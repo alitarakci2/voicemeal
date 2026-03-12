@@ -17,9 +17,25 @@ final class UserProfile {
     var goalWeightKg: Double
     var goalDays: Int
     var intensityLevel: Double
-    var weeklySchedule: [String]
+    var weeklyScheduleJSON: String
     var createdAt: Date
     var updatedAt: Date
+
+    var weeklySchedule: [[String]] {
+        get {
+            guard let data = weeklyScheduleJSON.data(using: .utf8),
+                  let decoded = try? JSONDecoder().decode([[String]].self, from: data) else {
+                return Array(repeating: ["rest"], count: 7)
+            }
+            return decoded
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue),
+               let json = String(data: data, encoding: .utf8) {
+                weeklyScheduleJSON = json
+            }
+        }
+    }
 
     init(
         name: String,
@@ -30,7 +46,7 @@ final class UserProfile {
         goalWeightKg: Double,
         goalDays: Int,
         intensityLevel: Double,
-        weeklySchedule: [String]
+        weeklySchedule: [[String]]
     ) {
         self.id = UUID()
         self.name = name
@@ -41,7 +57,12 @@ final class UserProfile {
         self.goalWeightKg = goalWeightKg
         self.goalDays = goalDays
         self.intensityLevel = intensityLevel
-        self.weeklySchedule = weeklySchedule
+        if let data = try? JSONEncoder().encode(weeklySchedule),
+           let json = String(data: data, encoding: .utf8) {
+            self.weeklyScheduleJSON = json
+        } else {
+            self.weeklyScheduleJSON = "[[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"]]"
+        }
         self.createdAt = .now
         self.updatedAt = .now
     }

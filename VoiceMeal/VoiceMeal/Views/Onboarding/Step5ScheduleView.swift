@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct Step5ScheduleView: View {
-    @Binding var weeklySchedule: [String]
+    @Binding var weeklySchedule: [[String]]
 
     private let dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
@@ -26,13 +26,13 @@ struct Step5ScheduleView: View {
 
     private struct Template {
         let name: String
-        let schedule: [String]
+        let schedule: [[String]]
     }
 
     private let templates: [Template] = [
-        Template(name: "Başlangıç", schedule: ["walking", "rest", "walking", "rest", "walking", "rest", "rest"]),
-        Template(name: "Orta", schedule: ["weights", "rest", "running", "weights", "rest", "cycling", "rest"]),
-        Template(name: "İleri", schedule: ["weights", "running", "weights", "cycling", "weights", "rest", "rest"]),
+        Template(name: "Başlangıç", schedule: [["walking"], ["rest"], ["walking"], ["rest"], ["walking"], ["rest"], ["rest"]]),
+        Template(name: "Orta", schedule: [["weights"], ["rest"], ["running"], ["weights", "walking"], ["rest"], ["cycling"], ["rest"]]),
+        Template(name: "İleri", schedule: [["weights", "running"], ["running"], ["weights"], ["cycling", "walking"], ["weights"], ["rest"], ["rest"]]),
     ]
 
     var body: some View {
@@ -73,8 +73,9 @@ struct Step5ScheduleView: View {
 
                             HStack(spacing: 8) {
                                 ForEach(activities, id: \.key) { activity in
+                                    let isSelected = weeklySchedule[index].contains(activity.key)
                                     Button {
-                                        weeklySchedule[index] = activity.key
+                                        toggleActivity(activity.key, forDay: index)
                                     } label: {
                                         VStack(spacing: 4) {
                                             Text(activity.emoji)
@@ -84,10 +85,10 @@ struct Step5ScheduleView: View {
                                         }
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 8)
-                                        .background(weeklySchedule[index] == activity.key ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                                        .background(isSelected ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
-                                                .stroke(weeklySchedule[index] == activity.key ? Color.accentColor : Color.clear, lineWidth: 2)
+                                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
                                         )
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }
@@ -100,5 +101,29 @@ struct Step5ScheduleView: View {
             }
             .padding()
         }
+    }
+
+    private func toggleActivity(_ key: String, forDay index: Int) {
+        var dayActivities = weeklySchedule[index]
+
+        if key == "rest" {
+            // Rest clears everything else
+            dayActivities = ["rest"]
+        } else {
+            // Remove rest if selecting an activity
+            dayActivities.removeAll { $0 == "rest" }
+
+            if dayActivities.contains(key) {
+                dayActivities.removeAll { $0 == key }
+                // If nothing left, default to rest
+                if dayActivities.isEmpty {
+                    dayActivities = ["rest"]
+                }
+            } else {
+                dayActivities.append(key)
+            }
+        }
+
+        weeklySchedule[index] = dayActivities
     }
 }

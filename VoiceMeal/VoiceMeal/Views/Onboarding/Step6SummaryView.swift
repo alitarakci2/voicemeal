@@ -14,16 +14,16 @@ struct Step6SummaryView: View {
     let goalWeightKg: Double
     let goalDays: Int
     let intensityLevel: Double
-    let weeklySchedule: [String]
+    let weeklySchedule: [[String]]
 
     private let dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
 
-    private let activityEmojis: [String: String] = [
-        "weights": "🏋️",
-        "running": "🏃",
-        "cycling": "🚴",
-        "walking": "🚶",
-        "rest": "😴",
+    private let activityLabels: [String: String] = [
+        "weights": "🏋️ Ağırlık",
+        "running": "🏃 Koşu",
+        "cycling": "🚴 Bisiklet",
+        "walking": "🚶 Yürüyüş",
+        "rest": "😴 Dinlenme",
     ]
 
     private var intensityLabel: String {
@@ -57,16 +57,18 @@ struct Step6SummaryView: View {
                     Text("Haftalık Program")
                         .font(.headline)
 
-                    HStack {
+                    VStack(alignment: .leading, spacing: 8) {
                         ForEach(0..<7, id: \.self) { index in
-                            VStack(spacing: 4) {
+                            HStack(alignment: .top) {
                                 Text(dayNames[index])
-                                    .font(.caption2)
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                                Text(activityEmojis[weeklySchedule[index]] ?? "?")
-                                    .font(.title3)
+                                    .frame(width: 30, alignment: .leading)
+
+                                let labels = weeklySchedule[index].compactMap { activityLabels[$0] }
+                                Text(labels.joined(separator: ", "))
+                                    .font(.subheadline)
                             }
-                            .frame(maxWidth: .infinity)
                         }
                     }
                 }

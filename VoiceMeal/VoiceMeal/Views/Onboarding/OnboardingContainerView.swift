@@ -26,7 +26,7 @@ struct OnboardingContainerView: View {
     // Step 4
     @State private var intensityLevel = 0.5
     // Step 5
-    @State private var weeklySchedule = ["walking", "rest", "walking", "rest", "walking", "rest", "rest"]
+    @State private var weeklySchedule: [[String]] = [["walking"], ["rest"], ["walking"], ["rest"], ["walking"], ["rest"], ["rest"]]
 
     private var canProceed: Bool {
         switch step {
