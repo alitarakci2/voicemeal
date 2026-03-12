@@ -10,6 +10,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var speechService = SpeechService()
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
+    @Query private var profiles: [UserProfile]
     @State private var permissionGranted = false
     @State private var isAnalyzing = false
     @State private var parsedMeals: [ParsedMeal] = []
@@ -17,6 +18,8 @@ struct HomeView: View {
     @State private var errorMessage: String?
     @State private var fullTranscript = ""
     @State private var showSavedConfirmation = false
+    @State private var showGoalInfo = false
+    @State private var goalEngine = GoalEngine()
 
     private let groqService = GroqService()
 
@@ -25,10 +28,18 @@ struct HomeView: View {
         return allEntries.filter { $0.date >= startOfDay }
     }
 
+    private var eatenCalories: Int { todayEntries.reduce(0) { $0 + $1.calories } }
+    private var eatenProtein: Double { todayEntries.reduce(0.0) { $0 + $1.protein } }
+    private var eatenCarbs: Double { todayEntries.reduce(0.0) { $0 + $1.carbs } }
+    private var eatenFat: Double { todayEntries.reduce(0.0) { $0 + $1.fat } }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Spacer(minLength: 20)
+                // Daily goal card
+                if goalEngine.profile != nil {
+                    dailyGoalCard
+                }
 
                 // Mic button
                 Button {
@@ -110,10 +121,10 @@ struct HomeView: View {
                         .foregroundStyle(.red)
                 }
 
-                // Today's summary
+                // Today's meal list
                 if !todayEntries.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Bugünkü Özet")
+                        Text("Bugünkü Yemekler")
                             .font(.headline)
 
                         ForEach(todayEntries, id: \.id) { entry in
@@ -125,17 +136,6 @@ struct HomeView: View {
                             }
                             .font(.subheadline)
                         }
-
-                        Divider()
-
-                        let totalCal = todayEntries.reduce(0) { $0 + $1.calories }
-                        let totalP = todayEntries.reduce(0.0) { $0 + $1.protein }
-                        let totalC = todayEntries.reduce(0.0) { $0 + $1.carbs }
-                        let totalF = todayEntries.reduce(0.0) { $0 + $1.fat }
-
-                        Text("Toplam: \(totalCal) kcal | Protein: \(Int(totalP))g | Karb: \(Int(totalC))g | Yağ: \(Int(totalF))g")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
                     }
                     .padding()
                     .background(Color(.systemGray6))
@@ -154,7 +154,149 @@ struct HomeView: View {
                 sendToGroq()
             }
         }
+        .onChange(of: profiles) {
+            goalEngine.update(with: profiles.first)
+        }
+        .onAppear {
+            goalEngine.update(with: profiles.first)
+        }
+        .sheet(isPresented: $showGoalInfo) {
+            goalInfoSheet
+        }
     }
+
+    // MARK: - Daily Goal Card
+
+    private var dailyGoalCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with today's activities
+            HStack {
+                let names = goalEngine.todayActivityNames
+                    .compactMap { GoalEngine.activityDisplayNames[$0] }
+                Text("📅 Bugün: \(names.joined(separator: ", "))")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                Button {
+                    showGoalInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // Calorie summary
+            let remaining = goalEngine.dailyCalorieTarget - eatenCalories
+            HStack {
+                calorieStat("Hedef", value: goalEngine.dailyCalorieTarget)
+                calorieStat("Yenen", value: eatenCalories)
+                VStack(spacing: 2) {
+                    Text("Kalan")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("\(remaining)")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundStyle(remaining < 0 ? .red : .primary)
+                }
+                .frame(maxWidth: .infinity)
+                Text("kcal")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Macro progress bars
+            macroRow("Protein", eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: .blue)
+            macroRow("Karb", eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: .orange)
+            macroRow("Yağ", eaten: Int(eatenFat), target: goalEngine.fatTarget, color: .yellow)
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func calorieStat(_ label: String, value: Int) -> some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text("\(value)")
+                .font(.title3)
+                .fontWeight(.bold)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func macroRow(_ name: String, eaten: Int, target: Int, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Text(name)
+                .font(.caption)
+                .frame(width: 50, alignment: .leading)
+
+            GeometryReader { geo in
+                let progress = target > 0 ? min(Double(eaten) / Double(target), 1.0) : 0
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.systemGray4))
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color)
+                        .frame(width: geo.size.width * progress)
+                }
+            }
+            .frame(height: 8)
+
+            Text("\(eaten)g / \(target)g")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 80, alignment: .trailing)
+        }
+    }
+
+    // MARK: - Goal Info Sheet
+
+    private var goalInfoSheet: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal")
+                infoRow("Kalori Açığı", value: "\(Int(goalEngine.deficit)) kcal")
+                infoRow("Günlük Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
+                infoRow("Tahmini Haftalık Kayıp", value: "\(String(format: "%.2f", goalEngine.projectedWeeklyLossKg)) kg")
+
+                Divider()
+
+                infoRow("BMR", value: "\(Int(goalEngine.bmr)) kcal")
+                infoRow("Aktivite Çarpanı", value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
+                infoRow("Protein Hedefi", value: "\(goalEngine.proteinTarget)g")
+                infoRow("Karb Hedefi", value: "\(goalEngine.carbTarget)g")
+                infoRow("Yağ Hedefi", value: "\(goalEngine.fatTarget)g")
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Hedef Detayları")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Kapat") { showGoalInfo = false }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func infoRow(_ label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .fontWeight(.medium)
+        }
+    }
+
+    // MARK: - Actions
 
     private func handleMicTap() {
         if speechService.isRecording {
@@ -226,5 +368,5 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
-        .modelContainer(for: FoodEntry.self, inMemory: true)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self], inMemory: true)
 }
