@@ -20,6 +20,7 @@ struct HomeView: View {
     @State private var fullTranscript = ""
     @State private var showSavedConfirmation = false
     @State private var showGoalInfo = false
+    @State private var showWeightBanner = false
     @State private var goalEngine = GoalEngine()
     @State private var healthKitService = HealthKitService()
 
@@ -38,6 +39,25 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Weight update banner
+                if showWeightBanner, let banner = goalEngine.weightUpdatedBanner {
+                    HStack {
+                        Text(banner)
+                            .font(.subheadline)
+                        Spacer()
+                        Button {
+                            showWeightBanner = false
+                            goalEngine.dismissWeightBanner()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.caption)
+                        }
+                    }
+                    .padding()
+                    .background(Color.green.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
                 // Daily goal card
                 if goalEngine.profile != nil {
                     dailyGoalCard
@@ -293,26 +313,32 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    // HealthKit vs calculated indicator
-                    if goalEngine.usingHealthKit {
-                        Label("Apple Health verisi kullanılıyor: \(Int(goalEngine.tdee)) kcal", systemImage: "iphone")
+                    // TDEE source indicator
+                    if goalEngine.isUsingExtrapolatedTDEE {
+                        let pct = Int(healthKitService.dayFraction * 100)
+                        Label("Tahmin y\u{00F6}ntemi: Extrapolasyon (%\(pct) g\u{00FC}n ge\u{00E7}ti)", systemImage: "chart.line.uptrend.xyaxis")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else if goalEngine.usingHealthKit {
+                        Label("Tam g\u{00FC}n verisi: \(Int(goalEngine.tdee)) kcal", systemImage: "iphone")
                             .font(.caption)
                             .foregroundStyle(.green)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.healthKitBurn > 0 {
-                        Label("HealthKit verisi henüz yetersiz, hesaplanan TDEE kullanılıyor", systemImage: "hourglass")
+                        Label("HealthKit verisi hen\u{00FC}z yetersiz, hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "hourglass")
                             .font(.caption)
                             .foregroundStyle(.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Label("Hesaplanan TDEE kullanılıyor: \(Int(goalEngine.tdee)) kcal", systemImage: "function")
+                        Label("Hesaplanan form\u{00FC}l: \(Int(goalEngine.tdee)) kcal", systemImage: "function")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if goalEngine.isCalorieClamped {
-                        Label("Minimum sağlıklı kalori hedefine ayarlandı", systemImage: "exclamationmark.triangle.fill")
+                        Label("Minimum sa\u{011F}l\u{0131}kl\u{0131} kalori hedefine ayarland\u{0131}", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
                             .foregroundStyle(.orange)
                             .fixedSize(horizontal: false, vertical: true)
@@ -320,29 +346,48 @@ struct HomeView: View {
 
                     Divider()
 
-                    infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal")
-                    if goalEngine.usingHealthKit {
+                    infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal (g\u{00FC}ven: \(goalEngine.tdeeConfidence))")
+                    if goalEngine.usingHealthKit || goalEngine.isUsingExtrapolatedTDEE {
                         infoRow("Hesaplanan TDEE", value: "\(Int(goalEngine.calculatedTDEE)) kcal")
                     }
-                    if goalEngine.healthKitBurn > 0 && !goalEngine.usingHealthKit {
-                        infoRow("HealthKit Yakım", value: "\(Int(goalEngine.healthKitBurn)) kcal")
-                        infoRow("BMR Eşiği", value: "\(Int(goalEngine.bmr)) kcal")
+                    if goalEngine.healthKitBurn > 0 && !goalEngine.usingHealthKit && !goalEngine.isUsingExtrapolatedTDEE {
+                        infoRow("HealthKit Yak\u{0131}m", value: "\(Int(goalEngine.healthKitBurn)) kcal")
+                        infoRow("BMR E\u{015F}i\u{011F}i", value: "\(Int(goalEngine.bmr)) kcal")
                     }
-                    infoRow("Kalori Açığı", value: "\(Int(goalEngine.deficit)) kcal")
-                    infoRow("Günlük Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
-                    infoRow("Tahmini Haftalık Kayıp", value: "\(String(format: "%.2f", goalEngine.projectedWeeklyLossKg)) kg")
+                    infoRow("Kalori A\u{00E7}\u{0131}\u{011F}\u{0131}", value: "\(Int(goalEngine.deficit)) kcal")
+                    infoRow("G\u{00FC}nl\u{00FC}k Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
+                    infoRow("Tahmini Haftal\u{0131}k Kay\u{0131}p", value: "\(String(format: "%.2f", goalEngine.projectedWeeklyLossKg)) kg")
+
+                    Divider()
+
+                    // VO2Max
+                    if let vo2 = goalEngine.vo2Max {
+                        infoRow("VO2 Max", value: "\(String(format: "%.1f", vo2)) ml/kg/min")
+                        infoRow("Fitness", value: goalEngine.vo2MaxLevel)
+                    } else {
+                        infoRow("VO2 Max", value: "Veri yok")
+                    }
+
+                    // Weight from Health
+                    if let w = goalEngine.latestWeightFromHealth {
+                        let dateStr = goalEngine.latestWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
+                        infoRow("Kilo (Health)", value: "\(String(format: "%.1f", w)) kg \u{2014} \(dateStr)")
+                    }
 
                     Divider()
 
                     infoRow("BMR", value: "\(Int(goalEngine.bmr)) kcal")
-                    infoRow("Aktivite Çarpanı", value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
+                    infoRow("Aktivite \u{00C7}arpan\u{0131}", value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
+                    if goalEngine.vo2Max != nil {
+                        infoRow("VO2 Ayar\u{0131}", value: "\(String(format: "%+.2f", goalEngine.vo2MaxAdjustment))")
+                    }
                     infoRow("Protein Hedefi", value: "\(goalEngine.proteinTarget)g")
                     infoRow("Karb Hedefi", value: "\(goalEngine.carbTarget)g")
-                    infoRow("Yağ Hedefi", value: "\(goalEngine.fatTarget)g")
+                    infoRow("Ya\u{011F} Hedefi", value: "\(goalEngine.fatTarget)g")
                 }
                 .padding()
             }
-            .navigationTitle("Hedef Detayları")
+            .navigationTitle("Hedef Detaylar\u{0131}")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -369,8 +414,28 @@ struct HomeView: View {
 
     private func refreshHealthKit() async {
         guard healthKitService.isAvailable else { return }
-        let burn = await healthKitService.fetchTodayTotalBurn()
-        goalEngine.updateHealthKitBurn(burn)
+
+        let extrapolated = await healthKitService.fetchTodayBurnExtrapolated(bmr: goalEngine.bmr)
+        if extrapolated > 0 {
+            goalEngine.updateExtrapolatedBurn(extrapolated)
+        } else {
+            let burn = healthKitService.todayTotalBurn
+            goalEngine.updateHealthKitBurn(burn)
+            goalEngine.isUsingExtrapolatedTDEE = false
+        }
+
+        let vo2 = await healthKitService.fetchLatestVO2Max()
+        goalEngine.updateVO2Max(vo2)
+
+        _ = await healthKitService.fetchLatestWeight()
+        goalEngine.syncWeight(
+            healthWeight: healthKitService.latestWeight,
+            healthWeightDate: healthKitService.latestWeightDate,
+            profile: profiles.first
+        )
+        if goalEngine.weightUpdatedBanner != nil {
+            showWeightBanner = true
+        }
     }
 
     // MARK: - Actions

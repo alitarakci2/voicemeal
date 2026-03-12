@@ -9,6 +9,11 @@ import Foundation
 class GoalEngine {
     private(set) var profile: UserProfile?
     var healthKitBurn: Double = 0
+    var vo2Max: Double?
+    var latestWeightFromHealth: Double?
+    var latestWeightDate: Date?
+    var isUsingExtrapolatedTDEE: Bool = false
+    var weightUpdatedBanner: String?
 
     var healthKitSufficient: Bool {
         healthKitBurn > bmr && bmr > 0
@@ -32,7 +37,7 @@ class GoalEngine {
         return todayActivities(for: p)
     }
 
-    var activityMultiplier: Double {
+    var baseActivityMultiplier: Double {
         let activities = todayActivityNames
 
         if activities == ["rest"] {
@@ -51,12 +56,55 @@ class GoalEngine {
         return highest + bonus
     }
 
+    var vo2MaxAdjustment: Double {
+        guard let vo2 = vo2Max else { return 0 }
+        switch vo2 {
+        case ..<35:
+            return -0.05
+        case 35..<45:
+            return 0
+        case 45..<55:
+            return 0.05
+        default:
+            return 0.10
+        }
+    }
+
+    var activityMultiplier: Double {
+        baseActivityMultiplier + vo2MaxAdjustment
+    }
+
+    var vo2MaxLevel: String {
+        guard let vo2 = vo2Max else { return "Bilinmiyor" }
+        switch vo2 {
+        case ..<35: return "D\u{00FC}\u{015F}\u{00FC}k"
+        case 35..<45: return "Orta"
+        case 45..<55: return "\u{0130}yi"
+        default: return "M\u{00FC}kemmel"
+        }
+    }
+
+    var tdeeConfidence: String {
+        let hasHealthKit = usingHealthKit || isUsingExtrapolatedTDEE
+        let hasVO2 = vo2Max != nil
+        if hasHealthKit && hasVO2 {
+            return "Y\u{00FC}ksek"
+        } else if hasHealthKit || hasVO2 {
+            return "Orta"
+        } else {
+            return "D\u{00FC}\u{015F}\u{00FC}k"
+        }
+    }
+
     var calculatedTDEE: Double {
         bmr * activityMultiplier
     }
 
     var tdee: Double {
-        usingHealthKit ? healthKitBurn : calculatedTDEE
+        if isUsingExtrapolatedTDEE && healthKitBurn > 0 {
+            return healthKitBurn
+        }
+        return usingHealthKit ? healthKitBurn : calculatedTDEE
     }
 
     var deficit: Double {
@@ -113,6 +161,41 @@ class GoalEngine {
         self.healthKitBurn = burn
     }
 
+    func updateExtrapolatedBurn(_ burn: Double) {
+        if burn > 0 {
+            self.healthKitBurn = burn
+            self.isUsingExtrapolatedTDEE = true
+        } else {
+            self.isUsingExtrapolatedTDEE = false
+        }
+    }
+
+    func updateVO2Max(_ value: Double?) {
+        self.vo2Max = value
+    }
+
+    func syncWeight(healthWeight: Double?, healthWeightDate: Date?, profile: UserProfile?) {
+        latestWeightFromHealth = healthWeight
+        latestWeightDate = healthWeightDate
+
+        guard let weight = healthWeight,
+              let weightDate = healthWeightDate,
+              let p = profile else {
+            return
+        }
+
+        if weightDate > p.updatedAt && abs(weight - p.currentWeightKg) > 0.01 {
+            let formatted = String(format: "%.1f", weight)
+            p.currentWeightKg = weight
+            p.updatedAt = .now
+            weightUpdatedBanner = "\u{2696}\u{FE0F} Kilonuz g\u{00FC}ncellendi: \(formatted) kg"
+        }
+    }
+
+    func dismissWeightBanner() {
+        weightUpdatedBanner = nil
+    }
+
     func todayActivities(for profile: UserProfile) -> [String] {
         let schedule = profile.weeklySchedule
         guard schedule.count == 7 else { return ["rest"] }
@@ -134,10 +217,10 @@ class GoalEngine {
     }
 
     static let activityDisplayNames: [String: String] = [
-        "weights": "Ağırlık",
-        "running": "Koşu",
+        "weights": "A\u{011F}\u{0131}rl\u{0131}k",
+        "running": "Ko\u{015F}u",
         "cycling": "Bisiklet",
-        "walking": "Yürüyüş",
+        "walking": "Y\u{00FC}r\u{00FC}y\u{00FC}\u{015F}",
         "rest": "Dinlenme",
     ]
 }
