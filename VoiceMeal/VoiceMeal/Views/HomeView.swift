@@ -226,6 +226,20 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
             }
 
+            // Daily deficit
+            let deficit = Int(goalEngine.tdee) - eatenCalories
+            HStack {
+                if deficit > 0 {
+                    Text("\u{1F525} \(deficit) kcal a\u{00E7}\u{0131}k")
+                        .foregroundStyle(.green)
+                } else {
+                    Text("\u{26A0}\u{FE0F} \(abs(deficit)) kcal fazla")
+                        .foregroundStyle(.red)
+                }
+            }
+            .font(.subheadline)
+            .fontWeight(.medium)
+
             // Macro progress bars
             macroRow("Protein", eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: .blue)
             macroRow("Karb", eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: .orange)

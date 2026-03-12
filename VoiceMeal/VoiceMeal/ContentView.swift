@@ -22,9 +22,9 @@ struct ContentView: View {
                         Label("Kayıt", systemImage: "mic")
                     }
 
-                HistoryView()
+                PlanView()
                     .tabItem {
-                        Label("Geçmiş", systemImage: "calendar")
+                        Label("Plan", systemImage: "calendar")
                     }
             }
         } else {
