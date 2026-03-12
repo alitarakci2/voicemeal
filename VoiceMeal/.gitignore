@@ -1,0 +1,15 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+
+# API Keys - NEVER commit
+Config.xcconfig
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+Packages/
