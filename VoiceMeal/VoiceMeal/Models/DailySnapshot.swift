@@ -21,6 +21,14 @@ final class DailySnapshot {
     var consumedFat: Double
     var usedHealthKit: Bool
     var weightKg: Double
+    var sleepMinutes: Int?
+    var deepSleepMinutes: Int?
+    var sleepQuality: String?
+    var todayHRV: Double?
+    var hrvBaseline: Double?
+    var hrvStatus: String?
+    var dailyInsight: String?
+    var insightGeneratedAt: Date?
     var savedAt: Date
 
     init(
@@ -35,7 +43,15 @@ final class DailySnapshot {
         consumedCarbs: Double,
         consumedFat: Double,
         usedHealthKit: Bool,
-        weightKg: Double
+        weightKg: Double,
+        sleepMinutes: Int? = nil,
+        deepSleepMinutes: Int? = nil,
+        sleepQuality: String? = nil,
+        todayHRV: Double? = nil,
+        hrvBaseline: Double? = nil,
+        hrvStatus: String? = nil,
+        dailyInsight: String? = nil,
+        insightGeneratedAt: Date? = nil
     ) {
         self.id = UUID()
         self.date = date
@@ -50,6 +66,14 @@ final class DailySnapshot {
         self.consumedFat = consumedFat
         self.usedHealthKit = usedHealthKit
         self.weightKg = weightKg
+        self.sleepMinutes = sleepMinutes
+        self.deepSleepMinutes = deepSleepMinutes
+        self.sleepQuality = sleepQuality
+        self.todayHRV = todayHRV
+        self.hrvBaseline = hrvBaseline
+        self.hrvStatus = hrvStatus
+        self.dailyInsight = dailyInsight
+        self.insightGeneratedAt = insightGeneratedAt
         self.savedAt = .now
     }
 }

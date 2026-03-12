@@ -21,11 +21,27 @@ struct PlanView: View {
         Calendar.current.startOfDay(for: .now)
     }
 
+    private var weeklyStats: (totalDeficit: Int, estimatedChangeKg: Double) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        guard let weekStart = calendar.date(byAdding: .day, value: -6, to: today) else {
+            return (0, 0)
+        }
+        let weekPlans = dayPlans.filter { $0.date >= weekStart && $0.date <= today && $0.status != .planned }
+        let totalDeficit = weekPlans.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) }
+        let estimatedChange = weekPlans.reduce(0.0) { $0 + $1.estimatedWeightChangeKg }
+        return (totalDeficit, estimatedChange)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
+                        // Weekly summary
+                        weeklySummaryCard
+                            .padding(.bottom, 4)
+
                         ForEach(dayPlans) { plan in
                             DayRowView(plan: plan)
                                 .id(plan.date)
@@ -50,6 +66,27 @@ struct PlanView: View {
                 DayDetailSheetView(plan: plan)
             }
         }
+    }
+
+    private var weeklySummaryCard: some View {
+        let stats = weeklyStats
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("\u{1F4CA} Bu Hafta")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+            HStack {
+                Text("Toplam a\u{00E7}\u{0131}k: \(stats.totalDeficit) kcal")
+                    .font(.caption)
+                Spacer()
+                Text("Tahmini: \u{2248} \(String(format: "%+.2f", stats.estimatedChangeKg)) kg")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(stats.estimatedChangeKg <= 0 ? .green : .orange)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -121,6 +158,10 @@ struct DayRowView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
+                    let plannedDeficit = plan.tdee - plan.targetCalories
+                    Text("~\(plannedDeficit) a\u{00E7}\u{0131}k")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
 
                 case .missed:
                     Text("0 / \(plan.targetCalories) kcal")
@@ -132,10 +173,11 @@ struct DayRowView: View {
                     Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
                         .font(.subheadline)
                     Spacer()
-                    Text("%\(plan.caloriePercentage)")
+                    let weightChange = plan.estimatedWeightChangeKg
+                    Text("\u{2248} \(String(format: "%+.2f", weightChange)) kg")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(plan.status == .exceeded ? .orange : plan.status == .underate ? .blue : .green)
+                        .foregroundStyle(weightChange <= 0 ? .green : .orange)
                 }
             }
         }
@@ -371,5 +413,5 @@ struct DayDetailSheetView: View {
 
 #Preview {
     PlanView()
-        .modelContainer(for: [FoodEntry.self, UserProfile.self], inMemory: true)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self], inMemory: true)
 }

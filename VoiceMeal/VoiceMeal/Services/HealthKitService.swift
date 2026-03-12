@@ -6,6 +6,28 @@
 import Foundation
 import HealthKit
 
+enum SleepQuality: String {
+    case excellent = "M\u{00FC}kemmel"
+    case good = "\u{0130}yi"
+    case fair = "Orta"
+    case poor = "K\u{00F6}t\u{00FC}"
+}
+
+struct SleepData {
+    let totalMinutes: Int
+    let deepSleepMinutes: Int
+    let efficiency: Double
+    let quality: SleepQuality
+}
+
+enum HRVStatus: String {
+    case excellent = "M\u{00FC}kemmel"
+    case normal = "Normal"
+    case tired = "Yorgun"
+    case veryTired = "\u{00C7}ok Yorgun"
+    case noData = "Veri Yok"
+}
+
 @Observable
 class HealthKitService {
     var todayTotalBurn: Double = 0
@@ -13,9 +35,25 @@ class HealthKitService {
     var latestVO2Max: Double?
     var latestWeight: Double?
     var latestWeightDate: Date?
+    var lastNightSleep: SleepData?
+    var todayHRV: Double?
+    var hrvBaseline: Double?
     var dayFraction: Double = 0
     var isExtrapolated: Bool = false
     var permissionGranted = false
+
+    var hrvStatus: HRVStatus {
+        guard let today = todayHRV, let baseline = hrvBaseline, baseline > 0 else {
+            return .noData
+        }
+        let ratio = today / baseline
+        switch ratio {
+        case 1.10...: return .excellent
+        case 0.90...: return .normal
+        case 0.80...: return .tired
+        default: return .veryTired
+        }
+    }
 
     private var store: HKHealthStore?
 
@@ -40,6 +78,8 @@ class HealthKitService {
             HKQuantityType(.basalEnergyBurned),
             HKQuantityType(.vo2Max),
             HKQuantityType(.bodyMass),
+            HKCategoryType(.sleepAnalysis),
+            HKQuantityType(.heartRateVariabilitySDNN),
         ]
         if HKQuantityType.quantityType(forIdentifier: .leanBodyMass) != nil {
             types.insert(HKQuantityType(.leanBodyMass))
@@ -138,6 +178,131 @@ class HealthKitService {
         latestWeight = result?.weight
         latestWeightDate = result?.date
         return result?.weight
+    }
+
+    func fetchLastNightSleep() async -> SleepData? {
+        guard let store else { return nil }
+
+        let type = HKCategoryType(.sleepAnalysis)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+        // Look for sleep data from the last 24 hours
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now))!
+        let predicate = HKQuery.predicateForSamples(withStart: yesterday, end: .now, options: .strictStartDate)
+
+        let samples: [HKCategorySample] = await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, results, error in
+                if let error {
+                    print("[HealthKit] Sleep query error: \(error)")
+                }
+                let categorySamples = (results as? [HKCategorySample]) ?? []
+                continuation.resume(returning: categorySamples)
+            }
+            store.execute(query)
+        }
+
+        guard !samples.isEmpty else {
+            lastNightSleep = nil
+            return nil
+        }
+
+        var totalSeconds: TimeInterval = 0
+        var deepSeconds: TimeInterval = 0
+
+        for sample in samples {
+            let duration = sample.endDate.timeIntervalSince(sample.startDate)
+            let value = HKCategoryValueSleepAnalysis(rawValue: sample.value)
+
+            switch value {
+            case .asleepDeep, .asleepREM:
+                deepSeconds += duration
+                totalSeconds += duration
+            case .asleepCore, .asleepUnspecified, .awake:
+                totalSeconds += duration
+            default:
+                totalSeconds += duration
+            }
+        }
+
+        let totalMinutes = Int(totalSeconds / 60)
+        let deepMinutes = Int(deepSeconds / 60)
+        let efficiency = totalSeconds > 0 ? deepSeconds / totalSeconds : 0
+        let totalHours = totalSeconds / 3600
+
+        let quality: SleepQuality
+        if totalHours >= 7.5 && efficiency >= 0.20 {
+            quality = .excellent
+        } else if totalHours >= 6.5 {
+            quality = .good
+        } else if totalHours >= 5.5 {
+            quality = .fair
+        } else {
+            quality = .poor
+        }
+
+        let data = SleepData(
+            totalMinutes: totalMinutes,
+            deepSleepMinutes: deepMinutes,
+            efficiency: efficiency,
+            quality: quality
+        )
+        lastNightSleep = data
+        return data
+    }
+
+    func fetchTodayHRV() async -> Double? {
+        guard let store else { return nil }
+
+        let type = HKQuantityType(.heartRateVariabilitySDNN)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: .now)!
+        let predicate = HKQuery.predicateForSamples(withStart: yesterday, end: .now, options: .strictStartDate)
+
+        let result: Double? = await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
+                if let error {
+                    print("[HealthKit] HRV query error: \(error)")
+                }
+                let value = (samples?.first as? HKQuantitySample)?
+                    .quantity.doubleValue(for: .secondUnit(with: .milli))
+                continuation.resume(returning: value)
+            }
+            store.execute(query)
+        }
+
+        todayHRV = result
+        return result
+    }
+
+    func fetchHRVBaseline() async -> Double? {
+        guard let store else { return nil }
+
+        let type = HKQuantityType(.heartRateVariabilitySDNN)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now)!
+        let predicate = HKQuery.predicateForSamples(withStart: sevenDaysAgo, end: .now, options: .strictStartDate)
+
+        let values: [Double] = await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, samples, error in
+                if let error {
+                    print("[HealthKit] HRV baseline query error: \(error)")
+                }
+                let vals = (samples as? [HKQuantitySample])?.map {
+                    $0.quantity.doubleValue(for: .secondUnit(with: .milli))
+                } ?? []
+                continuation.resume(returning: vals)
+            }
+            store.execute(query)
+        }
+
+        guard values.count >= 3 else {
+            hrvBaseline = nil
+            return nil
+        }
+
+        let avg = values.reduce(0, +) / Double(values.count)
+        hrvBaseline = avg
+        return avg
     }
 
     private func fetchSum(store: HKHealthStore, type: HKQuantityType, predicate: NSPredicate) async -> Double {

@@ -134,6 +134,99 @@ class GroqService {
             throw GroqError.invalidJSON
         }
     }
+
+    // MARK: - Daily Insight
+
+    private let insightSystemPrompt = """
+        Sen ki\u{015F}isel bir beslenme ve fitness ko\u{00E7}usun. \
+        Kullan\u{0131}c\u{0131}n\u{0131}n g\u{00FC}nl\u{00FC}k biyometrik verilerini analiz edip \
+        SADECE 2-3 c\u{00FC}mlelik k\u{0131}sa, samimi, T\u{00FC}rk\u{00E7}e bir g\u{00FC}nl\u{00FC}k \
+        de\u{011F}erlendirme yaz. Bilimsel ama sohbet dili kullan. \
+        Emoji kullanabilirsin. Asla liste yapma, d\u{00FC}z metin yaz.
+        """
+
+    func generateDailyInsight(
+        hrvStatus: HRVStatus,
+        todayHRV: Double?,
+        hrvBaseline: Double?,
+        sleep: SleepData?,
+        todayActivities: [String],
+        remainingCalories: Int,
+        calorieDeficit: Int,
+        intensityLevel: Double
+    ) async throws -> String {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let hrvText: String
+        if let hrv = todayHRV {
+            let baselineText = hrvBaseline.map { String(format: "%.0f", $0) } ?? "?"
+            hrvText = "\(String(format: "%.0f", hrv))ms (7 g\u{00FC}nl\u{00FC}k ort: \(baselineText)ms, durum: \(hrvStatus.rawValue))"
+        } else {
+            hrvText = "Veri yok"
+        }
+
+        let sleepText: String
+        if let s = sleep {
+            let hours = s.totalMinutes / 60
+            let mins = s.totalMinutes % 60
+            sleepText = "\(hours)s \(mins)dk toplam, \(s.deepSleepMinutes) dk derin uyku, kalite: \(s.quality.rawValue)"
+        } else {
+            sleepText = "Veri yok"
+        }
+
+        let activityNames = todayActivities
+            .compactMap { GoalEngine.activityDisplayNames[$0] }
+            .joined(separator: ", ")
+
+        let intensityText: String
+        switch intensityLevel {
+        case ...0.3: intensityText = "Hafif"
+        case 0.3...0.7: intensityText = "Orta"
+        default: intensityText = "Yo\u{011F}un"
+        }
+
+        let userPrompt = """
+            HRV: \(hrvText)
+            Uyku: \(sleepText)
+            Bug\u{00FC}nk\u{00FC} plan: \(activityNames)
+            Kalan kalori: \(remainingCalories) kcal
+            A\u{00E7}\u{0131}k: \(calorieDeficit) kcal
+            Program yo\u{011F}unlu\u{011F}u: \(intensityText)
+
+            Bu verilere g\u{00F6}re bug\u{00FC}n i\u{00E7}in k\u{0131}sa bir de\u{011F}erlendirme yap.
+            """
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                ["role": "system", "content": insightSystemPrompt],
+                ["role": "user", "content": userPrompt]
+            ],
+            "temperature": 0.7,
+            "max_tokens": 200
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 // MARK: - Groq API response types

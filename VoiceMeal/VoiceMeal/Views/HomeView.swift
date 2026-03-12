@@ -61,6 +61,17 @@ struct HomeView: View {
                 // Daily goal card
                 if goalEngine.profile != nil {
                     dailyGoalCard
+
+                    DailyInsightCard(
+                        hrvStatus: healthKitService.hrvStatus,
+                        todayHRV: healthKitService.todayHRV,
+                        hrvBaseline: healthKitService.hrvBaseline,
+                        sleep: healthKitService.lastNightSleep,
+                        todayActivities: goalEngine.todayActivityNames,
+                        remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
+                        calorieDeficit: Int(goalEngine.tdee) - eatenCalories,
+                        intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5
+                    )
                 }
 
                 // Mic button
@@ -440,6 +451,9 @@ struct HomeView: View {
         let vo2 = await healthKitService.fetchLatestVO2Max()
         goalEngine.updateVO2Max(vo2)
 
+        _ = await healthKitService.fetchTodayHRV()
+        _ = await healthKitService.fetchHRVBaseline()
+        _ = await healthKitService.fetchLastNightSleep()
         _ = await healthKitService.fetchLatestWeight()
         goalEngine.syncWeight(
             healthWeight: healthKitService.latestWeight,
@@ -559,5 +573,5 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
-        .modelContainer(for: [FoodEntry.self, UserProfile.self], inMemory: true)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self], inMemory: true)
 }

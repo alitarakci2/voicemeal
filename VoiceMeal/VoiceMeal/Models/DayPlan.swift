@@ -33,4 +33,9 @@ struct DayPlan: Identifiable {
         guard targetCalories > 0 else { return 0 }
         return Int(round(Double(consumedCalories) / Double(targetCalories) * 100))
     }
+
+    var estimatedWeightChangeKg: Double {
+        guard status != .planned && status != .missed else { return 0 }
+        return Double(consumedCalories - tdee) / 7700.0
+    }
 }
