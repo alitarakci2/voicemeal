@@ -8,6 +8,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var speechService = SpeechService()
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
@@ -20,6 +21,7 @@ struct HomeView: View {
     @State private var showSavedConfirmation = false
     @State private var showGoalInfo = false
     @State private var goalEngine = GoalEngine()
+    @State private var healthKitService = HealthKitService()
 
     private let groqService = GroqService()
 
@@ -148,6 +150,10 @@ struct HomeView: View {
         }
         .task {
             permissionGranted = await speechService.requestPermissions()
+            if healthKitService.isAvailable {
+                await healthKitService.requestPermission()
+                await refreshHealthKit()
+            }
         }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
             if oldValue && !newValue && !speechService.transcript.isEmpty {
@@ -156,6 +162,11 @@ struct HomeView: View {
         }
         .onChange(of: profiles) {
             goalEngine.update(with: profiles.first)
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                Task { await refreshHealthKit() }
+            }
         }
         .onAppear {
             goalEngine.update(with: profiles.first)
@@ -178,6 +189,14 @@ struct HomeView: View {
                     .fontWeight(.medium)
 
                 Spacer()
+
+                Button {
+                    Task { await refreshHealthKit() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 Button {
                     showGoalInfo = true
@@ -258,23 +277,57 @@ struct HomeView: View {
 
     private var goalInfoSheet: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal")
-                infoRow("Kalori Açığı", value: "\(Int(goalEngine.deficit)) kcal")
-                infoRow("Günlük Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
-                infoRow("Tahmini Haftalık Kayıp", value: "\(String(format: "%.2f", goalEngine.projectedWeeklyLossKg)) kg")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    // HealthKit vs calculated indicator
+                    if goalEngine.usingHealthKit {
+                        Label("Apple Health verisi kullanılıyor: \(Int(goalEngine.tdee)) kcal", systemImage: "iphone")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else if goalEngine.healthKitBurn > 0 {
+                        Label("HealthKit verisi henüz yetersiz, hesaplanan TDEE kullanılıyor", systemImage: "hourglass")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Label("Hesaplanan TDEE kullanılıyor: \(Int(goalEngine.tdee)) kcal", systemImage: "function")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                Divider()
+                    if goalEngine.isCalorieClamped {
+                        Label("Minimum sağlıklı kalori hedefine ayarlandı", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                infoRow("BMR", value: "\(Int(goalEngine.bmr)) kcal")
-                infoRow("Aktivite Çarpanı", value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
-                infoRow("Protein Hedefi", value: "\(goalEngine.proteinTarget)g")
-                infoRow("Karb Hedefi", value: "\(goalEngine.carbTarget)g")
-                infoRow("Yağ Hedefi", value: "\(goalEngine.fatTarget)g")
+                    Divider()
 
-                Spacer()
+                    infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal")
+                    if goalEngine.usingHealthKit {
+                        infoRow("Hesaplanan TDEE", value: "\(Int(goalEngine.calculatedTDEE)) kcal")
+                    }
+                    if goalEngine.healthKitBurn > 0 && !goalEngine.usingHealthKit {
+                        infoRow("HealthKit Yakım", value: "\(Int(goalEngine.healthKitBurn)) kcal")
+                        infoRow("BMR Eşiği", value: "\(Int(goalEngine.bmr)) kcal")
+                    }
+                    infoRow("Kalori Açığı", value: "\(Int(goalEngine.deficit)) kcal")
+                    infoRow("Günlük Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
+                    infoRow("Tahmini Haftalık Kayıp", value: "\(String(format: "%.2f", goalEngine.projectedWeeklyLossKg)) kg")
+
+                    Divider()
+
+                    infoRow("BMR", value: "\(Int(goalEngine.bmr)) kcal")
+                    infoRow("Aktivite Çarpanı", value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
+                    infoRow("Protein Hedefi", value: "\(goalEngine.proteinTarget)g")
+                    infoRow("Karb Hedefi", value: "\(goalEngine.carbTarget)g")
+                    infoRow("Yağ Hedefi", value: "\(goalEngine.fatTarget)g")
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle("Hedef Detayları")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -283,17 +336,27 @@ struct HomeView: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 
     private func infoRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
+                .font(.subheadline)
                 .fontWeight(.medium)
         }
+    }
+
+    // MARK: - HealthKit
+
+    private func refreshHealthKit() async {
+        guard healthKitService.isAvailable else { return }
+        let burn = await healthKitService.fetchTodayTotalBurn()
+        goalEngine.updateHealthKitBurn(burn)
     }
 
     // MARK: - Actions

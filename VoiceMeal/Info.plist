@@ -4,5 +4,7 @@
 <dict>
 	<key>GROQ_API_KEY</key>
 	<string>$(GROQ_API_KEY)</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>VoiceMeal günlük kalori hedefini hesaplamak için yakım verinizi kullanır</string>
 </dict>
 </plist>

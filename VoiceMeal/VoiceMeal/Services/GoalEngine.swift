@@ -8,6 +8,15 @@ import Foundation
 @Observable
 class GoalEngine {
     private(set) var profile: UserProfile?
+    var healthKitBurn: Double = 0
+
+    var healthKitSufficient: Bool {
+        healthKitBurn > bmr && bmr > 0
+    }
+
+    var usingHealthKit: Bool {
+        healthKitSufficient
+    }
 
     var bmr: Double {
         guard let p = profile else { return 0 }
@@ -42,8 +51,12 @@ class GoalEngine {
         return highest + bonus
     }
 
-    var tdee: Double {
+    var calculatedTDEE: Double {
         bmr * activityMultiplier
+    }
+
+    var tdee: Double {
+        usingHealthKit ? healthKitBurn : calculatedTDEE
     }
 
     var deficit: Double {
@@ -58,8 +71,18 @@ class GoalEngine {
         }
     }
 
+    private var minimumCalorieTarget: Double {
+        bmr * 0.85
+    }
+
+    var isCalorieClamped: Bool {
+        let raw = tdee - deficit
+        return raw < minimumCalorieTarget && minimumCalorieTarget > 0
+    }
+
     var dailyCalorieTarget: Int {
-        Int(tdee - deficit)
+        let raw = tdee - deficit
+        return Int(max(raw, minimumCalorieTarget))
     }
 
     var proteinTarget: Int {
@@ -86,12 +109,14 @@ class GoalEngine {
         self.profile = profile
     }
 
+    func updateHealthKitBurn(_ burn: Double) {
+        self.healthKitBurn = burn
+    }
+
     func todayActivities(for profile: UserProfile) -> [String] {
         let schedule = profile.weeklySchedule
         guard schedule.count == 7 else { return ["rest"] }
 
-        // Calendar: Sunday=1 ... Saturday=7
-        // Our schedule: Monday=0 ... Sunday=6
         let weekday = Calendar.current.component(.weekday, from: .now)
         let index: Int
         switch weekday {
