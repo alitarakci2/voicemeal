@@ -7,22 +7,33 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Kayıt", systemImage: "mic")
-                }
+    @Query private var profiles: [UserProfile]
+    @State private var onboardingComplete = false
 
-            HistoryView()
-                .tabItem {
-                    Label("Geçmiş", systemImage: "calendar")
-                }
+    private var hasProfile: Bool {
+        !profiles.isEmpty || onboardingComplete
+    }
+
+    var body: some View {
+        if hasProfile {
+            TabView {
+                HomeView()
+                    .tabItem {
+                        Label("Kayıt", systemImage: "mic")
+                    }
+
+                HistoryView()
+                    .tabItem {
+                        Label("Geçmiş", systemImage: "calendar")
+                    }
+            }
+        } else {
+            OnboardingContainerView(onboardingComplete: $onboardingComplete)
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: FoodEntry.self, inMemory: true)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self], inMemory: true)
 }

@@ -5,8 +5,8 @@
 //  Created by Ali Tarakçı on 11.03.2026.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct VoiceMealApp: App {
@@ -14,6 +14,6 @@ struct VoiceMealApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: FoodEntry.self)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self])
     }
 }
