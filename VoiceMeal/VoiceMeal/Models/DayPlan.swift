@@ -6,9 +6,10 @@
 import Foundation
 
 enum DayStatus {
-    case completed
-    case exceeded
-    case missed
+    case completed   // 85%-110% of target
+    case exceeded    // > 110% of target
+    case underate    // < 85% of target
+    case missed      // no food entries
     case today
     case planned
 }

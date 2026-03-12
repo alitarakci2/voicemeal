@@ -174,6 +174,7 @@ struct HomeView: View {
                 await healthKitService.requestPermission()
                 await refreshHealthKit()
             }
+            saveTodaySnapshot()
         }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
             if oldValue && !newValue && !speechService.transcript.isEmpty {
@@ -185,11 +186,23 @@ struct HomeView: View {
         }
         .onChange(of: scenePhase) {
             if scenePhase == .active {
-                Task { await refreshHealthKit() }
+                Task {
+                    await refreshHealthKit()
+                    if SnapshotService.snapshotNeedsUpdate(for: .now, modelContext: modelContext) {
+                        saveTodaySnapshot()
+                    }
+                }
             }
         }
         .onAppear {
             goalEngine.update(with: profiles.first)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            Task {
+                saveYesterdaySnapshot()
+                await refreshHealthKit()
+                saveTodaySnapshot()
+            }
         }
         .sheet(isPresented: $showGoalInfo) {
             goalInfoSheet
@@ -436,6 +449,42 @@ struct HomeView: View {
         if goalEngine.weightUpdatedBanner != nil {
             showWeightBanner = true
         }
+    }
+
+    // MARK: - Snapshots
+
+    private func saveTodaySnapshot() {
+        SnapshotService.saveSnapshot(
+            date: .now,
+            goalEngine: goalEngine,
+            consumedCalories: eatenCalories,
+            consumedProtein: eatenProtein,
+            consumedCarbs: eatenCarbs,
+            consumedFat: eatenFat,
+            modelContext: modelContext
+        )
+    }
+
+    private func saveYesterdaySnapshot() {
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) else { return }
+        let startOfYesterday = Calendar.current.startOfDay(for: yesterday)
+        let startOfToday = Calendar.current.startOfDay(for: .now)
+
+        let yesterdayEntries = allEntries.filter { $0.date >= startOfYesterday && $0.date < startOfToday }
+        let cal = yesterdayEntries.reduce(0) { $0 + $1.calories }
+        let pro = yesterdayEntries.reduce(0.0) { $0 + $1.protein }
+        let carb = yesterdayEntries.reduce(0.0) { $0 + $1.carbs }
+        let fat = yesterdayEntries.reduce(0.0) { $0 + $1.fat }
+
+        SnapshotService.saveSnapshot(
+            date: yesterday,
+            goalEngine: goalEngine,
+            consumedCalories: cal,
+            consumedProtein: pro,
+            consumedCarbs: carb,
+            consumedFat: fat,
+            modelContext: modelContext
+        )
     }
 
     // MARK: - Actions

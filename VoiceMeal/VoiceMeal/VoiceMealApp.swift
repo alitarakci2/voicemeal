@@ -14,6 +14,6 @@ struct VoiceMealApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [FoodEntry.self, UserProfile.self])
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self])
     }
 }

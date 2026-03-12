@@ -62,6 +62,7 @@ struct DayRowView: View {
         switch plan.status {
         case .completed: return "checkmark.circle.fill"
         case .exceeded: return "exclamationmark.triangle.fill"
+        case .underate: return "arrow.down.circle.fill"
         case .missed: return "xmark.circle.fill"
         case .today: return "location.fill"
         case .planned: return "doc.text"
@@ -72,6 +73,7 @@ struct DayRowView: View {
         switch plan.status {
         case .completed: return .green
         case .exceeded: return .yellow
+        case .underate: return .blue
         case .missed: return .gray
         case .today: return .blue
         case .planned: return .gray
@@ -133,7 +135,7 @@ struct DayRowView: View {
                     Text("%\(plan.caloriePercentage)")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(plan.status == .exceeded ? .orange : .green)
+                        .foregroundStyle(plan.status == .exceeded ? .orange : plan.status == .underate ? .blue : .green)
                 }
             }
         }
@@ -259,6 +261,11 @@ struct DayDetailSheetView: View {
         .presentationDetents([.medium, .large])
     }
 
+    private var isPastOlderThan7Days: Bool {
+        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Calendar.current.startOfDay(for: .now))!
+        return plan.date < sevenDaysAgo
+    }
+
     @ViewBuilder
     private var statusBanner: some View {
         switch plan.status {
@@ -270,6 +277,10 @@ struct DayDetailSheetView: View {
             Label("Hedef a\u{015F}\u{0131}ld\u{0131}", systemImage: "exclamationmark.triangle.fill")
                 .font(.subheadline)
                 .foregroundStyle(.orange)
+        case .underate:
+            Label("Hedefin alt\u{0131}nda kald\u{0131}n \u{2014} \u{00E7}ok az yedin", systemImage: "arrow.down.circle.fill")
+                .font(.subheadline)
+                .foregroundStyle(.blue)
         case .missed:
             Label("Ka\u{00E7}\u{0131}r\u{0131}ld\u{0131}", systemImage: "xmark.circle.fill")
                 .font(.subheadline)
@@ -281,6 +292,12 @@ struct DayDetailSheetView: View {
         case .planned:
             Label("Planland\u{0131}", systemImage: "doc.text")
                 .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+
+        if isPastOlderThan7Days {
+            Text("* Hedef, mevcut profil de\u{011F}erleriyle hesaplanm\u{0131}\u{015F}t\u{0131}r")
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
     }
@@ -298,7 +315,7 @@ struct DayDetailSheetView: View {
                     RoundedRectangle(cornerRadius: 6)
                         .fill(Color(.systemGray4))
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(plan.consumedCalories > Int(Double(plan.targetCalories) * 1.1) ? Color.orange : Color.green)
+                        .fill(plan.status == .exceeded ? Color.orange : plan.status == .underate ? Color.blue : Color.green)
                         .frame(width: geo.size.width * progress)
                 }
             }

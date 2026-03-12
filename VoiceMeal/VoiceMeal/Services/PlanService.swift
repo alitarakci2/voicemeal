@@ -44,6 +44,8 @@ class PlanService {
                 status = .missed
             } else if consumedCal > Int(Double(target.calories) * 1.1) {
                 status = .exceeded
+            } else if consumedCal < Int(Double(target.calories) * 0.85) {
+                status = .underate
             } else {
                 status = .completed
             }
@@ -90,6 +92,9 @@ class PlanService {
         return activities.isEmpty ? ["rest"] : activities
     }
 
+    // NOTE: Historical accuracy requires a DailySnapshot model to store
+    // per-day weight/profile values at the time. Currently all days use
+    // today's profile values. Planned for a future sprint.
     private func calculateTargets(profile: UserProfile, activities: [String]) -> (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int) {
         let bmr: Double
         if profile.gender == "male" {
