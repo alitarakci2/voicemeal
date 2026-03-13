@@ -386,6 +386,85 @@ class GroqService {
 
         return try JSONDecoder().decode(MealSuggestion.self, from: jsonData)
     }
+
+    // MARK: - Weekly Insight
+
+    private let weeklyInsightSystemPrompt = """
+        Sen ki\u{015F}isel bir beslenme ve fitness ko\u{00E7}usun. \
+        Kullan\u{0131}c\u{0131}n\u{0131}n haftal\u{0131}k istatistiklerini analiz edip \
+        SADECE 2-3 c\u{00FC}mlelik k\u{0131}sa, samimi, T\u{00FC}rk\u{00E7}e bir haftal\u{0131}k \
+        de\u{011F}erlendirme yaz. Bilimsel ama sohbet dili kullan. \
+        Emoji kullanabilirsin. Asla liste yapma, d\u{00FC}z metin yaz.
+        """
+
+    func generateWeeklyInsight(
+        stats: [DayStat],
+        streak: Int,
+        trend: TrendDirection,
+        avgCalories: Int,
+        avgProtein: Double,
+        totalDeficit: Int,
+        currentWeight: Double,
+        goalWeight: Double
+    ) async throws -> String {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let daysWithData = stats.filter { $0.hasData }.count
+        let estimatedKg = String(format: "%.2f", Double(totalDeficit) / 7700.0)
+
+        let activitySummary = Dictionary(
+            stats.flatMap { $0.activities }.map { ($0, 1) },
+            uniquingKeysWith: +
+        ).map { "\(GoalEngine.activityDisplayNames[$0.key] ?? $0.key): \($0.value) g\u{00FC}n" }
+        .joined(separator: ", ")
+
+        let userPrompt = """
+            Haftal\u{0131}k \u{00F6}zet:
+            Veri olan g\u{00FC}n say\u{0131}s\u{0131}: \(daysWithData)/7
+            Ortalama kalori: \(avgCalories) kcal
+            Ortalama protein: \(Int(avgProtein))g
+            Toplam a\u{00E7}\u{0131}k: \(totalDeficit) kcal
+            Tahmini de\u{011F}i\u{015F}im: \(estimatedKg) kg
+            Seri: \(streak) g\u{00FC}n hedefe ula\u{015F}t\u{0131}
+            Trend: \(trend.rawValue)
+            Mevcut kilo: \(String(format: "%.1f", currentWeight)) kg
+            Hedef kilo: \(String(format: "%.1f", goalWeight)) kg
+            Aktiviteler: \(activitySummary)
+
+            Bu verilere g\u{00F6}re k\u{0131}sa bir haftal\u{0131}k de\u{011F}erlendirme yap.
+            """
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                ["role": "system", "content": weeklyInsightSystemPrompt],
+                ["role": "user", "content": userPrompt]
+            ],
+            "temperature": 0.7,
+            "max_tokens": 200
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 // MARK: - Groq API response types

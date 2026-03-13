@@ -31,11 +31,17 @@ struct ContentView: View {
                     }
                     .tag(1)
 
+                StatisticsView()
+                    .tabItem {
+                        Label("\u{0130}statistik", systemImage: "chart.bar.fill")
+                    }
+                    .tag(2)
+
                 SettingsView()
                     .tabItem {
                         Label("Ayarlar", systemImage: "gearshape")
                     }
-                    .tag(2)
+                    .tag(3)
             }
             .environment(goalEngine)
             .onAppear {
