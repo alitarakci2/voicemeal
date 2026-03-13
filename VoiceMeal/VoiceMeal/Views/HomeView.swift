@@ -24,6 +24,11 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showMealSuggestion = false
     @State private var notificationSuggestionType: MealNotificationType?
+    @State private var entryToEdit: FoodEntry?
+    @State private var entryToDelete: FoodEntry?
+    @State private var showDeleteAlert = false
+    @State private var showCorrected = false
+    @State private var correctionPickerEntries: [FoodEntry]?
     @Environment(GoalEngine.self) private var goalEngine
     @State private var healthKitService = HealthKitService()
 
@@ -116,6 +121,10 @@ struct HomeView: View {
                 // Status label
                 if isAnalyzing {
                     ProgressView("Analiz ediliyor...")
+                } else if showCorrected {
+                    Text("D\u{00FC}zeltildi \u{2713}")
+                        .font(.headline)
+                        .foregroundStyle(.blue)
                 } else if showSavedConfirmation {
                     Text("Kaydedildi \u{2713}")
                         .font(.headline)
@@ -181,22 +190,78 @@ struct HomeView: View {
 
                 // Today's meal list
                 if !todayEntries.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Bugünkü Yemekler")
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Bug\u{00FC}nk\u{00FC} Yemekler")
                             .font(.headline)
+                            .padding(.horizontal)
+                            .padding(.top)
+                            .padding(.bottom, 8)
 
                         ForEach(todayEntries, id: \.id) { entry in
                             HStack {
-                                Text(entry.name)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(entry.name)
+                                        .font(.subheadline)
+                                    Text(entry.amount)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                                 Spacer()
                                 Text("\(entry.calories) kcal")
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
+                                Button {
+                                    entryToEdit = entry
+                                } label: {
+                                    Image(systemName: "pencil")
+                                        .font(.caption)
+                                        .foregroundStyle(.blue)
+                                }
+                                .buttonStyle(.plain)
+                                Button {
+                                    entryToDelete = entry
+                                    showDeleteAlert = true
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption)
+                                        .foregroundStyle(.red)
+                                }
+                                .buttonStyle(.plain)
                             }
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+                            if entry.id != todayEntries.last?.id {
+                                Divider().padding(.leading)
+                            }
+                        }
+                        .padding(.bottom, 8)
+                    }
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+
+                // Correction picker
+                if let entries = correctionPickerEntries {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Hangi kayd\u{0131} d\u{00FC}zelteyim?")
                             .font(.subheadline)
+                            .fontWeight(.medium)
+                        ForEach(entries, id: \.id) { entry in
+                            Button {
+                                entryToEdit = entry
+                                correctionPickerEntries = nil
+                            } label: {
+                                HStack {
+                                    Text(entry.name)
+                                    Spacer()
+                                    Text("\(entry.calories) kcal")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                         }
                     }
                     .padding()
-                    .background(Color(.systemGray6))
+                    .background(Color.orange.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
@@ -251,6 +316,24 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+        }
+        .sheet(item: $entryToEdit) { entry in
+            EditFoodEntryView(entry: entry) {
+                saveTodaySnapshot()
+            }
+        }
+        .alert("Bu kayd\u{0131} silmek istedi\u{011F}ine emin misin?", isPresented: $showDeleteAlert) {
+            Button("Sil", role: .destructive) {
+                if let entry = entryToDelete {
+                    modelContext.delete(entry)
+                    try? modelContext.save()
+                    saveTodaySnapshot()
+                }
+                entryToDelete = nil
+            }
+            Button("\u{0130}ptal", role: .cancel) {
+                entryToDelete = nil
+            }
         }
         .sheet(isPresented: $showMealSuggestion, onDismiss: {
             notificationSuggestionType = nil
@@ -616,18 +699,85 @@ struct HomeView: View {
         Task {
             do {
                 let response = try await groqService.parseMeals(transcript: fullTranscript)
-                parsedMeals = response.meals
-                if response.clarification_needed {
+
+                if response.isCorrection == true {
+                    handleCorrection(response)
+                } else if response.clarification_needed {
+                    parsedMeals = response.meals
                     clarificationQuestion = response.clarification_question
                 } else {
+                    parsedMeals = response.meals
                     clarificationQuestion = nil
                     saveEntries(from: response.meals)
                 }
             } catch {
-                errorMessage = "Bir hata oluştu, tekrar deneyin"
+                errorMessage = "Bir hata olu\u{015F}tu, tekrar deneyin"
             }
             isAnalyzing = false
         }
+    }
+
+    private func handleCorrection(_ response: MealParseResponse) {
+        guard let targetName = response.targetFoodName else {
+            errorMessage = "D\u{00FC}zeltilecek yemek belirlenemedi"
+            return
+        }
+
+        let matches = todayEntries.filter {
+            $0.name.localizedCaseInsensitiveContains(targetName)
+        }
+
+        if matches.count == 1, let entry = matches.first {
+            applyCorrection(to: entry, from: response)
+        } else if matches.count > 1 {
+            correctionPickerEntries = matches
+        } else {
+            // No match found — show picker with all entries
+            correctionPickerEntries = todayEntries
+        }
+    }
+
+    private func applyCorrection(to entry: FoodEntry, from response: MealParseResponse) {
+        // Safety fallback: if amount changed but macros missing, scale proportionally
+        if let newAmount = response.correctedAmount,
+           response.correctedCalories == nil {
+            let ratio = parseAmountRatio(old: entry.amount, new: newAmount)
+            if let ratio, ratio > 0, ratio != 1.0 {
+                entry.calories = Int(Double(entry.calories) * ratio)
+                entry.protein = entry.protein * ratio
+                entry.carbs = entry.carbs * ratio
+                entry.fat = entry.fat * ratio
+                entry.amount = newAmount
+            } else {
+                entry.amount = newAmount
+            }
+        } else {
+            if let cal = response.correctedCalories { entry.calories = cal }
+            if let pro = response.correctedProtein { entry.protein = pro }
+            if let carb = response.correctedCarbs { entry.carbs = carb }
+            if let fat = response.correctedFat { entry.fat = fat }
+            if let amount = response.correctedAmount { entry.amount = amount }
+        }
+        try? modelContext.save()
+        saveTodaySnapshot()
+
+        showCorrected = true
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            showCorrected = false
+        }
+    }
+
+    private func parseAmountRatio(old: String, new: String) -> Double? {
+        func extractNumber(_ s: String) -> Double? {
+            let digits = s.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+            return Double(digits)
+        }
+        guard let oldNum = extractNumber(old), oldNum > 0,
+              let newNum = extractNumber(new) else {
+            return nil
+        }
+        return newNum / oldNum
     }
 
     private func saveEntries(from meals: [ParsedMeal]) {
@@ -642,6 +792,7 @@ struct HomeView: View {
             )
             modelContext.insert(entry)
         }
+        saveTodaySnapshot()
         showSavedConfirmation = true
         Task {
             try? await Task.sleep(for: .seconds(2))

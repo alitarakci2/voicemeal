@@ -19,6 +19,13 @@ struct MealParseResponse: Codable {
     let meals: [ParsedMeal]
     let clarification_needed: Bool
     let clarification_question: String?
+    let isCorrection: Bool?
+    let targetFoodName: String?
+    let correctedCalories: Int?
+    let correctedProtein: Double?
+    let correctedCarbs: Double?
+    let correctedFat: Double?
+    let correctedAmount: String?
 }
 
 struct MealSuggestion: Codable {
@@ -40,13 +47,31 @@ class GroqService {
     private let model = "llama-3.3-70b-versatile"
 
     private let systemPrompt = """
-        Sen bir beslenme asistanısın. Kullanıcının Türkçe konuşmasından \
-        yenilen yemekleri çıkar ve SADECE JSON formatında yanıt ver.
+        Sen bir beslenme asistan\u{0131}s\u{0131}n. Kullan\u{0131}c\u{0131}n\u{0131}n T\u{00FC}rk\u{00E7}e konu\u{015F}mas\u{0131}ndan \
+        yenilen yemekleri \u{00E7}\u{0131}kar ve SADECE JSON format\u{0131}nda yan\u{0131}t ver.
 
-        Emin olmadığın miktar veya yemek varsa clarification_needed true yap \
-        ve clarification_question alanına Türkçe soru yaz.
+        Emin olmad\u{0131}\u{011F}\u{0131}n miktar veya yemek varsa clarification_needed true yap \
+        ve clarification_question alan\u{0131}na T\u{00FC}rk\u{00E7}e soru yaz.
 
-        JSON formatı kesinlikle şu şekilde olmalı, başka hiçbir şey yazma:
+        E\u{011F}er kullan\u{0131}c\u{0131} bir d\u{00FC}zeltme yap\u{0131}yorsa (\u{00F6}rn: "asl\u{0131}nda protein \
+        s\u{00FC}t\u{00FC} 250 kalori", "hay\u{0131}r yanl\u{0131}\u{015F} yazd\u{0131}m tavuk 300 gram", \
+        "de\u{011F}i\u{015F}tir", "g\u{00FC}ncelle"), isCorrection: true yap ve \
+        hangi yeme\u{011F}i d\u{00FC}zeltece\u{011F}ini targetFoodName'e yaz. \
+        D\u{00FC}zeltilen de\u{011F}erleri correctedCalories, correctedProtein, \
+        correctedCarbs, correctedFat, correctedAmount alanlar\u{0131}na yaz. \
+        Normal yemek giri\u{015F}iyse isCorrection: false.
+
+        E\u{011F}er kullan\u{0131}c\u{0131} sadece miktar\u{0131} de\u{011F}i\u{015F}tiriyorsa (\u{00F6}rn: "50 grama \
+        d\u{00FC}\u{015F}\u{00FC}r", "yar\u{0131}s\u{0131}n\u{0131} sil"), kalorileri ve makrolar\u{0131} da orant\u{0131}l\u{0131} \
+        olarak hesapla. \u{00D6}rnek: 100g = 250 kcal ise, 50g = 125 kcal olmal\u{0131}. \
+        Orijinal kay\u{0131}ttaki kalori yo\u{011F}unlu\u{011F}unu kullan: \
+        kalori_yo\u{011F}unlu\u{011F}u = orijinal_kalori / orijinal_miktar, \
+        yeni_kalori = kalori_yo\u{011F}unlu\u{011F}u * yeni_miktar. \
+        correctedCalories, correctedProtein, correctedCarbs, \
+        correctedFat alanlar\u{0131}n\u{0131} MUTLAKA doldur. \
+        Hi\u{00E7}bir zaman sadece miktar\u{0131} de\u{011F}i\u{015F}tirip makrolar\u{0131} bo\u{015F} b\u{0131}rakma.
+
+        JSON format\u{0131} kesinlikle \u{015F}u \u{015F}ekilde olmal\u{0131}, ba\u{015F}ka hi\u{00E7}bir \u{015F}ey yazma:
         {
           "meals": [
             {
@@ -59,7 +84,14 @@ class GroqService {
             }
           ],
           "clarification_needed": boolean,
-          "clarification_question": "string or null"
+          "clarification_question": "string or null",
+          "isCorrection": boolean,
+          "targetFoodName": "string or null",
+          "correctedCalories": "number or null",
+          "correctedProtein": "number or null",
+          "correctedCarbs": "number or null",
+          "correctedFat": "number or null",
+          "correctedAmount": "string or null"
         }
         """
 
