@@ -18,8 +18,31 @@ final class UserProfile {
     var goalDays: Int
     var intensityLevel: Double
     var weeklyScheduleJSON: String
+    var notification1Enabled: Bool
+    var notification1Hour: Int
+    var notification1Minute: Int
+    var notification2Enabled: Bool
+    var notification2Hour: Int
+    var notification2Minute: Int
+    var preferredProteinsJSON: String
     var createdAt: Date
     var updatedAt: Date
+
+    var preferredProteins: [String] {
+        get {
+            guard let data = preferredProteinsJSON.data(using: .utf8),
+                  let decoded = try? JSONDecoder().decode([String].self, from: data) else {
+                return ["tavuk", "bal\u{0131}k", "dana", "yumurta", "baklagil", "s\u{00FC}t \u{00FC}r\u{00FC}nleri"]
+            }
+            return decoded
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue),
+               let json = String(data: data, encoding: .utf8) {
+                preferredProteinsJSON = json
+            }
+        }
+    }
 
     var weeklySchedule: [[String]] {
         get {
@@ -62,6 +85,19 @@ final class UserProfile {
             self.weeklyScheduleJSON = json
         } else {
             self.weeklyScheduleJSON = "[[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"],[\"rest\"]]"
+        }
+        self.notification1Enabled = true
+        self.notification1Hour = 16
+        self.notification1Minute = 0
+        self.notification2Enabled = true
+        self.notification2Hour = 21
+        self.notification2Minute = 30
+        let defaultProteins = ["tavuk", "bal\u{0131}k", "dana", "yumurta", "baklagil", "s\u{00FC}t \u{00FC}r\u{00FC}nleri"]
+        if let data = try? JSONEncoder().encode(defaultProteins),
+           let json = String(data: data, encoding: .utf8) {
+            self.preferredProteinsJSON = json
+        } else {
+            self.preferredProteinsJSON = "[]"
         }
         self.createdAt = .now
         self.updatedAt = .now

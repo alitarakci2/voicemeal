@@ -13,6 +13,9 @@ struct VoiceMealApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    _ = await NotificationService.shared.requestPermission()
+                }
         }
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self])
     }

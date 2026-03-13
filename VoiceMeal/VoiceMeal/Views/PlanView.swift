@@ -10,12 +10,13 @@ struct PlanView: View {
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
     @State private var planService = PlanService()
+    @Environment(GoalEngine.self) private var goalEngine
     @State private var selectedPlan: DayPlan?
 
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID // force re-evaluation after regeneratePlans()
         guard let profile = profiles.first else { return [] }
-        return planService.generateDayPlans(profile: profile, entries: allEntries)
+        return planService.generateDayPlans(profile: profile, entries: allEntries, goalEngine: goalEngine)
     }
 
     private var todayID: Date {
@@ -417,5 +418,6 @@ struct DayDetailSheetView: View {
 
 #Preview {
     PlanView()
+        .environment(GoalEngine())
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self], inMemory: true)
 }

@@ -14,9 +14,10 @@ class PlanService {
         refreshID = UUID()
     }
 
-    func generateDayPlans(profile: UserProfile, entries: [FoodEntry]) -> [DayPlan] {
+    func generateDayPlans(profile: UserProfile, entries: [FoodEntry], goalEngine: GoalEngine) -> [DayPlan] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
+        let vo2Adjustment = goalEngine.vo2MaxAdjustment
 
         guard let startDate = calendar.date(byAdding: .day, value: -30, to: today),
               let endDate = calendar.date(byAdding: .day, value: 7, to: today) else {
@@ -33,8 +34,14 @@ class PlanService {
         while current <= endDate {
             let dayEntries = entriesByDay[current] ?? []
             let activities = activitiesForDate(current, profile: profile)
+            let isToday = calendar.isDate(current, inSameDayAs: today)
 
-            let target = calculateTargets(profile: profile, activities: activities)
+            let target: (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int)
+            if isToday {
+                target = (Int(goalEngine.tdee), goalEngine.dailyCalorieTarget, goalEngine.proteinTarget, goalEngine.carbTarget, goalEngine.fatTarget)
+            } else {
+                target = calculateTargets(profile: profile, activities: activities, vo2MaxAdjustment: vo2Adjustment)
+            }
 
             let consumedCal = dayEntries.reduce(0) { $0 + $1.calories }
             let consumedP = dayEntries.reduce(0.0) { $0 + $1.protein }
@@ -42,7 +49,7 @@ class PlanService {
             let consumedF = dayEntries.reduce(0.0) { $0 + $1.fat }
 
             let status: DayStatus
-            if calendar.isDate(current, inSameDayAs: today) {
+            if isToday {
                 status = .today
             } else if current > today {
                 status = .planned
@@ -101,7 +108,7 @@ class PlanService {
     // NOTE: Historical accuracy requires a DailySnapshot model to store
     // per-day weight/profile values at the time. Currently all days use
     // today's profile values. Planned for a future sprint.
-    private func calculateTargets(profile: UserProfile, activities: [String]) -> (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int) {
+    private func calculateTargets(profile: UserProfile, activities: [String], vo2MaxAdjustment: Double = 0) -> (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int) {
         let bmr: Double
         if profile.gender == "male" {
             bmr = 10 * profile.currentWeightKg + 6.25 * profile.heightCm - 5 * Double(profile.age) + 5
@@ -109,9 +116,9 @@ class PlanService {
             bmr = 10 * profile.currentWeightKg + 6.25 * profile.heightCm - 5 * Double(profile.age) - 161
         }
 
-        let multiplier: Double
+        let baseMultiplier: Double
         if activities == ["rest"] {
-            multiplier = 1.2
+            baseMultiplier = 1.2
         } else {
             let multipliers: [String: Double] = [
                 "walking": 1.375,
@@ -121,9 +128,10 @@ class PlanService {
             ]
             let highest = activities.compactMap { multipliers[$0] }.max() ?? 1.2
             let bonus = activities.filter({ $0 != "rest" }).count > 1 ? 0.1 : 0.0
-            multiplier = highest + bonus
+            baseMultiplier = highest + bonus
         }
 
+        let multiplier = baseMultiplier + vo2MaxAdjustment
         let tdee = bmr * multiplier
 
         let rawDeficit: Double

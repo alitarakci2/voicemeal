@@ -21,6 +21,19 @@ struct MealParseResponse: Codable {
     let clarification_question: String?
 }
 
+struct MealSuggestion: Codable {
+    let title: String
+    let body: String
+    let meals: [SuggestedMeal]
+}
+
+struct SuggestedMeal: Codable {
+    let name: String
+    let portion: String
+    let calories: Int
+    let protein: Int
+}
+
 class GroqService {
 
     private let endpoint = URL(string: "https://api.groq.com/openai/v1/chat/completions")!
@@ -186,7 +199,10 @@ class GroqService {
         default: intensityText = "Yo\u{011F}un"
         }
 
+        let today = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)
+
         let userPrompt = """
+            Tarih: \(today)
             HRV: \(hrvText)
             Uyku: \(sleepText)
             Bug\u{00FC}nk\u{00FC} plan: \(activityNames)
@@ -226,6 +242,117 @@ class GroqService {
         }
 
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Meal Suggestion
+
+    private let suggestionSystemPrompt = """
+        Sen ki\u{015F}isel bir T\u{00FC}rk beslenme ko\u{00E7}usun. \
+        Kullan\u{0131}c\u{0131}n\u{0131}n g\u{00FC}nl\u{00FC}k kalan makrolar\u{0131}na ve tercihlerine g\u{00F6}re \
+        yemek \u{00F6}nerisi yapacaks\u{0131}n.
+
+        \u{00D6}\u{011F}le/Ak\u{015F}am bildirimi (16:00) i\u{00E7}in:
+        - Ak\u{015F}am yeme\u{011F}i i\u{00E7}in tam \u{00F6}\u{011F}\u{00FC}n \u{00F6}ner
+        - Eksik makrolar\u{0131} tamamlayacak sporcu dostu yemek
+        - T\u{00FC}rk mutfa\u{011F}\u{0131}ndan \u{00F6}rnekler kullan
+        - Gerekirse "marketten \u{015F}unu al" diyebilirsin
+
+        Gece kapan\u{0131}\u{015F} bildirimi (21:30) i\u{00E7}in:
+        - Hafif, sindirimi kolay, uyku \u{00F6}ncesi uygun
+        - Protein a\u{011F}\u{0131}rl\u{0131}kl\u{0131} k\u{00FC}\u{00E7}\u{00FC}k at\u{0131}\u{015F}t\u{0131}rmal\u{0131}k
+        - \u{00D6}rnekler: kefir, yo\u{011F}urt, yumurta, protein s\u{00FC}t
+        - Mideyi yormayacak \u{015F}eyler \u{00F6}ner
+
+        SADECE JSON format\u{0131}nda yan\u{0131}t ver, ba\u{015F}ka hi\u{00E7}bir \u{015F}ey yazma.
+        """
+
+    func generateMealSuggestion(
+        notificationType: MealNotificationType,
+        remainingCalories: Int,
+        remainingProtein: Int,
+        remainingCarbs: Int,
+        remainingFat: Int,
+        todayMeals: [String],
+        preferredProteins: [String],
+        todayActivities: [String],
+        hrvStatus: HRVStatus
+    ) async throws -> MealSuggestion {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let typeText = notificationType == .afternoon ? "Ak\u{015F}am yeme\u{011F}i \u{00F6}nerisi" : "Gece at\u{0131}\u{015F}t\u{0131}rmal\u{0131}\u{011F}\u{0131} \u{00F6}nerisi"
+        let mealsText = todayMeals.isEmpty ? "Hen\u{00FC}z bir \u{015F}ey yenmedi" : todayMeals.joined(separator: ", ")
+        let activityNames = todayActivities
+            .compactMap { GoalEngine.activityDisplayNames[$0] }
+            .joined(separator: ", ")
+
+        let today = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)
+
+        let userPrompt = """
+            Tarih: \(today)
+            Bildirim tipi: \(typeText)
+            Kalan kalori: \(remainingCalories) kcal
+            Kalan protein: \(remainingProtein)g
+            Kalan karb: \(remainingCarbs)g
+            Kalan ya\u{011F}: \(remainingFat)g
+            Bug\u{00FC}n yenenler: \(mealsText)
+            Tercih edilen proteinler: \(preferredProteins.joined(separator: ", "))
+            Bug\u{00FC}nk\u{00FC} aktivite: \(activityNames)
+            Toparlanma durumu: \(hrvStatus.rawValue)
+
+            JSON format\u{0131}:
+            {
+              "title": "k\u{0131}sa ba\u{015F}l\u{0131}k max 50 karakter",
+              "body": "2-3 c\u{00FC}mle a\u{00E7}\u{0131}klama",
+              "meals": [
+                {
+                  "name": "yemek ad\u{0131}",
+                  "portion": "porsiyon",
+                  "calories": 0,
+                  "protein": 0
+                }
+              ]
+            }
+            """
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                ["role": "system", "content": suggestionSystemPrompt],
+                ["role": "user", "content": userPrompt]
+            ],
+            "temperature": 0.7,
+            "max_tokens": 400
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        let jsonString = content
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            throw GroqError.invalidJSON
+        }
+
+        return try JSONDecoder().decode(MealSuggestion.self, from: jsonData)
     }
 }
 

@@ -28,6 +28,13 @@ struct SettingsView: View {
     // Intensity
     @State private var intensityLevel: Double = 0.5
 
+    // Notifications
+    @State private var notification1Enabled = true
+    @State private var notification1Time = Calendar.current.date(from: DateComponents(hour: 16, minute: 0)) ?? .now
+    @State private var notification2Enabled = true
+    @State private var notification2Time = Calendar.current.date(from: DateComponents(hour: 21, minute: 30)) ?? .now
+    @State private var preferredProteins: Set<String> = ["tavuk", "bal\u{0131}k", "dana", "yumurta", "baklagil", "s\u{00FC}t \u{00FC}r\u{00FC}nleri"]
+
     // Schedule
     @State private var weeklySchedule: [[String]] = Array(repeating: ["rest"], count: 7)
     @State private var originalSchedule: [[String]] = Array(repeating: ["rest"], count: 7)
@@ -139,6 +146,25 @@ struct SettingsView: View {
                 Section("Haftalık Program") {
                     Step5ScheduleView(weeklySchedule: $weeklySchedule)
                         .listRowInsets(EdgeInsets())
+                }
+
+                // Section 6: Notifications
+                Section("Bildirimler") {
+                    Toggle("\u{00D6}\u{011F}le/Ak\u{015F}am Hat\u{0131}rlatmas\u{0131}", isOn: $notification1Enabled)
+                    if notification1Enabled {
+                        DatePicker("Saat", selection: $notification1Time, displayedComponents: .hourAndMinute)
+                    }
+
+                    Toggle("Gece Kapan\u{0131}\u{015F} Hat\u{0131}rlatmas\u{0131}", isOn: $notification2Enabled)
+                    if notification2Enabled {
+                        DatePicker("Saat", selection: $notification2Time, displayedComponents: .hourAndMinute)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Tercih Etti\u{011F}in Protein Kaynaklar\u{0131}")
+                            .font(.subheadline)
+                        proteinChips
+                    }
                 }
 
                 // Section 5: App
@@ -261,6 +287,46 @@ struct SettingsView: View {
         return rawDeficit > maxDeficit || rawDeficit < -maxSurplus
     }
 
+    // MARK: - Protein chips
+
+    private static let allProteins: [(key: String, label: String)] = [
+        ("tavuk", "Tavuk"),
+        ("bal\u{0131}k", "Bal\u{0131}k/Somon"),
+        ("dana", "Dana/K\u{0131}yma"),
+        ("yumurta", "Yumurta"),
+        ("baklagil", "Baklagil"),
+        ("s\u{00FC}t \u{00FC}r\u{00FC}nleri", "S\u{00FC}t \u{00DC}r\u{00FC}nleri"),
+    ]
+
+    private var proteinChips: some View {
+        let columns = [GridItem(.adaptive(minimum: 100))]
+        return LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(Self.allProteins, id: \.key) { protein in
+                let isSelected = preferredProteins.contains(protein.key)
+                Button {
+                    if isSelected {
+                        preferredProteins.remove(protein.key)
+                    } else {
+                        preferredProteins.insert(protein.key)
+                    }
+                } label: {
+                    Text(protein.label)
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .background(isSelected ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
     // MARK: - Intensity helpers
 
     private var intensityLabel: String {
@@ -293,6 +359,11 @@ struct SettingsView: View {
         intensityLevel = p.intensityLevel
         weeklySchedule = p.weeklySchedule
         originalSchedule = p.weeklySchedule
+        notification1Enabled = p.notification1Enabled
+        notification2Enabled = p.notification2Enabled
+        notification1Time = Calendar.current.date(from: DateComponents(hour: p.notification1Hour, minute: p.notification1Minute)) ?? .now
+        notification2Time = Calendar.current.date(from: DateComponents(hour: p.notification2Hour, minute: p.notification2Minute)) ?? .now
+        preferredProteins = Set(p.preferredProteins)
     }
 
     private func handleSave() {
@@ -330,11 +401,19 @@ struct SettingsView: View {
         p.goalDays = goalDays
         p.intensityLevel = intensityLevel
         p.weeklySchedule = weeklySchedule
+        p.notification1Enabled = notification1Enabled
+        p.notification1Hour = Calendar.current.component(.hour, from: notification1Time)
+        p.notification1Minute = Calendar.current.component(.minute, from: notification1Time)
+        p.notification2Enabled = notification2Enabled
+        p.notification2Hour = Calendar.current.component(.hour, from: notification2Time)
+        p.notification2Minute = Calendar.current.component(.minute, from: notification2Time)
+        p.preferredProteins = Array(preferredProteins)
         p.updatedAt = .now
 
         originalSchedule = weeklySchedule
 
         try? modelContext.save()
+        NotificationService.shared.reschedule(profile: p)
         NotificationCenter.default.post(name: .profileUpdated, object: nil)
 
         showSavedToast = true

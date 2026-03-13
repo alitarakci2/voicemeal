@@ -22,7 +22,9 @@ struct HomeView: View {
     @State private var showGoalInfo = false
     @State private var showWeightBanner = false
     @State private var showSettings = false
-    @State private var goalEngine = GoalEngine()
+    @State private var showMealSuggestion = false
+    @State private var notificationSuggestionType: MealNotificationType?
+    @Environment(GoalEngine.self) private var goalEngine
     @State private var healthKitService = HealthKitService()
 
     private let groqService = GroqService()
@@ -30,6 +32,13 @@ struct HomeView: View {
     private var todayEntries: [FoodEntry] {
         let startOfDay = Calendar.current.startOfDay(for: .now)
         return allEntries.filter { $0.date >= startOfDay }
+    }
+
+    private var currentSuggestionType: MealNotificationType? {
+        let hour = Calendar.current.component(.hour, from: .now)
+        if hour >= 20 { return .evening }
+        if hour >= 15 { return .afternoon }
+        return nil
     }
 
     private var eatenCalories: Int { todayEntries.reduce(0) { $0 + $1.calories } }
@@ -73,6 +82,21 @@ struct HomeView: View {
                         calorieDeficit: Int(goalEngine.tdee) - eatenCalories,
                         intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5
                     )
+
+                    // Meal suggestion button
+                    if let suggestionType = currentSuggestionType {
+                        Button {
+                            showMealSuggestion = true
+                        } label: {
+                            Label(
+                                suggestionType == .afternoon ? "Ak\u{015F}am \u{00D6}nerisi Al" : "Gece At\u{0131}\u{015F}t\u{0131}rmal\u{0131}\u{011F}\u{0131}",
+                                systemImage: "lightbulb.fill"
+                            )
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                    }
                 }
 
                 // Mic button
@@ -193,9 +217,6 @@ struct HomeView: View {
                 sendToGroq()
             }
         }
-        .onChange(of: profiles) {
-            goalEngine.update(with: profiles.first)
-        }
         .onChange(of: scenePhase) {
             if scenePhase == .active {
                 Task {
@@ -206,9 +227,6 @@ struct HomeView: View {
                 }
             }
         }
-        .onAppear {
-            goalEngine.update(with: profiles.first)
-        }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             Task {
                 saveYesterdaySnapshot()
@@ -217,16 +235,39 @@ struct HomeView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
-            if let profile = profiles.first {
-                goalEngine.updateProfile(profile)
-            }
             saveTodaySnapshot()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openMealSuggestion)) { notification in
+            if let typeRaw = notification.userInfo?["type"] as? String,
+               let type = MealNotificationType(rawValue: typeRaw) {
+                notificationSuggestionType = type
+            } else {
+                notificationSuggestionType = currentSuggestionType
+            }
+            showMealSuggestion = true
         }
         .sheet(isPresented: $showGoalInfo) {
             goalInfoSheet
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $showMealSuggestion, onDismiss: {
+            notificationSuggestionType = nil
+        }) {
+            if let type = notificationSuggestionType ?? currentSuggestionType {
+                MealSuggestionView(
+                    notificationType: type,
+                    remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
+                    remainingProtein: goalEngine.proteinTarget - Int(eatenProtein),
+                    remainingCarbs: goalEngine.carbTarget - Int(eatenCarbs),
+                    remainingFat: goalEngine.fatTarget - Int(eatenFat),
+                    todayMeals: todayEntries.map(\.name),
+                    preferredProteins: profiles.first?.preferredProteins ?? [],
+                    todayActivities: goalEngine.todayActivityNames,
+                    hrvStatus: healthKitService.hrvStatus
+                )
+            }
         }
     }
 
@@ -611,5 +652,6 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
+        .environment(GoalEngine())
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self], inMemory: true)
 }
