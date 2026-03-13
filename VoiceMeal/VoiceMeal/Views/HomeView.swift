@@ -570,7 +570,10 @@ struct HomeView: View {
                         infoRow("G\u{00FC}nl\u{00FC}k A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.deficit)) kcal")
                     }
                     infoRow("G\u{00FC}nl\u{00FC}k Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
-                    infoRow("Tahmini Haftal\u{0131}k De\u{011F}i\u{015F}im", value: "\(String(format: "%+.2f", goalEngine.projectedWeeklyLossKg)) kg")
+                    infoRow(
+                        goalEngine.projectedWeeklyLossKg > 0 ? "Tahmini Haftal\u{0131}k Kay\u{0131}p" : "Tahmini Haftal\u{0131}k Art\u{0131}\u{015F}",
+                        value: "\(goalEngine.projectedWeeklyLossKg > 0 ? "-" : "+")\(String(format: "%.2f", abs(goalEngine.projectedWeeklyLossKg))) kg"
+                    )
 
                     Divider()
 
