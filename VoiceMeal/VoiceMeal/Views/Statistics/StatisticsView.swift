@@ -13,7 +13,7 @@ struct StatisticsView: View {
     @Environment(GoalEngine.self) private var goalEngine
 
     @State private var statisticsService = StatisticsService()
-    @State private var selectedRange = 0 // 0 = weekly, 1 = monthly
+    @State private var selectedRange = 0 // 0 = weekly, 1 = monthly, 2 = program
     @State private var weeklyInsight: String?
     @State private var insightLoading = false
 
@@ -43,45 +43,62 @@ struct StatisticsView: View {
                     Picker("Aral\u{0131}k", selection: $selectedRange) {
                         Text("Haftal\u{0131}k").tag(0)
                         Text("Ayl\u{0131}k").tag(1)
+                        Text("Program").tag(2)
                     }
                     .pickerStyle(.segmented)
 
-                    if selectedRange == 1 && !monthlyHasEnoughData {
-                        Text("Ayl\u{0131}k grafik i\u{00E7}in en az 2 hafta veri gerekli")
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 4)
+                    if selectedRange == 2 {
+                        // Program view
+                        if let profile = profiles.first {
+                            ProgramSummaryView(
+                                summary: statisticsService.programData(
+                                    profile: profile,
+                                    snapshots: snapshots,
+                                    entries: allEntries
+                                ),
+                                targetProtein: goalEngine.proteinTarget,
+                                targetCarbs: goalEngine.carbTarget,
+                                targetFat: goalEngine.fatTarget
+                            )
+                        }
+                    } else {
+                        if selectedRange == 1 && !monthlyHasEnoughData {
+                            Text("Ayl\u{0131}k grafik i\u{00E7}in en az 2 hafta veri gerekli")
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 4)
+                        }
+
+                        // Summary cards
+                        summaryCards
+
+                        // Charts
+                        CalorieChartView(stats: currentStats)
+
+                        DeficitChartView(
+                            stats: currentStats,
+                            goalDays: profiles.first?.goalDays ?? 90,
+                            totalNeededDeficit: totalNeededDeficit
+                        )
+
+                        MacroChartView(
+                            avgProtein: statisticsService.weeklyAverageProtein,
+                            avgCarbs: statisticsService.weeklyAverageCarbs,
+                            avgFat: statisticsService.weeklyAverageFat,
+                            targetProtein: goalEngine.proteinTarget,
+                            targetCarbs: goalEngine.carbTarget,
+                            targetFat: goalEngine.fatTarget,
+                            todayProtein: todayEntries.reduce(0.0) { $0 + $1.protein },
+                            todayCarbs: todayEntries.reduce(0.0) { $0 + $1.carbs },
+                            todayFat: todayEntries.reduce(0.0) { $0 + $1.fat }
+                        )
+
+                        ActivityChartView(stats: currentStats)
+
+                        // Weekly Groq insight
+                        weeklyInsightCard
                     }
-
-                    // Summary cards
-                    summaryCards
-
-                    // Charts
-                    CalorieChartView(stats: currentStats)
-
-                    DeficitChartView(
-                        stats: currentStats,
-                        goalDays: profiles.first?.goalDays ?? 90,
-                        totalNeededDeficit: totalNeededDeficit
-                    )
-
-                    MacroChartView(
-                        avgProtein: statisticsService.weeklyAverageProtein,
-                        avgCarbs: statisticsService.weeklyAverageCarbs,
-                        avgFat: statisticsService.weeklyAverageFat,
-                        targetProtein: goalEngine.proteinTarget,
-                        targetCarbs: goalEngine.carbTarget,
-                        targetFat: goalEngine.fatTarget,
-                        todayProtein: todayEntries.reduce(0.0) { $0 + $1.protein },
-                        todayCarbs: todayEntries.reduce(0.0) { $0 + $1.carbs },
-                        todayFat: todayEntries.reduce(0.0) { $0 + $1.fat }
-                    )
-
-                    ActivityChartView(stats: currentStats)
-
-                    // Weekly Groq insight
-                    weeklyInsightCard
 
                     Spacer(minLength: 20)
                 }

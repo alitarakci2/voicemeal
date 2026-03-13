@@ -465,6 +465,89 @@ class GroqService {
 
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    // MARK: - Program Insight
+
+    private let programInsightSystemPrompt = """
+        Sen ki\u{015F}isel bir fitness ko\u{00E7}usun. \
+        Kullan\u{0131}c\u{0131}n\u{0131}n program \u{00F6}zetini analiz et ve \
+        2-3 c\u{00FC}mlelik T\u{00FC}rk\u{00E7}e bir de\u{011F}erlendirme yap. \
+        Motive edici ama ger\u{00E7}ek\u{00E7}i ol. \
+        Varsa \u{00F6}nemli bir \u{00F6}neri ekle. \
+        Emoji kullanabilirsin. D\u{00FC}z metin yaz, liste yapma.
+        """
+
+    func generateProgramInsight(summary: ProgramSummary) async throws -> String {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let goalText: String
+        switch summary.goalDirection {
+        case .losing: goalText = "kilo vermek"
+        case .gaining: goalText = "kilo almak"
+        case .maintenance: goalText = "kiloyu korumak"
+        }
+
+        let bestDayText: String
+        if let best = summary.bestDay {
+            bestDayText = "\(best.date.formatted(.dateTime.day().month(.abbreviated))) \u{2014} \(best.value) kcal"
+        } else { bestDayText = "Veri yok" }
+
+        let worstDayText: String
+        if let worst = summary.worstDay {
+            worstDayText = "\(worst.date.formatted(.dateTime.day().month(.abbreviated))) \u{2014} \(worst.value) kcal"
+        } else { worstDayText = "Veri yok" }
+
+        let userPrompt = """
+            Kullan\u{0131}c\u{0131}n\u{0131}n hedefi: \(goalText)
+            Program s\u{00FC}resi: \(summary.totalDays) g\u{00FC}n / \(summary.totalDays + summary.daysRemaining) g\u{00FC}n
+            Takip oran\u{0131}: %\(summary.adherencePercent)
+            Ba\u{015F}lang\u{0131}\u{00E7} kilo: \(String(format: "%.1f", summary.startWeight)) kg
+            Hedef kilo: \(String(format: "%.1f", summary.goalWeight)) kg
+            Tahmini de\u{011F}i\u{015F}im: \(String(format: "%.2f", summary.estimatedWeightChangeKg)) kg
+            Beklenen de\u{011F}i\u{015F}im: \(String(format: "%.2f", summary.expectedChangeByNow)) kg
+            Hedefe uygunluk: \(summary.onTrack ? "Evet" : "Hay\u{0131}r")
+            Ortalama kalori: \(summary.avgDailyCalories) kcal
+            Ortalama protein: \(Int(summary.avgDailyProtein))g
+            Toplam a\u{00E7}\u{0131}k: \(summary.totalDeficitKcal) kcal
+            Seri: \(summary.currentStreak) g\u{00FC}n (en iyi: \(summary.bestStreak))
+            Antrenman g\u{00FC}nleri: \(summary.totalWorkoutDays)
+            En iyi g\u{00FC}n: \(bestDayText)
+            En zor g\u{00FC}n: \(worstDayText)
+            \u{0130}lerleme: %\(summary.progressPercent)
+
+            Bu verilere g\u{00F6}re k\u{0131}sa bir program de\u{011F}erlendirmesi yap.
+            """
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                ["role": "system", "content": programInsightSystemPrompt],
+                ["role": "user", "content": userPrompt]
+            ],
+            "temperature": 0.7,
+            "max_tokens": 250
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 // MARK: - Groq API response types

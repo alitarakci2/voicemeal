@@ -27,6 +27,48 @@ enum TrendDirection: String {
     case stable = "Stabil"
 }
 
+enum GoalDirection {
+    case losing
+    case gaining
+    case maintenance
+}
+
+struct ProgramSummary {
+    let startDate: Date
+    let totalDays: Int
+    let daysWithData: Int
+    let adherencePercent: Int
+
+    let totalConsumedCalories: Int
+    let totalTargetCalories: Int
+    let totalDeficitKcal: Int
+    let estimatedWeightChangeKg: Double
+
+    let avgDailyCalories: Int
+    let avgDailyProtein: Double
+    let avgDailyCarbs: Double
+    let avgDailyFat: Double
+
+    let avgDailyDeficit: Int
+    let bestDay: (date: Date, value: Int)?
+    let worstDay: (date: Date, value: Int)?
+
+    let currentStreak: Int
+    let bestStreak: Int
+    let totalWorkoutDays: Int
+    let mostCommonActivity: String
+
+    let onTrack: Bool
+    let progressPercent: Int
+    let daysRemaining: Int
+    let goalDirection: GoalDirection
+
+    let startWeight: Double
+    let currentWeight: Double
+    let goalWeight: Double
+    let expectedChangeByNow: Double
+}
+
 @Observable
 class StatisticsService {
 
@@ -216,6 +258,151 @@ class StatisticsService {
         let withData = weeklyStats.filter { $0.hasData }
         guard !withData.isEmpty else { return 0 }
         return withData.reduce(0.0) { $0 + $1.fat } / Double(withData.count)
+    }
+
+    // MARK: - Program Data
+
+    static func goalDirection(profile: UserProfile) -> GoalDirection {
+        if profile.goalWeightKg > profile.currentWeightKg {
+            return .gaining
+        } else if profile.goalWeightKg < profile.currentWeightKg {
+            return .losing
+        } else {
+            return .maintenance
+        }
+    }
+
+    func programData(profile: UserProfile, snapshots: [DailySnapshot], entries: [FoodEntry]) -> ProgramSummary {
+        let calendar = Calendar.current
+        let startDate = calendar.startOfDay(for: profile.createdAt)
+        let today = calendar.startOfDay(for: .now)
+        let totalDays = max(1, calendar.dateComponents([.day], from: startDate, to: today).day! + 1)
+
+        let direction = Self.goalDirection(profile: profile)
+
+        // Build all stats from program start
+        let allStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: totalDays)
+        let withData = allStats.filter { $0.hasData }
+        let daysWithData = withData.count
+        let adherence = totalDays > 0 ? (daysWithData * 100) / totalDays : 0
+
+        let totalConsumed = withData.reduce(0) { $0 + $1.consumedCalories }
+        let totalTarget = withData.reduce(0) { $0 + $1.targetCalories }
+        let totalDeficit = withData.reduce(0) { $0 + $1.deficit }
+        let estimatedChange = Double(totalDeficit) / 7700.0
+
+        let avgCalories = daysWithData > 0 ? totalConsumed / daysWithData : 0
+        let avgProtein = daysWithData > 0 ? withData.reduce(0.0) { $0 + $1.protein } / Double(daysWithData) : 0
+        let avgCarbs = daysWithData > 0 ? withData.reduce(0.0) { $0 + $1.carbs } / Double(daysWithData) : 0
+        let avgFat = daysWithData > 0 ? withData.reduce(0.0) { $0 + $1.fat } / Double(daysWithData) : 0
+        let avgDeficit = daysWithData > 0 ? totalDeficit / daysWithData : 0
+
+        // Best/worst day depends on goal direction
+        let bestDay: (date: Date, value: Int)?
+        let worstDay: (date: Date, value: Int)?
+
+        switch direction {
+        case .losing:
+            // Best = highest deficit, worst = most over target (lowest deficit / highest surplus)
+            if let best = withData.max(by: { $0.deficit < $1.deficit }) {
+                bestDay = (best.date, best.deficit)
+            } else { bestDay = nil }
+            if let worst = withData.min(by: { $0.deficit < $1.deficit }) {
+                worstDay = (worst.date, worst.deficit)
+            } else { worstDay = nil }
+        case .gaining:
+            // Best = most surplus (most negative deficit), worst = most deficit
+            if let best = withData.min(by: { $0.deficit < $1.deficit }) {
+                bestDay = (best.date, -best.deficit)
+            } else { bestDay = nil }
+            if let worst = withData.max(by: { $0.deficit < $1.deficit }) {
+                worstDay = (worst.date, -worst.deficit)
+            } else { worstDay = nil }
+        case .maintenance:
+            // Best = closest to target, worst = furthest
+            if let best = withData.min(by: { abs($0.deficit) < abs($1.deficit) }) {
+                bestDay = (best.date, abs(best.deficit))
+            } else { bestDay = nil }
+            if let worst = withData.max(by: { abs($0.deficit) < abs($1.deficit) }) {
+                worstDay = (worst.date, abs(worst.deficit))
+            } else { worstDay = nil }
+        }
+
+        // Streaks
+        var currentStrk = 0
+        for stat in allStats.reversed() {
+            guard stat.hasData, stat.targetCalories > 0 else { break }
+            let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
+            if ratio >= 0.9 && ratio <= 1.1 { currentStrk += 1 } else { break }
+        }
+        var bestStrk = 0
+        var runStrk = 0
+        for stat in allStats {
+            guard stat.hasData, stat.targetCalories > 0 else { runStrk = 0; continue }
+            let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
+            if ratio >= 0.9 && ratio <= 1.1 {
+                runStrk += 1
+                bestStrk = max(bestStrk, runStrk)
+            } else { runStrk = 0 }
+        }
+
+        // Workout days + most common activity
+        let workoutDays = allStats.filter { $0.hasData && $0.activities != ["rest"] }.count
+        var actCounts: [String: Int] = [:]
+        for stat in allStats where stat.hasData {
+            for a in stat.activities where a != "rest" { actCounts[a, default: 0] += 1 }
+        }
+        let mostCommon = actCounts.max(by: { $0.value < $1.value })?.key ?? "rest"
+
+        // On track
+        let weightDiff = profile.currentWeightKg - profile.goalWeightKg
+        let expectedByNow = (Double(totalDays) / Double(max(1, profile.goalDays))) * abs(weightDiff)
+        let onTrack: Bool
+        switch direction {
+        case .losing: onTrack = estimatedChange >= expectedByNow
+        case .gaining: onTrack = abs(estimatedChange) >= expectedByNow
+        case .maintenance: onTrack = abs(estimatedChange) < 0.5
+        }
+
+        // Progress percent
+        let progressPercent: Int
+        if abs(weightDiff) < 0.01 {
+            progressPercent = 100
+        } else {
+            progressPercent = min(100, max(0, Int((abs(estimatedChange) / abs(weightDiff)) * 100)))
+        }
+
+        let daysRemaining = max(0, profile.goalDays - totalDays)
+
+        return ProgramSummary(
+            startDate: startDate,
+            totalDays: totalDays,
+            daysWithData: daysWithData,
+            adherencePercent: adherence,
+            totalConsumedCalories: totalConsumed,
+            totalTargetCalories: totalTarget,
+            totalDeficitKcal: totalDeficit,
+            estimatedWeightChangeKg: estimatedChange,
+            avgDailyCalories: avgCalories,
+            avgDailyProtein: avgProtein,
+            avgDailyCarbs: avgCarbs,
+            avgDailyFat: avgFat,
+            avgDailyDeficit: avgDeficit,
+            bestDay: bestDay,
+            worstDay: worstDay,
+            currentStreak: currentStrk,
+            bestStreak: bestStrk,
+            totalWorkoutDays: workoutDays,
+            mostCommonActivity: mostCommon,
+            onTrack: onTrack,
+            progressPercent: progressPercent,
+            daysRemaining: daysRemaining,
+            goalDirection: direction,
+            startWeight: profile.currentWeightKg,
+            currentWeight: profile.currentWeightKg, // best approximation
+            goalWeight: profile.goalWeightKg,
+            expectedChangeByNow: expectedByNow
+        )
     }
 
     // MARK: - Target Fallback
