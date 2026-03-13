@@ -75,6 +75,8 @@ struct EditFoodEntryView: View {
             }
             .navigationTitle("Kayd\u{0131} D\u{00FC}zenle")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Theme.background)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("\u{0130}ptal") { dismiss() }

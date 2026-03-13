@@ -67,17 +67,31 @@ struct SettingsView: View {
                         Text("Boy")
                         Spacer()
                         Text("\(Int(heightCm)) cm")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    Slider(value: $heightCm, in: 120...220, step: 1)
+                    HStack {
+                        Slider(value: $heightCm, in: 120...220, step: 1)
+                            .tint(Theme.accent)
+                        TextField("", value: $heightCm, format: .number.precision(.fractionLength(0)))
+                            .keyboardType(.numberPad)
+                            .frame(width: 60)
+                            .textFieldStyle(.roundedBorder)
+                    }
 
                     HStack {
                         Text("Kilo")
                         Spacer()
                         Text("\(String(format: "%.1f", currentWeightKg)) kg")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    Slider(value: $currentWeightKg, in: 30...200, step: 0.1)
+                    HStack {
+                        Slider(value: $currentWeightKg, in: 40...200, step: 0.1)
+                            .tint(Theme.accent)
+                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(1)))
+                            .keyboardType(.decimalPad)
+                            .frame(width: 60)
+                            .textFieldStyle(.roundedBorder)
+                    }
                 }
 
                 // Section 2: Goals
@@ -86,38 +100,45 @@ struct SettingsView: View {
                         Text("Hedef Kilo")
                         Spacer()
                         Text("\(String(format: "%.1f", goalWeightKg)) kg")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    Slider(value: $goalWeightKg, in: 30...200, step: 0.1)
+                    HStack {
+                        Slider(value: $goalWeightKg, in: 30...200, step: 0.1)
+                            .tint(Theme.accent)
+                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(1)))
+                            .keyboardType(.decimalPad)
+                            .frame(width: 60)
+                            .textFieldStyle(.roundedBorder)
+                    }
 
                     Stepper("Hedef Süre: \(goalDays) gün", value: $goalDays, in: 14...365, step: 7)
 
                     // Weight loss warnings
                     if weeklyChange > 1.0 {
                         Label("Sa\u{011F}l\u{0131}ks\u{0131}z h\u{0131}z! S\u{00FC}reyi uzatman\u{0131} \u{00F6}neririz", systemImage: "light.beacon.max.fill")
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.red)
                     } else if weeklyChange > 0.75 {
                         Label("Agresif hedef \u{2014} dikkatli ilerle", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                     }
                     // Weight gain warnings
                     if weeklyChange < -1.0 {
                         Label("\u{00C7}ok h\u{0131}zl\u{0131} kilo alma \u{2014} s\u{00FC}reyi uzatman\u{0131} \u{00F6}neririz", systemImage: "light.beacon.max.fill")
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.red)
                     } else if weeklyChange < -0.5 {
                         Label("H\u{0131}zl\u{0131} kilo alma hedefi \u{2014} dikkatli ilerle", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                     }
 
                     // Safety cap info
                     if isDeficitCapped {
                         Label("Hedef \u{00E7}ok agresif, g\u{00FC}venli s\u{0131}n\u{0131}ra ayarlanacak", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                     }
                 }
 
@@ -128,13 +149,13 @@ struct SettingsView: View {
                             Text("Yoğunluk")
                             Spacer()
                             Text(intensityLabel)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                         }
                         Slider(value: $intensityLevel, in: 0...1, step: 0.1)
 
                         Text(intensityDescription)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 } header: {
                     Text("Yoğunluk")
@@ -162,7 +183,7 @@ struct SettingsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Tercih Etti\u{011F}in Protein Kaynaklar\u{0131}")
-                            .font(.subheadline)
+                            .font(Theme.bodyFont)
                         proteinChips
                     }
                 }
@@ -173,7 +194,7 @@ struct SettingsView: View {
                         Text("Versiyon")
                         Spacer()
                         Text("1.0.0")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
 
                     Button(role: .destructive) {
@@ -185,6 +206,8 @@ struct SettingsView: View {
             }
             .navigationTitle("Ayarlar")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollContentBackground(.hidden)
+            .background(Theme.background)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Kaydet") {
@@ -197,11 +220,11 @@ struct SettingsView: View {
             .overlay(alignment: .bottom) {
                 if showSavedToast {
                     Text("Kaydedildi")
-                        .font(.subheadline)
+                        .font(Theme.bodyFont)
                         .fontWeight(.medium)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 12)
-                        .background(.green)
+                        .background(Theme.green)
                         .foregroundStyle(.white)
                         .clipShape(Capsule())
                         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -311,14 +334,14 @@ struct SettingsView: View {
                     }
                 } label: {
                     Text(protein.label)
-                        .font(.caption)
+                        .font(Theme.captionFont)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .frame(maxWidth: .infinity)
-                        .background(isSelected ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
+                        .background(isSelected ? Theme.accent.opacity(0.2) : Theme.cardBackground)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                                .stroke(isSelected ? Theme.accent : Color.clear, lineWidth: 1.5)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }

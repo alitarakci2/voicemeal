@@ -55,6 +55,7 @@ struct PlanView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                 }
+                .background(Theme.background)
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         withAnimation {
@@ -77,21 +78,22 @@ struct PlanView: View {
         let stats = weeklyStats
         return VStack(alignment: .leading, spacing: 6) {
             Text("\u{1F4CA} Bu Hafta")
-                .font(.subheadline)
+                .font(Theme.bodyFont)
                 .fontWeight(.semibold)
+                .foregroundStyle(Theme.textPrimary)
             HStack {
                 Text("Toplam a\u{00E7}\u{0131}k: \(stats.totalDeficit) kcal")
-                    .font(.caption)
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
                 Spacer()
                 Text("Tahmini: \u{2248} \(String(format: "%+.2f", stats.estimatedChangeKg)) kg")
-                    .font(.caption)
+                    .font(Theme.captionFont)
                     .fontWeight(.medium)
-                    .foregroundStyle(stats.estimatedChangeKg <= 0 ? .green : .orange)
+                    .foregroundStyle(stats.estimatedChangeKg <= 0 ? Theme.green : Theme.orange)
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
     }
 }
 
@@ -113,12 +115,12 @@ struct DayRowView: View {
 
     private var statusColor: Color {
         switch plan.status {
-        case .completed: return .green
-        case .exceeded: return .yellow
-        case .underate: return .blue
-        case .missed: return .gray
-        case .today: return .blue
-        case .planned: return .gray
+        case .completed: return Theme.green
+        case .exceeded: return Theme.orange
+        case .underate: return Theme.blue
+        case .missed: return Theme.textTertiary
+        case .today: return Theme.blue
+        case .planned: return Theme.textTertiary
         }
     }
 
@@ -133,17 +135,19 @@ struct DayRowView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: statusIcon)
+                    .font(.system(size: 20))
                     .foregroundStyle(statusColor)
 
                 Text(dateLabel)
-                    .font(.headline)
+                    .font(Theme.headlineFont)
+                    .foregroundStyle(Theme.textPrimary)
 
                 Spacer()
 
                 HStack(spacing: 4) {
                     ForEach(plan.activities, id: \.self) { activity in
                         Text(activityEmoji(activity))
-                            .font(.callout)
+                            .font(Theme.captionFont)
                     }
                 }
             }
@@ -152,43 +156,50 @@ struct DayRowView: View {
                 switch plan.status {
                 case .today:
                     Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
-                        .font(.subheadline)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.textPrimary)
                     Spacer()
                     Text("devam ediyor...")
-                        .font(.caption)
-                        .foregroundStyle(.blue)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.blue)
 
                 case .planned:
                     Text("Hedef: \(plan.targetCalories) kcal")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.textSecondary)
                     Spacer()
                     let plannedDeficit = plan.tdee - plan.targetCalories
                     Text("~\(plannedDeficit) a\u{00E7}\u{0131}k")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
 
                 case .missed:
                     Text("0 / \(plan.targetCalories) kcal")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.textSecondary)
                     Spacer()
 
                 default:
                     Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
-                        .font(.subheadline)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.textPrimary)
                     Spacer()
                     let weightChange = plan.estimatedWeightChangeKg
                     Text("\u{2248} \(String(format: "%+.2f", weightChange)) kg")
-                        .font(.caption)
+                        .font(Theme.captionFont)
                         .fontWeight(.medium)
-                        .foregroundStyle(weightChange <= 0 ? .green : .orange)
+                        .foregroundStyle(weightChange <= 0 ? Theme.green : Theme.orange)
                 }
             }
         }
         .padding()
-        .background(plan.status == .today ? Color.blue.opacity(0.1) : Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(minHeight: 72)
+        .background(plan.status == .today ? Theme.accent.opacity(0.1) : Theme.cardBackground)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(plan.status == .today ? Theme.accent.opacity(0.4) : Theme.cardBorder, lineWidth: plan.status == .today ? 2 : 1)
+        )
     }
 
     private func activityEmoji(_ activity: String) -> String {
@@ -222,15 +233,15 @@ struct DayDetailSheetView: View {
                     // Date + activities
                     HStack {
                         Text(plan.status == .today ? "Bug\u{00FC}n" : plan.date.formatted(.dateTime.day().month(.wide).year()))
-                            .font(.title3)
+                            .font(Theme.titleFont)
                             .fontWeight(.bold)
                         Spacer()
                         ForEach(plan.activities, id: \.self) { activity in
                             Text(GoalEngine.activityDisplayNames[activity] ?? activity)
-                                .font(.caption)
+                                .font(Theme.captionFont)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(Color(.systemGray5))
+                                .background(Theme.cardBackground)
                                 .clipShape(Capsule())
                         }
                     }
@@ -247,13 +258,13 @@ struct DayDetailSheetView: View {
                         HStack {
                             if deficit > 0 {
                                 Text("\u{1F525} \(deficit) kcal a\u{00E7}\u{0131}k")
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(Theme.green)
                             } else {
                                 Text("\u{26A0}\u{FE0F} \(abs(deficit)) kcal fazla")
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(Theme.red)
                             }
                         }
-                        .font(.subheadline)
+                        .font(Theme.bodyFont)
                         .fontWeight(.medium)
                     }
 
@@ -262,20 +273,20 @@ struct DayDetailSheetView: View {
                     // Food entries
                     if plan.status == .planned {
                         Text("Bu g\u{00FC}n i\u{00E7}in plan")
-                            .font(.headline)
+                            .font(Theme.headlineFont)
                             .padding(.top, 4)
                         Text("Hedef: \(plan.targetCalories) kcal")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                         Text("P: \(plan.targetProtein)g  K: \(plan.targetCarbs)g  Y: \(plan.targetFat)g")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textSecondary)
                     } else if dayEntries.isEmpty {
                         Text("Yemek kayd\u{0131} yok")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 4)
                     } else {
                         Text("Yemekler")
-                            .font(.headline)
+                            .font(Theme.headlineFont)
                             .padding(.top, 4)
                         ForEach(dayEntries, id: \.id) { entry in
                             VStack(alignment: .leading, spacing: 4) {
@@ -284,11 +295,11 @@ struct DayDetailSheetView: View {
                                         .fontWeight(.medium)
                                     Spacer()
                                     Text("\(entry.calories) kcal")
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Theme.textSecondary)
                                 }
                                 Text("P: \(Int(entry.protein))g  K: \(Int(entry.carbs))g  Y: \(Int(entry.fat))g")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.captionFont)
+                                    .foregroundStyle(Theme.textSecondary)
                             }
                             .padding(.vertical, 4)
                             Divider()
@@ -318,41 +329,41 @@ struct DayDetailSheetView: View {
         switch plan.status {
         case .completed:
             Label("Hedefe ula\u{015F}\u{0131}ld\u{0131}", systemImage: "checkmark.circle.fill")
-                .font(.subheadline)
-                .foregroundStyle(.green)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.green)
         case .exceeded:
             Label("Hedef a\u{015F}\u{0131}ld\u{0131}", systemImage: "exclamationmark.triangle.fill")
-                .font(.subheadline)
-                .foregroundStyle(.orange)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.orange)
         case .underate:
             Label("Hedefin alt\u{0131}nda kald\u{0131}n \u{2014} \u{00E7}ok az yedin", systemImage: "arrow.down.circle.fill")
-                .font(.subheadline)
-                .foregroundStyle(.blue)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.blue)
         case .missed:
             Label("Ka\u{00E7}\u{0131}r\u{0131}ld\u{0131}", systemImage: "xmark.circle.fill")
-                .font(.subheadline)
-                .foregroundStyle(.gray)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textTertiary)
         case .today:
             Label("Devam ediyor", systemImage: "location.fill")
-                .font(.subheadline)
-                .foregroundStyle(.blue)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.blue)
         case .planned:
             Label("Planland\u{0131}", systemImage: "doc.text")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textSecondary)
         }
 
         if isPastOlderThan7Days {
             Text("* Hedef, mevcut profil de\u{011F}erleriyle hesaplanm\u{0131}\u{015F}t\u{0131}r")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(Theme.microFont)
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 
     private var calorieSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Kalori")
-                .font(.subheadline)
+                .font(Theme.bodyFont)
                 .fontWeight(.medium)
 
             let progress = plan.targetCalories > 0 ? min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0) : 0
@@ -360,9 +371,9 @@ struct DayDetailSheetView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(.systemGray4))
+                        .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(plan.status == .exceeded ? Color.orange : plan.status == .underate ? Color.blue : Color.green)
+                        .fill(plan.status == .exceeded ? Theme.orange : plan.status == .underate ? Theme.blue : Theme.green)
                         .frame(width: geo.size.width * progress)
                 }
             }
@@ -370,15 +381,15 @@ struct DayDetailSheetView: View {
 
             HStack {
                 Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
-                    .font(.caption)
+                    .font(Theme.captionFont)
                 Spacer()
                 if plan.status != .planned {
                     Text("%\(plan.caloriePercentage)")
-                        .font(.caption)
+                        .font(Theme.captionFont)
                         .fontWeight(.medium)
                 }
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Theme.textSecondary)
         }
     }
 
@@ -393,14 +404,14 @@ struct DayDetailSheetView: View {
     private func macroBar(_ name: String, eaten: Int, target: Int, color: Color) -> some View {
         HStack(spacing: 8) {
             Text(name)
-                .font(.caption)
+                .font(Theme.captionFont)
                 .frame(width: 50, alignment: .leading)
 
             GeometryReader { geo in
                 let progress = target > 0 ? min(Double(eaten) / Double(target), 1.0) : 0
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(.systemGray4))
+                        .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color)
                         .frame(width: geo.size.width * progress)
@@ -409,8 +420,8 @@ struct DayDetailSheetView: View {
             .frame(height: 8)
 
             Text("\(eaten)g / \(target)g")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
                 .frame(width: 80, alignment: .trailing)
         }
     }

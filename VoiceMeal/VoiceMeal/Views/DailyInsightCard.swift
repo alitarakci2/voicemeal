@@ -40,27 +40,21 @@ struct DailyInsightCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("\u{1F9E0} G\u{00FC}nl\u{00FC}k De\u{011F}erlendirme")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                    .font(Theme.headlineFont)
+                    .foregroundStyle(Theme.textPrimary)
                 Spacer()
             }
 
             // Sleep + HRV summary line
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 if let summary = sleepSummary {
-                    Text("\u{1F634} \(summary)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    PillBadge(text: "\u{1F634} \(summary)")
                 }
                 if let s = sleep {
-                    Text("Kalite: \(s.quality.rawValue)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    PillBadge(text: "Kalite: \(s.quality.rawValue)")
                 }
                 if hrvStatus != .noData {
-                    Text("\u{1FAC0} HRV: \(hrvStatus.rawValue)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    PillBadge(text: "\u{1FAC0} \(hrvStatus.rawValue)")
                 }
             }
 
@@ -70,25 +64,27 @@ struct DailyInsightCard: View {
                     ProgressView()
                         .controlSize(.small)
                     Text("Analiz ediliyor...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             } else if let text = insightText {
                 Text(text)
-                    .font(.callout)
+                    .font(.system(size: 16))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             } else if !isInMorningWindow && !hasAttempted {
                 Text("De\u{011F}erlendirme sabah 7-11 aras\u{0131} g\u{00FC}ncellenir")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
             } else if hasAttempted {
                 Text("Bug\u{00FC}nk\u{00FC} veriler analiz edilemedi. Sa\u{011F}l\u{0131}kl\u{0131} beslenmeye devam et!")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textSecondary)
             } else {
                 Text("Yeterli veri yok \u{2014} birka\u{00E7} g\u{00FC}n sonra g\u{00F6}r\u{00FC}n\u{00FC}r")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
             }
 
             // Footer
@@ -97,22 +93,23 @@ struct DailyInsightCard: View {
                     Task { await generateInsight(force: true) }
                 } label: {
                     Label("Yenile", systemImage: "arrow.clockwise")
-                        .font(.caption)
+                        .font(Theme.captionFont)
                 }
+                .buttonStyle(.bordered)
+                .tint(Theme.accent)
                 .disabled(isLoading)
 
                 Spacer()
 
                 if let time = generatedAt {
                     Text("\(time.formatted(.dateTime.hour().minute()))'de \u{00FC}retildi")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
         .task {
             loadCachedInsight()
             if insightText == nil && isInMorningWindow {

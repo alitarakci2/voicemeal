@@ -29,12 +29,11 @@ struct Step4IntensityView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("Yoğunluk")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(Theme.titleFont)
 
             Text("Kalori açığını ne kadar agresif tutmak istiyorsun?")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
 
             VStack(spacing: 16) {
@@ -48,26 +47,26 @@ struct Step4IntensityView: View {
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(option.label)
-                                    .font(.headline)
+                                    .font(Theme.headlineFont)
                                 Text(option.subtitle)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.bodyFont)
+                                    .foregroundStyle(Theme.textSecondary)
                                 Text(option.detail)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.captionFont)
+                                    .foregroundStyle(Theme.textSecondary)
                             }
 
                             Spacer()
 
                             if intensityLevel == option.value {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.title2)
+                                    .font(Theme.titleFont)
                                     .foregroundStyle(option.color)
                             }
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(intensityLevel == option.value ? option.color.opacity(0.1) : Color(.systemGray6))
+                        .background(intensityLevel == option.value ? option.color.opacity(0.1) : Theme.cardBackground)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(intensityLevel == option.value ? option.color : Color.clear, lineWidth: 2)

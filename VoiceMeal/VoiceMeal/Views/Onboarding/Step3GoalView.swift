@@ -27,34 +27,33 @@ struct Step3GoalView: View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("Hedefin")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(Theme.titleFont)
 
                 // Goal weight
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Hedef Kilo: \(String(format: "%.1f", goalWeightKg)) kg")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     Slider(value: $goalWeightKg, in: 40...200, step: 0.5)
                 }
 
                 // Duration
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Süre")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     HStack(spacing: 12) {
                         ForEach(presetDays, id: \.self) { days in
                             Button {
                                 goalDays = days
                             } label: {
                                 Text("\(days) gün")
-                                    .font(.subheadline)
+                                    .font(Theme.bodyFont)
                                     .fontWeight(.medium)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
-                                    .background(goalDays == days ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                                    .background(goalDays == days ? Theme.accent.opacity(0.15) : Theme.cardBackground)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 10)
-                                            .stroke(goalDays == days ? Color.accentColor : Color.clear, lineWidth: 2)
+                                            .stroke(goalDays == days ? Theme.accent : Color.clear, lineWidth: 2)
                                     )
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
@@ -64,7 +63,7 @@ struct Step3GoalView: View {
 
                     // Custom stepper
                     Stepper("Özel: \(goalDays) gün", value: $goalDays, in: 14...365, step: 7)
-                        .font(.subheadline)
+                        .font(Theme.bodyFont)
                         .padding(.top, 4)
                 }
 
@@ -72,16 +71,16 @@ struct Step3GoalView: View {
                 VStack(spacing: 12) {
                     if currentWeightKg > goalWeightKg {
                         Text("Haftada yaklaşık \(String(format: "%.2f", weeklyLoss)) kg verirsin")
-                            .font(.headline)
+                            .font(Theme.headlineFont)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color(.systemGray6))
+                            .background(Theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
 
                         if isAggressive {
                             Label("Çok agresif, süreyi uzatmanı öneririz", systemImage: "exclamationmark.triangle.fill")
-                                .font(.callout)
-                                .foregroundStyle(.orange)
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(Theme.orange)
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(Color.orange.opacity(0.1))
@@ -89,17 +88,17 @@ struct Step3GoalView: View {
                         }
                     } else if currentWeightKg < goalWeightKg {
                         Text("Haftada yaklaşık \(String(format: "%.2f", abs(weeklyLoss))) kg alırsın")
-                            .font(.headline)
+                            .font(Theme.headlineFont)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color(.systemGray6))
+                            .background(Theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     } else {
                         Text("Kilonu korumayı hedefliyorsun")
-                            .font(.headline)
+                            .font(Theme.headlineFont)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color(.systemGray6))
+                            .background(Theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }

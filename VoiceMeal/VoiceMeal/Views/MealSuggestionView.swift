@@ -32,13 +32,13 @@ struct MealSuggestionView: View {
                     // Header
                     HStack {
                         Text(notificationType == .afternoon ? "Ak\u{015F}am \u{00D6}nerisi" : "Gece At\u{0131}\u{015F}t\u{0131}rmal\u{0131}\u{011F}\u{0131}")
-                            .font(.title3)
+                            .font(Theme.titleFont)
                             .fontWeight(.bold)
                         Spacer()
                         if let time = cachedAt {
                             Text(time.formatted(.dateTime.hour().minute()))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .font(Theme.microFont)
+                                .foregroundStyle(Theme.textSecondary)
                         }
                     }
 
@@ -58,8 +58,8 @@ struct MealSuggestionView: View {
                             VStack(spacing: 12) {
                                 ProgressView()
                                 Text("\u{00D6}neri haz\u{0131}rlan\u{0131}yor...")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.bodyFont)
+                                    .foregroundStyle(Theme.textSecondary)
                             }
                             Spacer()
                         }
@@ -67,11 +67,11 @@ struct MealSuggestionView: View {
                     } else if let suggestion {
                         // Suggestion title
                         Text(suggestion.title)
-                            .font(.headline)
+                            .font(Theme.headlineFont)
 
                         // Suggestion body
                         Text(suggestion.body)
-                            .font(.callout)
+                            .font(Theme.bodyFont)
                             .fixedSize(horizontal: false, vertical: true)
 
                         // Suggested meals
@@ -81,23 +81,23 @@ struct MealSuggestionView: View {
                                     HStack {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(meal.name)
-                                                .font(.subheadline)
+                                                .font(Theme.bodyFont)
                                                 .fontWeight(.medium)
                                             Text(meal.portion)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                                .font(Theme.captionFont)
+                                                .foregroundStyle(Theme.textSecondary)
                                         }
                                         Spacer()
                                         VStack(alignment: .trailing, spacing: 2) {
                                             Text("\(meal.calories) kcal")
-                                                .font(.subheadline)
+                                                .font(Theme.bodyFont)
                                             Text("\(meal.protein)g protein")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                                .font(Theme.captionFont)
+                                                .foregroundStyle(Theme.textSecondary)
                                         }
                                     }
                                     .padding()
-                                    .background(Color(.systemGray6))
+                                    .background(Theme.cardBackground)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                 }
                             }
@@ -115,8 +115,8 @@ struct MealSuggestionView: View {
                     } else if let error = errorMessage {
                         VStack(spacing: 8) {
                             Text(error)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(Theme.textSecondary)
                             Button("Tekrar Dene") {
                                 Task { await generateSuggestion(force: true) }
                             }
@@ -145,11 +145,11 @@ struct MealSuggestionView: View {
     private func macroChip(_ label: String, value: String, unit: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.subheadline)
+                .font(Theme.bodyFont)
                 .fontWeight(.semibold)
             Text("\(label)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(Theme.microFont)
+                .foregroundStyle(Theme.textSecondary)
         }
         .frame(maxWidth: .infinity)
     }

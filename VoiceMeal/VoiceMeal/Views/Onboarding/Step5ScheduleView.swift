@@ -39,8 +39,7 @@ struct Step5ScheduleView: View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("Haftalık Program")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(Theme.titleFont)
 
                 // Templates
                 HStack(spacing: 12) {
@@ -49,14 +48,14 @@ struct Step5ScheduleView: View {
                             weeklySchedule = template.schedule
                         } label: {
                             Text(template.name)
-                                .font(.subheadline)
+                                .font(Theme.bodyFont)
                                 .fontWeight(.medium)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)
-                                .background(weeklySchedule == template.schedule ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                                .background(weeklySchedule == template.schedule ? Theme.accent.opacity(0.15) : Theme.cardBackground)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(weeklySchedule == template.schedule ? Color.accentColor : Color.clear, lineWidth: 2)
+                                        .stroke(weeklySchedule == template.schedule ? Theme.accent : Color.clear, lineWidth: 2)
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
@@ -69,7 +68,7 @@ struct Step5ScheduleView: View {
                     ForEach(0..<7, id: \.self) { index in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(dayNames[index])
-                                .font(.headline)
+                                .font(Theme.headlineFont)
 
                             HStack(spacing: 8) {
                                 ForEach(activities, id: \.key) { activity in
@@ -79,16 +78,16 @@ struct Step5ScheduleView: View {
                                     } label: {
                                         VStack(spacing: 4) {
                                             Text(activity.emoji)
-                                                .font(.title3)
+                                                .font(Theme.titleFont)
                                             Text(activity.label)
-                                                .font(.caption2)
+                                                .font(Theme.microFont)
                                         }
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 8)
-                                        .background(isSelected ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
+                                        .background(isSelected ? Theme.accent.opacity(0.2) : Theme.cardBackground)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
-                                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                                                .stroke(isSelected ? Theme.accent : Color.clear, lineWidth: 2)
                                         )
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }

@@ -34,12 +34,13 @@ struct DeficitChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Birikimli A\u{00E7}\u{0131}k")
-                .font(.headline)
+                .font(Theme.headlineFont)
+                .foregroundStyle(Theme.textPrimary)
 
             if snapshotStats.isEmpty {
                 Text("Hen\u{00FC}z yeterli veri yok")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: 150)
             } else {
                 Chart {
@@ -48,7 +49,7 @@ struct DeficitChartView: View {
                             x: .value("Tarih", item.date, unit: .day),
                             y: .value("Birikimli", item.cumulativeDeficit)
                         )
-                        .foregroundStyle(isAhead ? .green : .orange)
+                        .foregroundStyle(isAhead ? Theme.green : Theme.orange)
                         .interpolationMethod(.catmullRom)
 
                         AreaMark(
@@ -56,22 +57,29 @@ struct DeficitChartView: View {
                             y: .value("Birikimli", item.cumulativeDeficit)
                         )
                         .foregroundStyle(
-                            (isAhead ? Color.green : Color.orange).opacity(0.1)
+                            (isAhead ? Theme.green : Theme.orange).opacity(0.15)
                         )
                     }
                 }
                 .chartYAxisLabel("kcal")
+                .chartYAxis {
+                    AxisMarks { _ in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(Theme.cardBorder)
+                        AxisValueLabel()
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
                 .frame(height: 180)
 
                 if let last = snapshotStats.last {
                     Text("Toplam: \(last.cumulativeDeficit) kcal")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
     }
 }

@@ -34,39 +34,40 @@ struct ActivityChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Aktivite Da\u{011F}\u{0131}l\u{0131}m\u{0131}")
-                .font(.headline)
+                .font(Theme.headlineFont)
+                .foregroundStyle(Theme.textPrimary)
 
             if activityCounts.isEmpty {
                 Text("Hen\u{00FC}z veri yok")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textSecondary)
             } else {
                 let maxCount = activityCounts.map(\.count).max() ?? 1
 
                 ForEach(activityCounts, id: \.activity) { item in
                     HStack(spacing: 8) {
                         Text("\(item.emoji) \(item.label)")
-                            .font(.caption)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textPrimary)
                             .frame(width: 100, alignment: .leading)
 
                         GeometryReader { geo in
                             let width = geo.size.width * Double(item.count) / Double(maxCount)
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(item.activity == "rest" ? Color.gray : Color.blue)
+                                .fill(item.activity == "rest" ? Theme.textTertiary : Theme.blue)
                                 .frame(width: max(width, 4))
                         }
                         .frame(height: 16)
 
                         Text("\(item.count) g\u{00FC}n")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                             .frame(width: 45, alignment: .trailing)
                     }
                 }
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
     }
 }

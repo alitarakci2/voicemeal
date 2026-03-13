@@ -58,19 +58,19 @@ struct HomeView: View {
                 if showWeightBanner, let banner = goalEngine.weightUpdatedBanner {
                     HStack {
                         Text(banner)
-                            .font(.subheadline)
+                            .font(Theme.bodyFont)
                         Spacer()
                         Button {
                             showWeightBanner = false
                             goalEngine.dismissWeightBanner()
                         } label: {
                             Image(systemName: "xmark")
-                                .font(.caption)
+                                .font(Theme.captionFont)
                         }
                     }
                     .padding()
-                    .background(Color.green.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .background(Theme.green.opacity(0.15))
+                    .themeCard()
                 }
 
                 // Daily goal card
@@ -100,7 +100,7 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.orange)
+                        .tint(Theme.orange)
                     }
                 }
 
@@ -109,40 +109,54 @@ struct HomeView: View {
                     handleMicTap()
                 } label: {
                     Image(systemName: speechService.isRecording ? "mic.fill" : "mic")
-                        .font(.system(size: 48))
+                        .font(.system(size: 40))
                         .foregroundStyle(.white)
-                        .frame(width: 120, height: 120)
-                        .background(speechService.isRecording ? Color.red : Color.gray)
+                        .frame(width: 88, height: 88)
+                        .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
                         .clipShape(Circle())
-                        .shadow(color: speechService.isRecording ? .red.opacity(0.4) : .clear, radius: 16)
+                        .overlay(
+                            Group {
+                                if speechService.isRecording {
+                                    Circle()
+                                        .stroke(Theme.red.opacity(0.4), lineWidth: 3)
+                                        .scaleEffect(speechService.isRecording ? 1.3 : 1.0)
+                                        .opacity(speechService.isRecording ? 0 : 1)
+                                        .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: false), value: speechService.isRecording)
+                                } else {
+                                    Circle()
+                                        .stroke(Theme.cardBorder, lineWidth: 2)
+                                }
+                            }
+                        )
                 }
                 .disabled(isAnalyzing)
+                .sensoryFeedback(.impact, trigger: speechService.isRecording)
 
                 // Status label
                 if isAnalyzing {
                     ProgressView("Analiz ediliyor...")
                 } else if showCorrected {
                     Text("D\u{00FC}zeltildi \u{2713}")
-                        .font(.headline)
-                        .foregroundStyle(.blue)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.blue)
                 } else if showSavedConfirmation {
                     Text("Kaydedildi \u{2713}")
-                        .font(.headline)
-                        .foregroundStyle(.green)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.green)
                 } else {
                     Text(speechService.isRecording ? "Dinliyorum..." : "Hazır")
-                        .font(.headline)
-                        .foregroundStyle(speechService.isRecording ? .red : .secondary)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
                 }
 
                 // Transcript
                 if !speechService.transcript.isEmpty {
                     Text(speechService.transcript)
-                        .font(.body)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.textPrimary)
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .themeCard()
                 }
 
                 // Parsed results
@@ -153,7 +167,7 @@ struct HomeView: View {
                                 Text(meal.name)
                                 Spacer()
                                 Text("\(Int(meal.calories)) kcal")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Theme.textSecondary)
                             }
                         }
                         Divider()
@@ -166,33 +180,33 @@ struct HomeView: View {
                         }
                     }
                     .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .themeCard()
                 }
 
                 // Clarification question
                 if let question = clarificationQuestion {
                     Text(question)
-                        .font(.callout)
-                        .foregroundStyle(.orange)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.orange)
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.orange.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(Theme.orange.opacity(0.1))
+                        .themeCard()
                 }
 
                 // Error
                 if let error = errorMessage {
                     Text(error)
-                        .font(.callout)
-                        .foregroundStyle(.red)
+                        .font(Theme.bodyFont)
+                        .foregroundStyle(Theme.red)
                 }
 
                 // Today's meal list
                 if !todayEntries.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Bug\u{00FC}nk\u{00FC} Yemekler")
-                            .font(.headline)
+                            .font(Theme.headlineFont)
+                            .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal)
                             .padding(.top)
                             .padding(.bottom, 8)
@@ -201,21 +215,26 @@ struct HomeView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(entry.name)
-                                        .font(.subheadline)
+                                        .font(Theme.bodyFont)
+                                        .foregroundStyle(Theme.textPrimary)
                                     Text(entry.amount)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.textSecondary)
+                                    Text("P:\(Int(entry.protein))g K:\(Int(entry.carbs))g Y:\(Int(entry.fat))g")
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.textTertiary)
                                 }
                                 Spacer()
                                 Text("\(entry.calories) kcal")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.bodyFont)
+                                    .foregroundStyle(Theme.textSecondary)
                                 Button {
                                     entryToEdit = entry
                                 } label: {
                                     Image(systemName: "pencil")
-                                        .font(.caption)
-                                        .foregroundStyle(.blue)
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.accent)
+                                        .frame(width: 44, height: 44)
                                 }
                                 .buttonStyle(.plain)
                                 Button {
@@ -223,29 +242,32 @@ struct HomeView: View {
                                     showDeleteAlert = true
                                 } label: {
                                     Image(systemName: "trash")
-                                        .font(.caption)
-                                        .foregroundStyle(.red)
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.red)
+                                        .frame(width: 44, height: 44)
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal)
                             .padding(.vertical, 8)
                             if entry.id != todayEntries.last?.id {
-                                Divider().padding(.leading)
+                                Theme.cardBorder
+                                    .frame(height: 1)
+                                    .padding(.leading)
                             }
                         }
                         .padding(.bottom, 8)
                     }
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .themeCard()
                 }
 
                 // Correction picker
                 if let entries = correctionPickerEntries {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Hangi kayd\u{0131} d\u{00FC}zelteyim?")
-                            .font(.subheadline)
+                            .font(Theme.bodyFont)
                             .fontWeight(.medium)
+                            .foregroundStyle(Theme.orange)
                         ForEach(entries, id: \.id) { entry in
                             Button {
                                 entryToEdit = entry
@@ -255,20 +277,21 @@ struct HomeView: View {
                                     Text(entry.name)
                                     Spacer()
                                     Text("\(entry.calories) kcal")
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Theme.textSecondary)
                                 }
                             }
                         }
                     }
                     .padding()
-                    .background(Color.orange.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(Theme.orange.opacity(0.1))
+                    .themeCard()
                 }
 
                 Spacer(minLength: 20)
             }
             .padding()
         }
+        .background(Theme.background)
         .task {
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {
@@ -363,7 +386,7 @@ struct HomeView: View {
                 let names = goalEngine.todayActivityNames
                     .compactMap { GoalEngine.activityDisplayNames[$0] }
                 Text("📅 Bugün: \(names.joined(separator: ", "))")
-                    .font(.subheadline)
+                    .font(Theme.bodyFont)
                     .fontWeight(.medium)
 
                 Spacer()
@@ -372,43 +395,49 @@ struct HomeView: View {
                     Task { await refreshHealthKit() }
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
                 }
 
                 Button {
                     showGoalInfo = true
                 } label: {
                     Image(systemName: "info.circle")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
 
                 Button {
                     showSettings = true
                 } label: {
                     Image(systemName: "gearshape")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
 
             // Calorie summary
             let remaining = goalEngine.dailyCalorieTarget - eatenCalories
-            HStack {
+            HStack(spacing: 0) {
                 calorieStat("Hedef", value: goalEngine.dailyCalorieTarget)
+
+                Divider()
+                    .frame(width: 1, height: 40)
+                    .background(Theme.cardBorder)
+
                 calorieStat("Yenen", value: eatenCalories)
+
+                Divider()
+                    .frame(width: 1, height: 40)
+                    .background(Theme.cardBorder)
+
                 VStack(spacing: 2) {
                     Text("Kalan")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
                     Text("\(remaining)")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundStyle(remaining < 0 ? .red : .primary)
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundStyle(remaining < 0 ? Theme.red : Theme.textPrimary)
                 }
                 .frame(maxWidth: .infinity)
-                Text("kcal")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
             // Daily deficit
@@ -416,13 +445,13 @@ struct HomeView: View {
             HStack {
                 if deficit > 0 {
                     Text("\u{1F525} \(deficit) kcal a\u{00E7}\u{0131}k")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Theme.green)
                 } else {
                     Text("\u{26A0}\u{FE0F} \(abs(deficit)) kcal fazla")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.red)
                 }
             }
-            .font(.subheadline)
+            .font(Theme.bodyFont)
             .fontWeight(.medium)
 
             // Macro progress bars
@@ -431,18 +460,17 @@ struct HomeView: View {
             macroRow("Yağ", eaten: Int(eatenFat), target: goalEngine.fatTarget, color: .yellow)
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
     }
 
     private func calorieStat(_ label: String, value: Int) -> some View {
         VStack(spacing: 2) {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
             Text("\(value)")
-                .font(.title3)
-                .fontWeight(.bold)
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -450,14 +478,15 @@ struct HomeView: View {
     private func macroRow(_ name: String, eaten: Int, target: Int, color: Color) -> some View {
         HStack(spacing: 8) {
             Text(name)
-                .font(.caption)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
                 .frame(width: 50, alignment: .leading)
 
             GeometryReader { geo in
                 let progress = target > 0 ? min(Double(eaten) / Double(target), 1.0) : 0
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(.systemGray4))
+                        .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color)
                         .frame(width: geo.size.width * progress)
@@ -466,8 +495,8 @@ struct HomeView: View {
             .frame(height: 8)
 
             Text("\(eaten)g / \(target)g")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
                 .frame(width: 80, alignment: .trailing)
         }
     }
@@ -482,46 +511,46 @@ struct HomeView: View {
                     if goalEngine.isUsingExtrapolatedTDEE {
                         let pct = Int(healthKitService.dayFraction * 100)
                         Label("Extrapolasyon aktif (%\(pct) g\u{00FC}n ge\u{00E7}ti)", systemImage: "iphone")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.blue)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.usingHealthKit {
                         Label("Apple Health verisi kullan\u{0131}l\u{0131}yor", systemImage: "iphone")
-                            .font(.caption)
-                            .foregroundStyle(.green)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.green)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
                         Label("Sabah erken \u{2014} hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "function")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.healthKitBurn > 0 {
                         Label("HealthKit verisi hen\u{00FC}z yetersiz, hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "hourglass")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Label("Hesaplanan form\u{00FC}l: \(Int(goalEngine.tdee)) kcal", systemImage: "function")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if goalEngine.isCalorieClamped {
                         Label("Minimum sa\u{011F}l\u{0131}kl\u{0131} kalori hedefine ayarland\u{0131}", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if goalEngine.isCapped, let reason = goalEngine.capReason {
                         Label("Hedef \u{00E7}ok agresif, g\u{00FC}venli s\u{0131}n\u{0131}ra ayarland\u{0131}", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                         Text(reason)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textSecondary)
                     }
 
                     Divider()
@@ -586,11 +615,11 @@ struct HomeView: View {
     private func infoRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textSecondary)
             Spacer()
             Text(value)
-                .font(.subheadline)
+                .font(Theme.bodyFont)
                 .fontWeight(.medium)
         }
     }

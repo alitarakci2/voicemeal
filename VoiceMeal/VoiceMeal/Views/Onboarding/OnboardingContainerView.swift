@@ -40,12 +40,13 @@ struct OnboardingContainerView: View {
         VStack(spacing: 0) {
             // Progress bar
             ProgressView(value: Double(step), total: Double(totalSteps))
+                .tint(Theme.accent)
                 .padding(.horizontal)
                 .padding(.top, 8)
 
             Text("\(step) / \(totalSteps)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
                 .padding(.top, 4)
 
             // Content
@@ -101,10 +102,12 @@ struct OnboardingContainerView: View {
                         .padding(.vertical, 14)
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
                 .disabled(!canProceed)
             }
             .padding()
         }
+        .background(Theme.background)
     }
 
     private func saveProfile() {

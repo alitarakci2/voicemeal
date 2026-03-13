@@ -17,17 +17,16 @@ struct Step1WelcomeView: View {
                 .foregroundStyle(.tint)
 
             Text("Hoş Geldin!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+                .font(Theme.largeTitleFont)
 
             Text("Sesini kullanarak yemeklerini takip et")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
 
             TextField("Adın", text: $name)
                 .textFieldStyle(.roundedBorder)
-                .font(.title3)
+                .font(Theme.titleFont)
                 .padding(.horizontal, 40)
 
             Spacer()

@@ -39,8 +39,7 @@ struct Step6SummaryView: View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("Özet")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(Theme.titleFont)
 
                 VStack(alignment: .leading, spacing: 12) {
                     summaryRow("İsim", value: name)
@@ -55,26 +54,25 @@ struct Step6SummaryView: View {
                     Divider()
 
                     Text("Haftalık Program")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
 
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(0..<7, id: \.self) { index in
                             HStack(alignment: .top) {
                                 Text(dayNames[index])
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(Theme.bodyFont)
+                                    .foregroundStyle(Theme.textSecondary)
                                     .frame(width: 30, alignment: .leading)
 
                                 let labels = weeklySchedule[index].compactMap { activityLabels[$0] }
                                 Text(labels.joined(separator: ", "))
-                                    .font(.subheadline)
+                                    .font(Theme.bodyFont)
                             }
                         }
                     }
                 }
                 .padding()
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .themeCard()
             }
             .padding()
         }
@@ -83,7 +81,7 @@ struct Step6SummaryView: View {
     private func summaryRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.textSecondary)
             Spacer()
             Text(value)
                 .fontWeight(.medium)

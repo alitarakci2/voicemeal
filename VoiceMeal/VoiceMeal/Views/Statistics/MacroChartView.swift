@@ -24,21 +24,24 @@ struct MacroChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Makro Ortalamalar\u{0131}")
-                .font(.headline)
+                .font(Theme.headlineFont)
+                .foregroundStyle(Theme.textPrimary)
 
             // Weekly average bars
             VStack(spacing: 10) {
-                macroBar("Protein", avg: avgProtein, target: targetProtein, color: .blue)
-                macroBar("Karb", avg: avgCarbs, target: targetCarbs, color: .orange)
+                macroBar("Protein", avg: avgProtein, target: targetProtein, color: Theme.blue)
+                macroBar("Karb", avg: avgCarbs, target: targetCarbs, color: Theme.orange)
                 macroBar("Ya\u{011F}", avg: avgFat, target: targetFat, color: .yellow)
             }
 
             Divider()
+                .overlay(Theme.cardBorder)
 
             // Today's macro distribution
             Text("Bug\u{00FC}n\u{00FC}n Da\u{011F}\u{0131}l\u{0131}m\u{0131}")
-                .font(.subheadline)
+                .font(Theme.bodyFont)
                 .fontWeight(.medium)
+                .foregroundStyle(Theme.textPrimary)
 
             if todayTotal > 0 {
                 let proteinPct = Int((todayProtein * 4 / todayTotal) * 100)
@@ -46,43 +49,44 @@ struct MacroChartView: View {
                 let fatPct = 100 - proteinPct - carbPct
 
                 HStack(spacing: 0) {
-                    macroSegment("P", pct: proteinPct, color: .blue)
-                    macroSegment("K", pct: carbPct, color: .orange)
+                    macroSegment("P", pct: proteinPct, color: Theme.blue)
+                    macroSegment("K", pct: carbPct, color: Theme.orange)
                     macroSegment("Y", pct: fatPct, color: .yellow)
                 }
                 .frame(height: 28)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 HStack {
-                    legendDot("Protein %\(proteinPct)", color: .blue)
+                    legendDot("Protein %\(proteinPct)", color: Theme.blue)
                     Spacer()
-                    legendDot("Karb %\(carbPct)", color: .orange)
+                    legendDot("Karb %\(carbPct)", color: Theme.orange)
                     Spacer()
                     legendDot("Ya\u{011F} %\(fatPct)", color: .yellow)
                 }
-                .font(.caption)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
             } else {
                 Text("Hen\u{00FC}z veri yok")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
     }
 
     private func macroBar(_ name: String, avg: Double, target: Int, color: Color) -> some View {
         HStack(spacing: 8) {
             Text(name)
-                .font(.caption)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
                 .frame(width: 50, alignment: .leading)
 
             GeometryReader { geo in
                 let progress = target > 0 ? min(avg / Double(target), 1.0) : 0
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(.systemGray4))
+                        .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color)
                         .frame(width: geo.size.width * progress)
@@ -91,8 +95,8 @@ struct MacroChartView: View {
             .frame(height: 8)
 
             Text("\(Int(avg))g / \(target)g")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
                 .frame(width: 90, alignment: .trailing)
         }
     }
@@ -105,7 +109,7 @@ struct MacroChartView: View {
                 .overlay {
                     if pct >= 15 {
                         Text("\(label) %\(pct)")
-                            .font(.caption2)
+                            .font(Theme.microFont)
                             .fontWeight(.medium)
                             .foregroundStyle(.white)
                     }

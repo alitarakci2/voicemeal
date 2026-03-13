@@ -48,8 +48,8 @@ struct StatisticsView: View {
 
                     if selectedRange == 1 && !monthlyHasEnoughData {
                         Text("Ayl\u{0131}k grafik i\u{00E7}in en az 2 hafta veri gerekli")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 4)
                     }
@@ -87,6 +87,7 @@ struct StatisticsView: View {
                 }
                 .padding()
             }
+            .background(Theme.background)
             .navigationTitle("\u{0130}statistik")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
@@ -131,69 +132,66 @@ struct StatisticsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     let streak = statisticsService.currentStreak
                     Text("\u{1F525} \(streak) G\u{00FC}nl\u{00FC}k Seri")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     if streak > 0 {
                         Text("Hedefe ula\u{015F}\u{0131}yorsun, devam et!")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                     } else {
                         Text("Bug\u{00FC}n hedefe ula\u{015F}arak ba\u{015F}la!")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Spacer()
                 if statisticsService.bestStreak > 0 {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("En iyi")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textSecondary)
                         Text("\(statisticsService.bestStreak) g\u{00FC}n")
-                            .font(.subheadline)
+                            .font(Theme.bodyFont)
                             .fontWeight(.medium)
                     }
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .themeCard()
 
             // Estimated weight card
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\u{2696}\u{FE0F} Tahmini Kilo De\u{011F}i\u{015F}imi")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     let weekKg = statisticsService.estimatedWeightLostWeekKg
                     Text("Bu hafta: \(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg))) kg tahmini")
-                        .font(.subheadline)
+                        .font(Theme.bodyFont)
                     let monthKg = statisticsService.estimatedWeightLostMonthKg
                     Text("Bu ay: \(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg))) kg tahmini")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
             }
             .padding()
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .themeCard()
 
             // Trend card
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(trendEmoji) Trend: \(statisticsService.trend.rawValue)")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     let avgDef = statisticsService.last3DaysAvgDeficit
                     if avgDef != 0 {
                         Text("Son 3 g\u{00FC}nde ortalama \(abs(avgDef)) kcal \(avgDef > 0 ? "a\u{00E7}\u{0131}k" : "fazla")")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Spacer()
             }
             .padding()
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .themeCard()
         }
     }
 
@@ -202,7 +200,7 @@ struct StatisticsView: View {
     private var weeklyInsightCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("\u{1F9E0} Haftal\u{0131}k De\u{011F}erlendirme")
-                .font(.headline)
+                .font(Theme.headlineFont)
 
             if insightLoading {
                 HStack {
@@ -213,23 +211,22 @@ struct StatisticsView: View {
                 .padding(.vertical, 12)
             } else if let insight = weeklyInsight {
                 Text(insight)
-                    .font(.callout)
+                    .font(Theme.bodyFont)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let cached = cachedInsightDate {
                     Text(cached.formatted(.dateTime.weekday(.wide).hour().minute()))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             } else {
                 Text("Hen\u{00FC}z yeterli veri yok")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textSecondary)
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .themeCard()
     }
 
     private var cachedInsightDate: Date? {

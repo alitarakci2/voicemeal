@@ -15,8 +15,7 @@ struct Step2BodyView: View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("Vücut Bilgilerin")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(Theme.titleFont)
 
                 // Gender
                 HStack(spacing: 16) {
@@ -27,7 +26,7 @@ struct Step2BodyView: View {
                 // Age
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Yaş: \(age)")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     Picker("Yaş", selection: $age) {
                         ForEach(15...80, id: \.self) { y in
                             Text("\(y)").tag(y)
@@ -40,14 +39,14 @@ struct Step2BodyView: View {
                 // Height
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Boy: \(Int(heightCm)) cm")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     Slider(value: $heightCm, in: 140...220, step: 1)
                 }
 
                 // Weight
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Kilo: \(String(format: "%.1f", currentWeightKg)) kg")
-                        .font(.headline)
+                        .font(Theme.headlineFont)
                     Slider(value: $currentWeightKg, in: 40...200, step: 0.5)
                 }
             }
@@ -63,14 +62,14 @@ struct Step2BodyView: View {
                 Image(systemName: icon)
                     .font(.system(size: 40))
                 Text(label)
-                    .font(.headline)
+                    .font(Theme.headlineFont)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 24)
-            .background(gender == value ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+            .background(gender == value ? Theme.accent.opacity(0.15) : Theme.cardBackground)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(gender == value ? Color.accentColor : Color.clear, lineWidth: 2)
+                    .stroke(gender == value ? Theme.accent : Color.clear, lineWidth: 2)
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }

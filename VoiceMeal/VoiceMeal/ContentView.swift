@@ -43,6 +43,7 @@ struct ContentView: View {
                     }
                     .tag(3)
             }
+            .tint(Theme.accent)
             .environment(goalEngine)
             .onAppear {
                 goalEngine.update(with: profiles.first)
