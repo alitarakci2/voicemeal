@@ -8,6 +8,12 @@ import Foundation
 @Observable
 class PlanService {
 
+    var refreshID = UUID()
+
+    func regeneratePlans() {
+        refreshID = UUID()
+    }
+
     func generateDayPlans(profile: UserProfile, entries: [FoodEntry]) -> [DayPlan] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
@@ -120,19 +126,25 @@ class PlanService {
 
         let tdee = bmr * multiplier
 
-        let deficit: Double
-        switch profile.intensityLevel {
-        case ...0.3:
-            deficit = tdee * 0.10
-        case 0.3...0.7:
-            deficit = tdee * 0.20
-        default:
-            deficit = tdee * 0.28
+        let rawDeficit: Double
+        if profile.goalDays > 0 {
+            let weightDiff = profile.currentWeightKg - profile.goalWeightKg
+            rawDeficit = (weightDiff * 7700) / Double(profile.goalDays)
+        } else {
+            rawDeficit = 0
         }
+        let maxDeficit = tdee * 0.35
+        let maxSurplus = tdee * 0.20
+        let deficit = max(-maxSurplus, min(maxDeficit, rawDeficit))
 
         let minimumCalorie = bmr * 0.85
         let rawCalories = tdee - deficit
-        let calories = Int(max(rawCalories, minimumCalorie))
+        let calories: Int
+        if deficit > 0 {
+            calories = Int(max(rawCalories, minimumCalorie))
+        } else {
+            calories = Int(rawCalories)
+        }
 
         let protein = Int(2.0 * profile.currentWeightKg)
         let fat = Int(Double(calories) * 0.25 / 9.0)

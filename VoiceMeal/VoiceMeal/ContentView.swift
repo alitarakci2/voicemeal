@@ -26,6 +26,11 @@ struct ContentView: View {
                     .tabItem {
                         Label("Plan", systemImage: "calendar")
                     }
+
+                SettingsView()
+                    .tabItem {
+                        Label("Ayarlar", systemImage: "gearshape")
+                    }
             }
         } else {
             OnboardingContainerView(onboardingComplete: $onboardingComplete)

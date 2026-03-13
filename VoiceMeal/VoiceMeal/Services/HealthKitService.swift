@@ -110,7 +110,7 @@ class HealthKitService {
         return total
     }
 
-    func fetchTodayBurnExtrapolated(bmr: Double) async -> Double {
+    func fetchTodayBurnExtrapolated(bmr: Double, calculatedTDEE: Double) async -> Double {
         let rawBurn = await fetchTodayTotalBurn()
 
         let now = Date.now
@@ -119,7 +119,7 @@ class HealthKitService {
         let fraction = secondsElapsed / 86400.0
         dayFraction = fraction
 
-        guard fraction > 0.25 && rawBurn > 0 else {
+        guard fraction >= 0.40 && rawBurn > 0 else {
             isExtrapolated = false
             todayExtrapolatedBurn = 0
             return 0
@@ -127,6 +127,14 @@ class HealthKitService {
 
         let extrapolated = rawBurn / fraction
         let capped = min(extrapolated, bmr * 2.5)
+
+        // If extrapolated is too far below formula TDEE, don't trust it
+        guard capped >= calculatedTDEE * 0.85 else {
+            isExtrapolated = false
+            todayExtrapolatedBurn = 0
+            return 0
+        }
+
         isExtrapolated = true
         todayExtrapolatedBurn = capped
         return capped

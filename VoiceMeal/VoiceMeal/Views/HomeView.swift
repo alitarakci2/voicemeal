@@ -21,6 +21,7 @@ struct HomeView: View {
     @State private var showSavedConfirmation = false
     @State private var showGoalInfo = false
     @State private var showWeightBanner = false
+    @State private var showSettings = false
     @State private var goalEngine = GoalEngine()
     @State private var healthKitService = HealthKitService()
 
@@ -215,8 +216,17 @@ struct HomeView: View {
                 saveTodaySnapshot()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
+            if let profile = profiles.first {
+                goalEngine.updateProfile(profile)
+            }
+            saveTodaySnapshot()
+        }
         .sheet(isPresented: $showGoalInfo) {
             goalInfoSheet
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
     }
 
@@ -246,6 +256,13 @@ struct HomeView: View {
                     showGoalInfo = true
                 } label: {
                     Image(systemName: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
+
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -340,14 +357,19 @@ struct HomeView: View {
                     // TDEE source indicator
                     if goalEngine.isUsingExtrapolatedTDEE {
                         let pct = Int(healthKitService.dayFraction * 100)
-                        Label("Tahmin y\u{00F6}ntemi: Extrapolasyon (%\(pct) g\u{00FC}n ge\u{00E7}ti)", systemImage: "chart.line.uptrend.xyaxis")
+                        Label("Extrapolasyon aktif (%\(pct) g\u{00FC}n ge\u{00E7}ti)", systemImage: "iphone")
                             .font(.caption)
                             .foregroundStyle(.blue)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.usingHealthKit {
-                        Label("Tam g\u{00FC}n verisi: \(Int(goalEngine.tdee)) kcal", systemImage: "iphone")
+                        Label("Apple Health verisi kullan\u{0131}l\u{0131}yor", systemImage: "iphone")
                             .font(.caption)
                             .foregroundStyle(.green)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
+                        Label("Sabah erken \u{2014} hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "function")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.healthKitBurn > 0 {
                         Label("HealthKit verisi hen\u{00FC}z yetersiz, hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "hourglass")
@@ -368,6 +390,16 @@ struct HomeView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
+                    if goalEngine.isCapped, let reason = goalEngine.capReason {
+                        Label("Hedef \u{00E7}ok agresif, g\u{00FC}venli s\u{0131}n\u{0131}ra ayarland\u{0131}", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(reason)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
                     Divider()
 
                     infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal (g\u{00FC}ven: \(goalEngine.tdeeConfidence))")
@@ -378,9 +410,14 @@ struct HomeView: View {
                         infoRow("HealthKit Yak\u{0131}m", value: "\(Int(goalEngine.healthKitBurn)) kcal")
                         infoRow("BMR E\u{015F}i\u{011F}i", value: "\(Int(goalEngine.bmr)) kcal")
                     }
-                    infoRow("Kalori A\u{00E7}\u{0131}\u{011F}\u{0131}", value: "\(Int(goalEngine.deficit)) kcal")
+                    if goalEngine.isCapped {
+                        infoRow("Ham A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.rawDailyDeficit)) kcal")
+                        infoRow("Uygulan A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.cappedDailyDeficit)) kcal")
+                    } else {
+                        infoRow("G\u{00FC}nl\u{00FC}k A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.deficit)) kcal")
+                    }
                     infoRow("G\u{00FC}nl\u{00FC}k Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
-                    infoRow("Tahmini Haftal\u{0131}k Kay\u{0131}p", value: "\(String(format: "%.2f", goalEngine.projectedWeeklyLossKg)) kg")
+                    infoRow("Tahmini Haftal\u{0131}k De\u{011F}i\u{015F}im", value: "\(String(format: "%+.2f", goalEngine.projectedWeeklyLossKg)) kg")
 
                     Divider()
 
@@ -439,7 +476,8 @@ struct HomeView: View {
     private func refreshHealthKit() async {
         guard healthKitService.isAvailable else { return }
 
-        let extrapolated = await healthKitService.fetchTodayBurnExtrapolated(bmr: goalEngine.bmr)
+        let extrapolated = await healthKitService.fetchTodayBurnExtrapolated(bmr: goalEngine.bmr, calculatedTDEE: goalEngine.calculatedTDEE)
+        goalEngine.isEarlyMorning = healthKitService.dayFraction < 0.40
         if extrapolated > 0 {
             goalEngine.updateExtrapolatedBurn(extrapolated)
         } else {

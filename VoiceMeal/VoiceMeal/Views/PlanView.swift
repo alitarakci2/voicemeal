@@ -13,6 +13,7 @@ struct PlanView: View {
     @State private var selectedPlan: DayPlan?
 
     private var dayPlans: [DayPlan] {
+        _ = planService.refreshID // force re-evaluation after regeneratePlans()
         guard let profile = profiles.first else { return [] }
         return planService.generateDayPlans(profile: profile, entries: allEntries)
     }
@@ -62,6 +63,9 @@ struct PlanView: View {
                 }
             }
             .navigationTitle("Plan")
+            .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
+                planService.regeneratePlans()
+            }
             .sheet(item: $selectedPlan) { plan in
                 DayDetailSheetView(plan: plan)
             }

@@ -13,6 +13,7 @@ class GoalEngine {
     var latestWeightFromHealth: Double?
     var latestWeightDate: Date?
     var isUsingExtrapolatedTDEE: Bool = false
+    var isEarlyMorning: Bool = false
     var weightUpdatedBanner: String?
 
     var healthKitSufficient: Bool {
@@ -85,6 +86,9 @@ class GoalEngine {
     }
 
     var tdeeConfidence: String {
+        if isEarlyMorning {
+            return "Orta (sabah erken)"
+        }
         let hasHealthKit = usingHealthKit || isUsingExtrapolatedTDEE
         let hasVO2 = vo2Max != nil
         if hasHealthKit && hasVO2 {
@@ -107,16 +111,36 @@ class GoalEngine {
         return usingHealthKit ? healthKitBurn : calculatedTDEE
     }
 
-    var deficit: Double {
-        guard let p = profile else { return 0 }
-        switch p.intensityLevel {
-        case ...0.3:
-            return tdee * 0.10
-        case 0.3...0.7:
-            return tdee * 0.20
-        default:
-            return tdee * 0.28
+    /// Raw daily deficit before safety caps (positive = loss, negative = gain/surplus)
+    var rawDailyDeficit: Double {
+        guard let p = profile, p.goalDays > 0 else { return 0 }
+        let weightDiff = p.currentWeightKg - p.goalWeightKg
+        let totalCaloriesNeeded = weightDiff * 7700
+        return totalCaloriesNeeded / Double(p.goalDays)
+    }
+
+    /// Daily deficit after safety caps
+    var cappedDailyDeficit: Double {
+        let maxDeficit = tdee * 0.35
+        let maxSurplus = tdee * 0.20
+        return max(-maxSurplus, min(maxDeficit, rawDailyDeficit))
+    }
+
+    var isCapped: Bool {
+        abs(rawDailyDeficit - cappedDailyDeficit) > 1
+    }
+
+    var capReason: String? {
+        guard isCapped else { return nil }
+        if rawDailyDeficit > cappedDailyDeficit {
+            return "Maksimum a\u{00E7}\u{0131}k s\u{0131}n\u{0131}r\u{0131}na ula\u{015F}\u{0131}ld\u{0131}"
+        } else {
+            return "Maksimum fazla s\u{0131}n\u{0131}r\u{0131}na ula\u{015F}\u{0131}ld\u{0131}"
         }
+    }
+
+    var deficit: Double {
+        cappedDailyDeficit
     }
 
     private var minimumCalorieTarget: Double {
@@ -125,12 +149,15 @@ class GoalEngine {
 
     var isCalorieClamped: Bool {
         let raw = tdee - deficit
-        return raw < minimumCalorieTarget && minimumCalorieTarget > 0
+        return deficit > 0 && raw < minimumCalorieTarget && minimumCalorieTarget > 0
     }
 
     var dailyCalorieTarget: Int {
         let raw = tdee - deficit
-        return Int(max(raw, minimumCalorieTarget))
+        if deficit > 0 {
+            return Int(max(raw, minimumCalorieTarget))
+        }
+        return Int(raw)
     }
 
     var proteinTarget: Int {
@@ -150,10 +177,16 @@ class GoalEngine {
     }
 
     var projectedWeeklyLossKg: Double {
-        (deficit * 7) / 7700
+        (cappedDailyDeficit * 7) / 7700
     }
 
     func update(with profile: UserProfile?) {
+        self.profile = profile
+    }
+
+    func updateProfile(_ profile: UserProfile) {
+        // Force @Observable notification by clearing and re-setting
+        self.profile = nil
         self.profile = profile
     }
 
