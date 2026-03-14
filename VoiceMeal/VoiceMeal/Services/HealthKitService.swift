@@ -194,9 +194,12 @@ class HealthKitService {
         let type = HKCategoryType(.sleepAnalysis)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
-        // Look for sleep data from the last 24 hours
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now))!
-        let predicate = HKQuery.predicateForSamples(withStart: yesterday, end: .now, options: .strictStartDate)
+        // Last night = yesterday 18:00 to today 12:00
+        let calendar = Calendar.current
+        let now = Date()
+        let todayNoon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now)!
+        let yesterdayEvening = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: calendar.date(byAdding: .day, value: -1, to: now)!)!
+        let predicate = HKQuery.predicateForSamples(withStart: yesterdayEvening, end: todayNoon, options: .strictStartDate)
 
         let samples: [HKCategorySample] = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, results, error in
@@ -232,8 +235,14 @@ class HealthKitService {
             }
         }
 
-        let totalMinutes = Int(totalSeconds / 60)
+        var totalMinutes = Int(totalSeconds / 60)
         let deepMinutes = Int(deepSeconds / 60)
+
+        // Sanity cap: prevent multi-day accumulation errors
+        if totalMinutes > 600 {
+            print("[HealthKit] Unusual sleep duration detected (\(totalMinutes) min), capping at 10h")
+            totalMinutes = 600
+        }
         let efficiency = totalSeconds > 0 ? deepSeconds / totalSeconds : 0
         let totalHours = totalSeconds / 3600
 
