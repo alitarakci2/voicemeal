@@ -180,24 +180,64 @@ class GroqService {
         }
     }
 
+    // MARK: - Time of Day
+
+    enum TimeOfDay: String {
+        case morning  = "Sabah"    // 06:00 - 11:00
+        case midday   = "Öğle"     // 11:00 - 15:00
+        case evening  = "Akşam"    // 15:00 - 20:00
+        case night    = "Gece"     // 20:00 - 06:00
+    }
+
+    static func currentTimeOfDay() -> TimeOfDay {
+        let hour = Calendar.current.component(.hour, from: .now)
+        switch hour {
+        case 6..<11:  return .morning
+        case 11..<15: return .midday
+        case 15..<20: return .evening
+        default:      return .night
+        }
+    }
+
     // MARK: - Daily Insight
 
     private let insightSystemPrompt = """
-        Sen ki\u{015F}isel bir beslenme ve fitness ko\u{00E7}usun. \
-        Kullan\u{0131}c\u{0131}n\u{0131}n g\u{00FC}nl\u{00FC}k biyometrik verilerini analiz edip \
-        SADECE 2-3 c\u{00FC}mlelik k\u{0131}sa, samimi, T\u{00FC}rk\u{00E7}e bir g\u{00FC}nl\u{00FC}k \
-        de\u{011F}erlendirme yaz. Bilimsel ama sohbet dili kullan. \
-        Emoji kullanabilirsin. Asla liste yapma, d\u{00FC}z metin yaz.
+        Sen kişisel bir beslenme ve fitness koçusun.
+        Kullanıcının o ANKİ durumunu analiz et.
+        SADECE 2-3 cümle, Türkçe, samimi, emoji kullanabilirsin.
+
+        Zaman dilimi kuralları:
+        - Sabah: Günü planla, motivasyon ver, neye dikkat etmeli
+        - Öğle: Sabah nasıl geçti, öğleden sonra için öneri
+        - Akşam: Kalan kalori/açık durumuna göre akşam yemeği yönlendirmesi
+        - Gece: Günün özeti, yarına hazırlık, uyku öncesi öneri
+
+        ÖNEMLİ:
+        - Yeme hedefi (dailyCalorieTarget) ile kalori açığı (targetDeficit) \
+        FARKLI şeylerdir. Açık = TDEE - yenen. Yeme hedefi = ne kadar yemeli.
+        - Kullanıcı yeme hedefini aştıysa bunu belirt
+        - Ama gerçek açık hedef açıktan büyükse (çok spor yaptı) \
+        bunu olumlu değerlendir
+        - Asla TDEE'yi yeme hedefi olarak gösterme
+        Asla liste yapma, düz metin yaz.
         """
 
     func generateDailyInsight(
+        timeOfDay: TimeOfDay,
         hrvStatus: HRVStatus,
         todayHRV: Double?,
         hrvBaseline: Double?,
         sleep: SleepData?,
         todayActivities: [String],
+        consumed: Int,
+        dailyCalorieTarget: Int,
         remainingCalories: Int,
-        calorieDeficit: Int,
+        targetDeficit: Int,
+        actualDeficit: Int,
+        deficitGap: Int,
+        proteinConsumed: Double,
+        proteinTarget: Int,
+        tdee: Int,
         intensityLevel: Double
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
@@ -206,7 +246,7 @@ class GroqService {
         let hrvText: String
         if let hrv = todayHRV {
             let baselineText = hrvBaseline.map { String(format: "%.0f", $0) } ?? "?"
-            hrvText = "\(String(format: "%.0f", hrv))ms (7 g\u{00FC}nl\u{00FC}k ort: \(baselineText)ms, durum: \(hrvStatus.rawValue))"
+            hrvText = "\(String(format: "%.0f", hrv))ms (baseline: \(baselineText)ms, durum: \(hrvStatus.rawValue))"
         } else {
             hrvText = "Veri yok"
         }
@@ -215,7 +255,7 @@ class GroqService {
         if let s = sleep {
             let hours = s.totalMinutes / 60
             let mins = s.totalMinutes % 60
-            sleepText = "\(hours)s \(mins)dk toplam, \(s.deepSleepMinutes) dk derin uyku, kalite: \(s.quality.rawValue)"
+            sleepText = "\(hours)s \(mins)dk toplam, kalite: \(s.quality.rawValue)"
         } else {
             sleepText = "Veri yok"
         }
@@ -224,25 +264,34 @@ class GroqService {
             .compactMap { GoalEngine.activityDisplayNames[$0] }
             .joined(separator: ", ")
 
-        let intensityText: String
-        switch intensityLevel {
-        case ...0.3: intensityText = "Hafif"
-        case 0.3...0.7: intensityText = "Orta"
-        default: intensityText = "Yo\u{011F}un"
-        }
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        let timeStr = timeFormatter.string(from: .now)
 
-        let today = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)
+        let remainingStatus = remainingCalories < 0 ? "hedefi aştı" : "hedef içinde"
+        let deficitStatus = deficitGap > 0
+            ? "hedefe ulaşmak için \(deficitGap) kcal daha lazım"
+            : "hedefi geçtin, bravo"
 
         let userPrompt = """
-            Tarih: \(today)
+            Saat: \(timeStr) (\(timeOfDay.rawValue))
             HRV: \(hrvText)
             Uyku: \(sleepText)
-            Bug\u{00FC}nk\u{00FC} plan: \(activityNames)
-            Kalan kalori: \(remainingCalories) kcal
-            A\u{00E7}\u{0131}k: \(calorieDeficit) kcal
-            Program yo\u{011F}unlu\u{011F}u: \(intensityText)
+            Bugünkü aktivite: \(activityNames)
 
-            Bu verilere g\u{00F6}re bug\u{00FC}n i\u{00E7}in k\u{0131}sa bir de\u{011F}erlendirme yap.
+            --- BESLENME DURUMU ---
+            Yeme hedefi: \(dailyCalorieTarget) kcal
+            Şu ana kadar yendi: \(consumed) kcal
+            Yeme hedefine göre kalan: \(remainingCalories) kcal
+            (\(remainingStatus))
+
+            Kalori açığı hedefi: \(targetDeficit) kcal/gün
+            Şu anki gerçek açık: \(actualDeficit) kcal
+            Açık farkı: \(deficitGap) kcal
+            (\(deficitStatus))
+
+            Protein: \(String(format: "%.0f", proteinConsumed))g / \(proteinTarget)g hedef
+            TDEE: \(tdee) kcal
             """
 
         let body: [String: Any] = [

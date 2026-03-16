@@ -33,6 +33,8 @@ struct SnapshotService {
             snapshot.consumedFat = consumedFat
             snapshot.usedHealthKit = goalEngine.usingHealthKit || goalEngine.isUsingExtrapolatedTDEE
             snapshot.weightKg = goalEngine.profile?.currentWeightKg ?? 0
+            snapshot.targetDeficit = Int(goalEngine.cappedDailyDeficit)
+            snapshot.actualDeficitAtClose = Int(goalEngine.tdee) - consumedCalories
             snapshot.savedAt = .now
         } else {
             let snapshot = DailySnapshot(
@@ -47,7 +49,9 @@ struct SnapshotService {
                 consumedCarbs: consumedCarbs,
                 consumedFat: consumedFat,
                 usedHealthKit: goalEngine.usingHealthKit || goalEngine.isUsingExtrapolatedTDEE,
-                weightKg: goalEngine.profile?.currentWeightKg ?? 0
+                weightKg: goalEngine.profile?.currentWeightKg ?? 0,
+                targetDeficit: Int(goalEngine.cappedDailyDeficit),
+                actualDeficitAtClose: Int(goalEngine.tdee) - consumedCalories
             )
             modelContext.insert(snapshot)
         }

@@ -29,6 +29,8 @@ final class DailySnapshot {
     var hrvStatus: String?
     var dailyInsight: String?
     var insightGeneratedAt: Date?
+    var targetDeficit: Int = 0
+    var actualDeficitAtClose: Int = 0
     var savedAt: Date
 
     init(
@@ -51,7 +53,9 @@ final class DailySnapshot {
         hrvBaseline: Double? = nil,
         hrvStatus: String? = nil,
         dailyInsight: String? = nil,
-        insightGeneratedAt: Date? = nil
+        insightGeneratedAt: Date? = nil,
+        targetDeficit: Int = 0,
+        actualDeficitAtClose: Int = 0
     ) {
         self.id = UUID()
         self.date = date
@@ -74,6 +78,8 @@ final class DailySnapshot {
         self.hrvStatus = hrvStatus
         self.dailyInsight = dailyInsight
         self.insightGeneratedAt = insightGeneratedAt
+        self.targetDeficit = targetDeficit
+        self.actualDeficitAtClose = actualDeficitAtClose
         self.savedAt = .now
     }
 }

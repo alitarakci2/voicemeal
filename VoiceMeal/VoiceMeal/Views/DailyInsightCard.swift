@@ -12,8 +12,15 @@ struct DailyInsightCard: View {
     let hrvBaseline: Double?
     let sleep: SleepData?
     let todayActivities: [String]
+    let consumed: Int
+    let dailyCalorieTarget: Int
     let remainingCalories: Int
-    let calorieDeficit: Int
+    let targetDeficit: Int
+    let actualDeficit: Int
+    let deficitGap: Int
+    let proteinConsumed: Double
+    let proteinTarget: Int
+    let tdee: Int
     let intensityLevel: Double
     @Environment(\.modelContext) private var modelContext
 
@@ -21,13 +28,10 @@ struct DailyInsightCard: View {
     @State private var isLoading = false
     @State private var generatedAt: Date?
     @State private var hasAttempted = false
+    @State private var lastTimeOfDay: GroqService.TimeOfDay?
+    @State private var isAutoRefreshing = false
 
     private let groqService = GroqService()
-
-    private var isInMorningWindow: Bool {
-        let hour = Calendar.current.component(.hour, from: .now)
-        return hour >= 7 && hour < 11
-    }
 
     private var sleepSummary: String? {
         guard let s = sleep else { return nil }
@@ -39,7 +43,7 @@ struct DailyInsightCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("\u{1F9E0} G\u{00FC}nl\u{00FC}k De\u{011F}erlendirme")
+                Text("\u{1F9E0} Günlük Değerlendirme")
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -59,7 +63,7 @@ struct DailyInsightCard: View {
             }
 
             // Insight content
-            if isLoading {
+            if isLoading && !isAutoRefreshing {
                 HStack {
                     ProgressView()
                         .controlSize(.small)
@@ -67,22 +71,30 @@ struct DailyInsightCard: View {
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
+            } else if isAutoRefreshing, insightText != nil {
+                // Show existing text with subtle update indicator
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(insightText!)
+                        .font(.system(size: 16))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Güncelleniyor...")
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
+                }
             } else if let text = insightText {
                 Text(text)
                     .font(.system(size: 16))
                     .foregroundStyle(Theme.textPrimary)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
-            } else if !isInMorningWindow && !hasAttempted {
-                Text("De\u{011F}erlendirme sabah 7-11 aras\u{0131} g\u{00FC}ncellenir")
-                    .font(Theme.captionFont)
-                    .foregroundStyle(Theme.textSecondary)
             } else if hasAttempted {
-                Text("Bug\u{00FC}nk\u{00FC} veriler analiz edilemedi. Sa\u{011F}l\u{0131}kl\u{0131} beslenmeye devam et!")
+                Text("Bugünkü veriler analiz edilemedi. Sağlıklı beslenmeye devam et!")
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             } else {
-                Text("Yeterli veri yok \u{2014} birka\u{00E7} g\u{00FC}n sonra g\u{00F6}r\u{00FC}n\u{00FC}r")
+                Text("Yeterli veri yok \u{2014} birkaç gün sonra görünür")
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -102,7 +114,7 @@ struct DailyInsightCard: View {
                 Spacer()
 
                 if let time = generatedAt {
-                    Text("\(time.formatted(.dateTime.hour().minute()))'de \u{00FC}retildi")
+                    Text("\(time.formatted(.dateTime.hour().minute()))'de güncellendi")
                         .font(Theme.microFont)
                         .foregroundStyle(Theme.textTertiary)
                 }
@@ -112,8 +124,27 @@ struct DailyInsightCard: View {
         .themeCard()
         .task {
             loadCachedInsight()
-            if insightText == nil && isInMorningWindow {
+            lastTimeOfDay = GroqService.currentTimeOfDay()
+            if insightText == nil {
                 await generateInsight(force: false)
+            }
+
+            // Periodic refresh loop: check every 60s if 3 hours elapsed or timeOfDay changed
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                guard !Task.isCancelled else { break }
+
+                let currentTOD = GroqService.currentTimeOfDay()
+                let timeOfDayChanged = currentTOD != lastTimeOfDay
+                let threeHoursAgo = Date().addingTimeInterval(-3 * 3600)
+                let needsRefresh = generatedAt == nil || generatedAt! < threeHoursAgo
+
+                if timeOfDayChanged || needsRefresh {
+                    lastTimeOfDay = currentTOD
+                    isAutoRefreshing = true
+                    await generateInsight(force: true)
+                    isAutoRefreshing = false
+                }
             }
         }
     }
@@ -145,13 +176,21 @@ struct DailyInsightCard: View {
 
         do {
             let text = try await groqService.generateDailyInsight(
+                timeOfDay: GroqService.currentTimeOfDay(),
                 hrvStatus: hrvStatus,
                 todayHRV: todayHRV,
                 hrvBaseline: hrvBaseline,
                 sleep: sleep,
                 todayActivities: todayActivities,
+                consumed: consumed,
+                dailyCalorieTarget: dailyCalorieTarget,
                 remainingCalories: remainingCalories,
-                calorieDeficit: calorieDeficit,
+                targetDeficit: targetDeficit,
+                actualDeficit: actualDeficit,
+                deficitGap: deficitGap,
+                proteinConsumed: proteinConsumed,
+                proteinTarget: proteinTarget,
+                tdee: tdee,
                 intensityLevel: intensityLevel
             )
             insightText = text
@@ -172,7 +211,9 @@ struct DailyInsightCard: View {
             }
         } catch {
             print("[DailyInsight] Error: \(error)")
-            insightText = "Bug\u{00FC}nk\u{00FC} veriler analiz edilemedi. Sa\u{011F}l\u{0131}kl\u{0131} beslenmeye devam et!"
+            if insightText == nil {
+                insightText = "Bugünkü veriler analiz edilemedi. Sağlıklı beslenmeye devam et!"
+            }
         }
 
         isLoading = false

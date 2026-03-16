@@ -83,8 +83,15 @@ struct HomeView: View {
                         hrvBaseline: healthKitService.hrvBaseline,
                         sleep: healthKitService.lastNightSleep,
                         todayActivities: goalEngine.todayActivityNames,
+                        consumed: eatenCalories,
+                        dailyCalorieTarget: goalEngine.dailyCalorieTarget,
                         remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
-                        calorieDeficit: Int(goalEngine.tdee) - eatenCalories,
+                        targetDeficit: Int(goalEngine.cappedDailyDeficit),
+                        actualDeficit: Int(goalEngine.tdee) - eatenCalories,
+                        deficitGap: Int(goalEngine.cappedDailyDeficit) - (Int(goalEngine.tdee) - eatenCalories),
+                        proteinConsumed: eatenProtein,
+                        proteinTarget: goalEngine.proteinTarget,
+                        tdee: Int(goalEngine.tdee),
                         intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5
                     )
 
@@ -380,12 +387,22 @@ struct HomeView: View {
     // MARK: - Daily Goal Card
 
     private var dailyGoalCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let remaining = goalEngine.dailyCalorieTarget - eatenCalories
+        let targetDeficit = Int(goalEngine.cappedDailyDeficit)
+        let actualDeficit = Int(goalEngine.tdee) - eatenCalories
+        let eatingPercent = goalEngine.dailyCalorieTarget > 0
+            ? Int(Double(eatenCalories) / Double(goalEngine.dailyCalorieTarget) * 100) : 0
+        let deficitPercent = targetDeficit > 0
+            ? min(Int(Double(max(actualDeficit, 0)) / Double(targetDeficit) * 100), 999) : 0
+        let deficitColor: Color = deficitPercent >= 80 ? Theme.green
+            : deficitPercent >= 50 ? Theme.orange : Theme.red
+
+        return VStack(alignment: .leading, spacing: 12) {
             // Header with today's activities
             HStack {
                 let names = goalEngine.todayActivityNames
                     .compactMap { GoalEngine.activityDisplayNames[$0] }
-                Text("📅 Bugün: \(names.joined(separator: ", "))")
+                Text("\u{1F4C5} Bug\u{00FC}n: \(names.joined(separator: ", "))")
                     .font(Theme.bodyFont)
                     .fontWeight(.medium)
 
@@ -414,50 +431,95 @@ struct HomeView: View {
                 }
             }
 
-            // Calorie summary
-            let remaining = goalEngine.dailyCalorieTarget - eatenCalories
+            // Dual target: Yeme Hedefi + Kalori Açığı
             HStack(spacing: 0) {
-                calorieStat("Hedef", value: goalEngine.dailyCalorieTarget)
-
-                Divider()
-                    .frame(width: 1, height: 40)
-                    .background(Theme.cardBorder)
-
-                calorieStat("Yenen", value: eatenCalories)
-
-                Divider()
-                    .frame(width: 1, height: 40)
-                    .background(Theme.cardBorder)
-
-                VStack(spacing: 2) {
-                    Text("Kalan")
+                // Left: Yeme Hedefi
+                VStack(spacing: 6) {
+                    Text("Yeme Hedefi")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
-                    Text("\(remaining)")
-                        .font(.system(size: 34, weight: .bold))
-                        .foregroundStyle(remaining < 0 ? Theme.red : Theme.textPrimary)
+                    HStack(spacing: 12) {
+                        VStack(spacing: 2) {
+                            Text("Hedef")
+                                .font(Theme.microFont)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text("\(goalEngine.dailyCalorieTarget)")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        VStack(spacing: 2) {
+                            Text("Yenen")
+                                .font(Theme.microFont)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text("\(eatenCalories)")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        VStack(spacing: 2) {
+                            Text("Kalan")
+                                .font(Theme.microFont)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text("\(remaining)")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(remaining < 0 ? Theme.red : Theme.textPrimary)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+                    .frame(width: 1, height: 50)
+                    .background(Theme.cardBorder)
+
+                // Right: Kalori Açığı
+                VStack(spacing: 6) {
+                    Text("Kalori A\u{00E7}\u{0131}\u{011F}\u{0131}")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
+                    HStack(spacing: 12) {
+                        VStack(spacing: 2) {
+                            Text("Hedef")
+                                .font(Theme.microFont)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text("\(targetDeficit)")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        VStack(spacing: 2) {
+                            Text("Ger\u{00E7}ek")
+                                .font(Theme.microFont)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text("\(actualDeficit)")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(actualDeficit < 0 ? Theme.red : Theme.textPrimary)
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
 
-            // Daily deficit
-            let deficit = Int(goalEngine.tdee) - eatenCalories
-            HStack {
-                if deficit > 0 {
-                    Text("\u{1F525} \(deficit) kcal a\u{00E7}\u{0131}k")
-                        .foregroundStyle(Theme.green)
-                } else {
-                    Text("\u{26A0}\u{FE0F} \(abs(deficit)) kcal fazla")
-                        .foregroundStyle(Theme.red)
-                }
+            // Eating progress line
+            if remaining < 0 {
+                Text("\u{26A0}\u{FE0F} Yeme: %\(eatingPercent) a\u{015F}t\u{0131}n")
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.red)
+            } else {
+                Text("\u{2705} Yeme: %\(eatingPercent) tamamland\u{0131}")
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.green)
             }
-            .font(Theme.bodyFont)
-            .fontWeight(.medium)
 
-            // Macro progress bars
-            macroRow("Protein", eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: .blue)
-            macroRow("Karb", eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: .orange)
-            macroRow("Yağ", eaten: Int(eatenFat), target: goalEngine.fatTarget, color: .yellow)
+            // Deficit progress line
+            HStack(spacing: 4) {
+                Text("\u{1F525} A\u{00E7}\u{0131}k: \(max(actualDeficit, 0)) / \(targetDeficit) kcal (%\(deficitPercent))")
+                    .font(Theme.captionFont)
+                    .foregroundStyle(deficitColor)
+            }
+
+            // Macro progress bars with warning emoji
+            macroRow("Protein", eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: .blue, exceeded: Int(eatenProtein) > goalEngine.proteinTarget)
+            macroRow("Karb", eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: .orange, exceeded: Int(eatenCarbs) > goalEngine.carbTarget)
+            macroRow("Ya\u{011F}", eaten: Int(eatenFat), target: goalEngine.fatTarget, color: .yellow, exceeded: Int(eatenFat) > goalEngine.fatTarget)
         }
         .padding()
         .themeCard()
@@ -475,7 +537,7 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func macroRow(_ name: String, eaten: Int, target: Int, color: Color) -> some View {
+    private func macroRow(_ name: String, eaten: Int, target: Int, color: Color, exceeded: Bool = false) -> some View {
         HStack(spacing: 8) {
             Text(name)
                 .font(Theme.captionFont)
@@ -494,10 +556,16 @@ struct HomeView: View {
             }
             .frame(height: 8)
 
-            Text("\(eaten)g / \(target)g")
-                .font(Theme.captionFont)
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 80, alignment: .trailing)
+            HStack(spacing: 2) {
+                Text("\(eaten)g / \(target)g")
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
+                if exceeded {
+                    Text("\u{2B06}\u{FE0F}")
+                        .font(Theme.microFont)
+                }
+            }
+            .frame(width: 95, alignment: .trailing)
         }
     }
 
