@@ -10,6 +10,7 @@ struct ProgramSummaryView: View {
     let targetProtein: Int
     let targetCarbs: Int
     let targetFat: Int
+    let realWeightDate: Date?
 
     @State private var insightText: String?
     @State private var insightLoading = false
@@ -103,14 +104,20 @@ struct ProgramSummaryView: View {
     }
 
     private var onTrackText: String {
-        if summary.onTrack {
-            return "✅ Hedefte gidiyorsun!"
+        switch summary.onTrackLevel {
+        case 2: return "✅ Hedefte gidiyorsun!"
+        case 1: return "👌 Hedefe yakın gidiyorsun"
+        default:
+            switch summary.goalDirection {
+            case .losing: return "⚠️ Biraz geride — açığı artır"
+            case .gaining: return "⚠️ Biraz geride — kaloriyi artır"
+            case .maintenance: return "⚠️ Hedeften sapma var"
+            }
         }
-        switch summary.goalDirection {
-        case .losing: return "⚠️ Biraz geride — açığı artır"
-        case .gaining: return "⚠️ Biraz geride — kaloriyi artır"
-        case .maintenance: return "⚠️ Hedeften sapma var"
-        }
+    }
+
+    private var onTrackColor: Color {
+        summary.onTrackLevel >= 1 ? Theme.green : Theme.orange
     }
 
     private var programCompletionPercent: Int {
@@ -168,7 +175,7 @@ struct ProgramSummaryView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(summary.onTrack ? Theme.green : Theme.orange)
+                        .fill(onTrackColor)
                         .frame(width: geo.size.width * progress)
                 }
             }
@@ -186,7 +193,38 @@ struct ProgramSummaryView: View {
             // On track indicator
             Text(onTrackText)
                 .font(Theme.bodyFont)
-                .foregroundStyle(summary.onTrack ? Theme.green : Theme.orange)
+                .foregroundStyle(onTrackColor)
+
+            // Real weight comparison
+            if summary.currentWeight != summary.startWeight {
+                Divider()
+                    .background(Theme.cardBorder)
+
+                let realWeight = summary.currentWeight
+                let dateStr = realWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
+                let healthNote = dateStr.isEmpty ? "" : " (\(dateStr), Health'ten)"
+
+                Text("⚖️ Gerçek Kilo: \(String(format: "%.1f", realWeight)) kg\(healthNote)")
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textPrimary)
+
+                let estimatedWeight = summary.startWeight - (Double(summary.totalDeficitKcal) / 7700.0)
+                let diff = estimatedWeight - realWeight
+
+                if diff > 0.1 {
+                    Text("✅ Beklenenden \(String(format: "%.1f", diff)) kg fazla verdin!")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.green)
+                } else if diff < -0.1 {
+                    Text("⚠️ Tahminden \(String(format: "%.1f", abs(diff))) kg geride")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.orange)
+                } else {
+                    Text("👌 Tahminle örtüşüyor")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
         }
         .padding()
         .themeCard()

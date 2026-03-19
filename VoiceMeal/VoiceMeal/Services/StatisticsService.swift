@@ -11,7 +11,9 @@ struct DayStat: Identifiable {
     let date: Date
     let consumedCalories: Int
     let targetCalories: Int
-    let deficit: Int
+    let tdee: Int
+    let deficit: Int          // real deficit: tdee - consumed
+    let eatingGoalDiff: Int   // target - consumed (how far from eating goal)
     let cumulativeDeficit: Int
     let protein: Double
     let carbs: Double
@@ -59,6 +61,7 @@ struct ProgramSummary {
     let mostCommonActivity: String
 
     let onTrack: Bool
+    let onTrackLevel: Int // 0=behind, 1=near, 2=ahead
     let progressPercent: Int
     let daysRemaining: Int
     let goalDirection: GoalDirection
@@ -99,7 +102,9 @@ class StatisticsService {
 
             let consumed = snapshot?.consumedCalories ?? dayEntries.reduce(0) { $0 + $1.calories }
             let target = snapshot?.dailyCalorieTarget ?? calculateTargetForDate(current, profile: profile)
-            let deficit = target > 0 ? target - consumed : 0
+            let dayTDEE = snapshot != nil ? Int(snapshot!.tdee) : calculateTDEEForDate(current, profile: profile)
+            let deficit = dayTDEE > 0 ? dayTDEE - consumed : 0  // real deficit
+            let eatingGoalDiff = target > 0 ? target - consumed : 0
             cumulative += deficit
 
             let protein = snapshot?.consumedProtein ?? dayEntries.reduce(0.0) { $0 + $1.protein }
@@ -132,7 +137,9 @@ class StatisticsService {
                 date: current,
                 consumedCalories: consumed,
                 targetCalories: target,
+                tdee: dayTDEE,
                 deficit: deficit,
+                eatingGoalDiff: eatingGoalDiff,
                 cumulativeDeficit: cumulative,
                 protein: protein,
                 carbs: carbs,
@@ -287,6 +294,12 @@ class StatisticsService {
         let programStart = earliestSnapshot?.weightKg
             ?? (profile.programStartWeightKg > 0 ? profile.programStartWeightKg : profile.currentWeightKg)
 
+        print("📊 Program start weight: \(programStart)")
+        print("📊 Profile.programStartWeightKg: \(profile.programStartWeightKg)")
+        print("📊 Profile.currentWeightKg: \(profile.currentWeightKg)")
+        print("📊 Earliest snapshot weight: \(earliestSnapshot?.weightKg ?? -1)")
+        print("📊 Snapshots count for program: \(snapshots.filter { $0.date >= profile.createdAt }.count)")
+
         // Derive direction from program start weight, not current weight
         let direction: GoalDirection
         if profile.goalWeightKg > programStart {
@@ -371,23 +384,56 @@ class StatisticsService {
         }
         let mostCommon = actCounts.max(by: { $0.value < $1.value })?.key ?? "rest"
 
-        // On track
+        print("📊 Total deficit kcal: \(totalDeficit)")
+        print("📊 Estimated change kg: \(estimatedChange)")
+        print("📊 Days with data: \(daysWithData)")
+
+        // Use real weight (from HealthKit/profile) if it differs from start, else estimated
+        let realWeight = profile.currentWeightKg
+        let estimatedCurrentWeight = programStart - estimatedChange
+        let effectiveCurrentWeight = (realWeight > 0 && abs(realWeight - programStart) > 0.01)
+            ? realWeight : estimatedCurrentWeight
+        print("📊 Estimated current weight: \(estimatedCurrentWeight)")
+        print("📊 Real weight (currentWeightKg): \(realWeight)")
+        print("📊 Effective current weight: \(effectiveCurrentWeight)")
+
+        // On track — use effective weight with 85% tolerance
         let totalToChange = programStart - profile.goalWeightKg
+        let actualLost = programStart - effectiveCurrentWeight
         let expectedByNow = (Double(totalDays) / Double(max(1, profile.goalDays))) * abs(totalToChange)
         let onTrack: Bool
+        let onTrackLevel: Int
         switch direction {
-        case .losing: onTrack = estimatedChange >= expectedByNow
-        case .gaining: onTrack = abs(estimatedChange) >= expectedByNow
-        case .maintenance: onTrack = abs(estimatedChange) < 0.5
+        case .losing:
+            onTrack = actualLost >= expectedByNow * 0.85
+            if actualLost >= expectedByNow * 1.10 {
+                onTrackLevel = 2 // ahead
+            } else if actualLost >= expectedByNow * 0.85 {
+                onTrackLevel = 1 // near
+            } else {
+                onTrackLevel = 0 // behind
+            }
+        case .gaining:
+            let actualGained = effectiveCurrentWeight - programStart
+            onTrack = actualGained >= expectedByNow * 0.85
+            if actualGained >= expectedByNow * 1.10 {
+                onTrackLevel = 2
+            } else if actualGained >= expectedByNow * 0.85 {
+                onTrackLevel = 1
+            } else {
+                onTrackLevel = 0
+            }
+        case .maintenance:
+            onTrack = abs(actualLost) < 0.5
+            onTrackLevel = onTrack ? 1 : 0
         }
 
-        // Progress percent
+        // Progress percent — based on effective weight
         let progressPercent: Int
         if abs(totalToChange) < 0.01 {
             progressPercent = 100
         } else {
-            let lost = programStart - profile.currentWeightKg
-            progressPercent = min(100, max(0, Int((abs(lost) / abs(totalToChange)) * 100)))
+            progressPercent = min(100, max(0, Int((abs(actualLost) / abs(totalToChange)) * 100)))
         }
 
         let daysRemaining = max(0, profile.goalDays - totalDays)
@@ -413,6 +459,7 @@ class StatisticsService {
             totalWorkoutDays: workoutDays,
             mostCommonActivity: mostCommon,
             onTrack: onTrack,
+            onTrackLevel: onTrackLevel,
             progressPercent: progressPercent,
             daysRemaining: daysRemaining,
             goalDirection: direction,
@@ -423,9 +470,9 @@ class StatisticsService {
         )
     }
 
-    // MARK: - Target Fallback
+    // MARK: - TDEE & Target Fallback
 
-    private func calculateTargetForDate(_ date: Date, profile: UserProfile?) -> Int {
+    private func calculateTDEEForDate(_ date: Date, profile: UserProfile?) -> Int {
         guard let p = profile else { return 0 }
 
         // BMR (Mifflin-St Jeor)
@@ -474,7 +521,21 @@ class StatisticsService {
             activityMultiplier = highest + bonus
         }
 
-        let tdee = bmr * activityMultiplier
+        return Int(bmr * activityMultiplier)
+    }
+
+    private func calculateTargetForDate(_ date: Date, profile: UserProfile?) -> Int {
+        guard let p = profile else { return 0 }
+
+        let tdee = Double(calculateTDEEForDate(date, profile: p))
+
+        // BMR for minimum target
+        let bmr: Double
+        if p.gender == "male" {
+            bmr = 10 * p.currentWeightKg + 6.25 * p.heightCm - 5 * Double(p.age) + 5
+        } else {
+            bmr = 10 * p.currentWeightKg + 6.25 * p.heightCm - 5 * Double(p.age) - 161
+        }
 
         // Deficit (same formula as GoalEngine)
         guard p.goalDays > 0 else { return Int(tdee) }

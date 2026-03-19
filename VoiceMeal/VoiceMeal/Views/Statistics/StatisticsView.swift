@@ -58,7 +58,8 @@ struct StatisticsView: View {
                                 ),
                                 targetProtein: goalEngine.proteinTarget,
                                 targetCarbs: goalEngine.carbTarget,
-                                targetFat: goalEngine.fatTarget
+                                targetFat: goalEngine.fatTarget,
+                                realWeightDate: goalEngine.latestWeightDate
                             )
                         }
                     } else {
