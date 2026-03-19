@@ -44,7 +44,7 @@ struct SuggestedMeal: Codable {
 class GroqService {
 
     private let endpoint = URL(string: "https://api.groq.com/openai/v1/chat/completions")!
-    private let model = "llama-3.3-70b-versatile"
+    private let model = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     private let systemPrompt = """
         Sen bir beslenme asistan\u{0131}s\u{0131}n. Kullan\u{0131}c\u{0131}n\u{0131}n T\u{00FC}rk\u{00E7}e konu\u{015F}mas\u{0131}ndan \
