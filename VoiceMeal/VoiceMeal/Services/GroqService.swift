@@ -214,7 +214,8 @@ class GroqService {
         tdee: Int,
         intensityLevel: Double,
         waterMl: Int = 0,
-        waterGoalMl: Int = 0
+        waterGoalMl: Int = 0,
+        plannedMeals: String? = nil
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -271,6 +272,7 @@ class GroqService {
 
             --- SU DURUMU ---
             İçilen su: \(waterMl) ml / \(waterGoalMl) ml hedef
+            \(plannedMeals.map { "\n--- PLANLANAN ÖĞÜNLER ---\n\($0)" } ?? "")
             """
 
         let body: [String: Any] = [
@@ -575,6 +577,115 @@ class GroqService {
         }
 
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Daily Meal Plan
+
+    private let mealPlanSystemPrompt = """
+        Sen ki\u{015F}isel bir T\u{00FC}rk beslenme uzman\u{0131}s\u{0131}n.
+        Kullan\u{0131}c\u{0131}n\u{0131}n g\u{00FC}nl\u{00FC}k kalori ve makro hedeflerine g\u{00F6}re \
+        3 \u{00F6}\u{011F}\u{00FC}n i\u{00E7}in 3'er se\u{00E7}enek \u{00F6}ner.
+
+        Kurallar:
+        - T\u{00FC}rk mutfa\u{011F}\u{0131}ndan ve g\u{00FC}nl\u{00FC}k hayattan yemekler
+        - 3 \u{00F6}\u{011F}\u{00FC}n toplam\u{0131} hedef kaloriye yak\u{0131}n olsun
+        - Protein hedefine \u{00F6}zellikle dikkat et
+        - Kullan\u{0131}c\u{0131}n\u{0131}n favori ve s\u{0131}k yedi\u{011F}i malzemeleri kullan
+        - Her se\u{00E7}enek farkl\u{0131} olsun
+        - prepNote max 2 c\u{00FC}mle, pratik bilgi
+        - Emoji se\u{00E7} her yemek i\u{00E7}in
+        - mealType de\u{011F}erleri: "breakfast", "lunch", "dinner"
+
+        SADECE JSON d\u{00F6}nd\u{00FC}r, ba\u{015F}ka hi\u{00E7}bir \u{015F}ey yazma.
+        """
+
+    func generateDailyMealPlan(
+        dailyCalorieTarget: Int,
+        proteinTarget: Int,
+        carbTarget: Int,
+        fatTarget: Int,
+        favoriteFoods: [String],
+        frequentFoods: [String],
+        todayActivities: [String],
+        hrvStatus: HRVStatus
+    ) async throws -> DailyMealPlanResponse {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let activityNames = todayActivities
+            .compactMap { GoalEngine.activityDisplayNames[$0] }
+            .joined(separator: ", ")
+
+        let userPrompt = """
+            G\u{00FC}nl\u{00FC}k hedef: \(dailyCalorieTarget) kcal
+            Protein: \(proteinTarget)g | Karb: \(carbTarget)g | Ya\u{011F}: \(fatTarget)g
+
+            Favori malzemeler: \(favoriteFoods.joined(separator: ", "))
+            S\u{0131}k yenilen yemekler: \(frequentFoods.joined(separator: ", "))
+            Bug\u{00FC}nk\u{00FC} aktivite: \(activityNames)
+            Toparlanma: \(hrvStatus.rawValue)
+
+            Kahvalt\u{0131} ~%25, \u{00D6}\u{011F}le ~%35, Ak\u{015F}am ~%40 kalori da\u{011F}\u{0131}l\u{0131}m\u{0131} yap.
+            Her \u{00F6}\u{011F}\u{00FC}n i\u{00E7}in 3 farkl\u{0131} se\u{00E7}enek sun.
+
+            JSON format\u{0131}:
+            {
+              "breakfast": [
+                {
+                  "name": "string",
+                  "emoji": "string",
+                  "ingredients": ["string"],
+                  "prepNote": "string",
+                  "calories": number,
+                  "protein": number,
+                  "carbs": number,
+                  "fat": number,
+                  "mealType": "breakfast"
+                }
+              ],
+              "lunch": [...],
+              "dinner": [...]
+            }
+            """
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                ["role": "system", "content": mealPlanSystemPrompt],
+                ["role": "user", "content": userPrompt]
+            ],
+            "temperature": 0.8,
+            "max_tokens": 1500
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        let jsonString = content
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            throw GroqError.invalidJSON
+        }
+
+        return try JSONDecoder().decode(DailyMealPlanResponse.self, from: jsonData)
     }
 }
 
