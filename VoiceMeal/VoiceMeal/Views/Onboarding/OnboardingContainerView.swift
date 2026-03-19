@@ -122,6 +122,7 @@ struct OnboardingContainerView: View {
             intensityLevel: intensityLevel,
             weeklySchedule: weeklySchedule
         )
+        profile.programStartWeightKg = currentWeightKg
         modelContext.insert(profile)
         onboardingComplete = true
     }

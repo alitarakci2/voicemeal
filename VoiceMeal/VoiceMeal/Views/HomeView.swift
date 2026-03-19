@@ -444,24 +444,33 @@ struct HomeView: View {
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(goalEngine.dailyCalorieTarget)")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Theme.textPrimary)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                                .allowsTightening(true)
                         }
                         VStack(spacing: 2) {
                             Text("Yenen")
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(eatenCalories)")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Theme.textPrimary)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                                .allowsTightening(true)
                         }
                         VStack(spacing: 2) {
                             Text("Kalan")
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(remaining)")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(remaining < 0 ? Theme.red : Theme.textPrimary)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                                .allowsTightening(true)
                         }
                     }
                 }
@@ -482,16 +491,22 @@ struct HomeView: View {
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(targetDeficit)")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Theme.textPrimary)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                                .allowsTightening(true)
                         }
                         VStack(spacing: 2) {
                             Text("Ger\u{00E7}ek")
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(actualDeficit)")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(actualDeficit < 0 ? Theme.red : Theme.textPrimary)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                                .allowsTightening(true)
                         }
                     }
                 }

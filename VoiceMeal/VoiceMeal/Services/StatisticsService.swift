@@ -263,9 +263,10 @@ class StatisticsService {
     // MARK: - Program Data
 
     static func goalDirection(profile: UserProfile) -> GoalDirection {
-        if profile.goalWeightKg > profile.currentWeightKg {
+        let start = profile.programStartWeightKg > 0 ? profile.programStartWeightKg : profile.currentWeightKg
+        if profile.goalWeightKg > start {
             return .gaining
-        } else if profile.goalWeightKg < profile.currentWeightKg {
+        } else if profile.goalWeightKg < start {
             return .losing
         } else {
             return .maintenance
@@ -355,8 +356,9 @@ class StatisticsService {
         let mostCommon = actCounts.max(by: { $0.value < $1.value })?.key ?? "rest"
 
         // On track
-        let weightDiff = profile.currentWeightKg - profile.goalWeightKg
-        let expectedByNow = (Double(totalDays) / Double(max(1, profile.goalDays))) * abs(weightDiff)
+        let programStart = profile.programStartWeightKg > 0 ? profile.programStartWeightKg : profile.currentWeightKg
+        let totalToChange = programStart - profile.goalWeightKg
+        let expectedByNow = (Double(totalDays) / Double(max(1, profile.goalDays))) * abs(totalToChange)
         let onTrack: Bool
         switch direction {
         case .losing: onTrack = estimatedChange >= expectedByNow
@@ -366,10 +368,11 @@ class StatisticsService {
 
         // Progress percent
         let progressPercent: Int
-        if abs(weightDiff) < 0.01 {
+        if abs(totalToChange) < 0.01 {
             progressPercent = 100
         } else {
-            progressPercent = min(100, max(0, Int((abs(estimatedChange) / abs(weightDiff)) * 100)))
+            let lost = programStart - profile.currentWeightKg
+            progressPercent = min(100, max(0, Int((abs(lost) / abs(totalToChange)) * 100)))
         }
 
         let daysRemaining = max(0, profile.goalDays - totalDays)
@@ -398,7 +401,7 @@ class StatisticsService {
             progressPercent: progressPercent,
             daysRemaining: daysRemaining,
             goalDirection: direction,
-            startWeight: profile.currentWeightKg,
+            startWeight: programStart,
             currentWeight: profile.currentWeightKg, // best approximation
             goalWeight: profile.goalWeightKg,
             expectedChangeByNow: expectedByNow

@@ -25,6 +25,7 @@ final class UserProfile {
     var notification2Hour: Int
     var notification2Minute: Int
     var preferredProteinsJSON: String
+    var programStartWeightKg: Double = 0
     var createdAt: Date
     var updatedAt: Date
 

@@ -40,14 +40,42 @@ struct Step2BodyView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Boy: \(Int(heightCm)) cm")
                         .font(Theme.headlineFont)
-                    Slider(value: $heightCm, in: 140...220, step: 1)
+                    HStack {
+                        Slider(value: $heightCm, in: 140...220, step: 1)
+                            .tint(Theme.accent)
+                        TextField("", value: $heightCm, format: .number.precision(.fractionLength(0)))
+                            .keyboardType(.numberPad)
+                            .frame(width: 64)
+                            .padding(8)
+                            .background(Color(hex: "2A2A38"))
+                            .cornerRadius(8)
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .onChange(of: heightCm) { _, newVal in
+                                heightCm = min(220, max(140, newVal)).rounded()
+                            }
+                    }
                 }
 
                 // Weight
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Kilo: \(String(format: "%.1f", currentWeightKg)) kg")
                         .font(Theme.headlineFont)
-                    Slider(value: $currentWeightKg, in: 40...200, step: 0.5)
+                    HStack {
+                        Slider(value: $currentWeightKg, in: 40...200, step: 0.5)
+                            .tint(Theme.accent)
+                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(1)))
+                            .keyboardType(.decimalPad)
+                            .frame(width: 64)
+                            .padding(8)
+                            .background(Color(hex: "2A2A38"))
+                            .cornerRadius(8)
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .onChange(of: currentWeightKg) { _, newVal in
+                                currentWeightKg = min(200, max(40, (newVal * 2).rounded() / 2))
+                            }
+                    }
                 }
             }
             .padding()
