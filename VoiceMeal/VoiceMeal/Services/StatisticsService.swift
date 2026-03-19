@@ -279,7 +279,23 @@ class StatisticsService {
         let today = calendar.startOfDay(for: .now)
         let totalDays = max(1, calendar.dateComponents([.day], from: startDate, to: today).day! + 1)
 
-        let direction = Self.goalDirection(profile: profile)
+        // Determine start weight from earliest snapshot or profile
+        let earliestSnapshot = snapshots
+            .filter { $0.date >= startDate && $0.weightKg > 0 }
+            .sorted { $0.date < $1.date }
+            .first
+        let programStart = earliestSnapshot?.weightKg
+            ?? (profile.programStartWeightKg > 0 ? profile.programStartWeightKg : profile.currentWeightKg)
+
+        // Derive direction from program start weight, not current weight
+        let direction: GoalDirection
+        if profile.goalWeightKg > programStart {
+            direction = .gaining
+        } else if profile.goalWeightKg < programStart {
+            direction = .losing
+        } else {
+            direction = .maintenance
+        }
 
         // Build all stats from program start
         let allStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: totalDays)
@@ -356,7 +372,6 @@ class StatisticsService {
         let mostCommon = actCounts.max(by: { $0.value < $1.value })?.key ?? "rest"
 
         // On track
-        let programStart = profile.programStartWeightKg > 0 ? profile.programStartWeightKg : profile.currentWeightKg
         let totalToChange = programStart - profile.goalWeightKg
         let expectedByNow = (Double(totalDays) / Double(max(1, profile.goalDays))) * abs(totalToChange)
         let onTrack: Bool

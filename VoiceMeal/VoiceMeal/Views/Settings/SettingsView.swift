@@ -415,6 +415,8 @@ struct SettingsView: View {
     private func performSave() {
         guard let p = profiles.first else { return }
 
+        print("[Settings] BEFORE save - startWeight: \(p.programStartWeightKg)")
+
         p.name = name
         p.gender = gender
         p.age = age
@@ -436,6 +438,7 @@ struct SettingsView: View {
         originalSchedule = weeklySchedule
 
         try? modelContext.save()
+        print("[Settings] AFTER save - startWeight: \(p.programStartWeightKg)")
         NotificationService.shared.reschedule(profile: p)
         NotificationCenter.default.post(name: .profileUpdated, object: nil)
 
