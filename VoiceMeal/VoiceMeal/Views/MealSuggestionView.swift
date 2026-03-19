@@ -179,7 +179,6 @@ struct MealSuggestionView: View {
             suggestion = result
             cachedAt = .now
         } catch {
-            print("[MealSuggestion] Error: \(error)")
             errorMessage = "\u{00D6}neri olu\u{015F}turulamad\u{0131}. \u{0130}nternet ba\u{011F}lant\u{0131}n\u{0131} kontrol et."
         }
 

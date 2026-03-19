@@ -210,7 +210,7 @@ struct DailyInsightCard: View {
                 snapshot.hrvStatus = hrvStatus.rawValue
             }
         } catch {
-            print("[DailyInsight] Error: \(error)")
+            // Daily insight error
             if insightText == nil {
                 insightText = "Bugünkü veriler analiz edilemedi. Sağlıklı beslenmeye devam et!"
             }

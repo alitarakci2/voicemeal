@@ -423,7 +423,7 @@ struct ProgramSummaryView: View {
             insightText = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)
         } catch {
-            print("[ProgramInsight] Error: \(error)")
+            // Program insight error
             insightText = "Değerlendirme yüklenemedi."
         }
         insightLoading = false

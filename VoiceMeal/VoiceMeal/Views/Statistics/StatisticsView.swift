@@ -182,10 +182,10 @@ struct StatisticsView: View {
                     Text("\u{2696}\u{FE0F} Tahmini Kilo De\u{011F}i\u{015F}imi")
                         .font(Theme.headlineFont)
                     let weekKg = statisticsService.estimatedWeightLostWeekKg
-                    Text("Bu hafta: \(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg))) kg tahmini")
+                    Text("Bu hafta: \(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg))) kg (ger\u{00E7}ek a\u{00E7}\u{0131}k)")
                         .font(Theme.bodyFont)
                     let monthKg = statisticsService.estimatedWeightLostMonthKg
-                    Text("Bu ay: \(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg))) kg tahmini")
+                    Text("Bu ay: \(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg))) kg (ger\u{00E7}ek a\u{00E7}\u{0131}k)")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -281,7 +281,7 @@ struct StatisticsView: View {
             UserDefaults.standard.set(insight, forKey: cacheKey)
             UserDefaults.standard.set(Date.now, forKey: "weeklyInsightDate")
         } catch {
-            print("[Statistics] Weekly insight error: \(error)")
+            // Weekly insight error
         }
         insightLoading = false
     }

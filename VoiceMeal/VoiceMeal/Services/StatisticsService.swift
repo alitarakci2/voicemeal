@@ -75,6 +75,12 @@ struct ProgramSummary {
 @Observable
 class StatisticsService {
 
+    private static var localCalendar: Calendar {
+        var cal = Calendar.current
+        cal.timeZone = TimeZone.current
+        return cal
+    }
+
     private(set) var weeklyStats: [DayStat] = []
     private(set) var monthlyStats: [DayStat] = []
 
@@ -84,7 +90,7 @@ class StatisticsService {
     }
 
     private func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, days: Int) -> [DayStat] {
-        let calendar = Calendar.current
+        let calendar = Self.localCalendar
         let today = calendar.startOfDay(for: .now)
         guard let startDate = calendar.date(byAdding: .day, value: -(days - 1), to: today) else { return [] }
 
@@ -103,9 +109,9 @@ class StatisticsService {
             let consumed = snapshot?.consumedCalories ?? dayEntries.reduce(0) { $0 + $1.calories }
             let target = snapshot?.dailyCalorieTarget ?? calculateTargetForDate(current, profile: profile)
             let dayTDEE = snapshot != nil ? Int(snapshot!.tdee) : calculateTDEEForDate(current, profile: profile)
-            let deficit = dayTDEE > 0 ? dayTDEE - consumed : 0  // real deficit
-            let eatingGoalDiff = target > 0 ? target - consumed : 0
-            cumulative += deficit
+            let deficit = hasData && dayTDEE > 0 ? dayTDEE - consumed : 0  // real deficit, only for days with data
+            let eatingGoalDiff = hasData && target > 0 ? target - consumed : 0
+            if hasData { cumulative += deficit }
 
             let protein = snapshot?.consumedProtein ?? dayEntries.reduce(0.0) { $0 + $1.protein }
             let carbs = snapshot?.consumedCarbs ?? dayEntries.reduce(0.0) { $0 + $1.carbs }
@@ -158,11 +164,11 @@ class StatisticsService {
     // MARK: - Summary Properties
 
     var totalDeficitThisWeek: Int {
-        weeklyStats.reduce(0) { $0 + $1.deficit }
+        weeklyStats.filter { $0.hasData }.reduce(0) { $0 + $1.deficit }
     }
 
     var totalDeficitThisMonth: Int {
-        monthlyStats.reduce(0) { $0 + $1.deficit }
+        monthlyStats.filter { $0.hasData }.reduce(0) { $0 + $1.deficit }
     }
 
     var estimatedWeightLostWeekKg: Double {
@@ -186,8 +192,11 @@ class StatisticsService {
     }
 
     var currentStreak: Int {
+        let calendar = Self.localCalendar
+        let todayStart = calendar.startOfDay(for: .now)
         var streak = 0
         for stat in weeklyStats.reversed() {
+            if calendar.startOfDay(for: stat.date) == todayStart { continue }
             guard stat.hasData, stat.targetCalories > 0 else { break }
             let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
             if ratio >= 0.9 && ratio <= 1.1 {
@@ -281,7 +290,7 @@ class StatisticsService {
     }
 
     func programData(profile: UserProfile, snapshots: [DailySnapshot], entries: [FoodEntry]) -> ProgramSummary {
-        let calendar = Calendar.current
+        let calendar = Self.localCalendar
         let startDate = calendar.startOfDay(for: profile.createdAt)
         let today = calendar.startOfDay(for: .now)
         let totalDays = max(1, calendar.dateComponents([.day], from: startDate, to: today).day! + 1)
@@ -293,12 +302,6 @@ class StatisticsService {
             .first
         let programStart = earliestSnapshot?.weightKg
             ?? (profile.programStartWeightKg > 0 ? profile.programStartWeightKg : profile.currentWeightKg)
-
-        print("📊 Program start weight: \(programStart)")
-        print("📊 Profile.programStartWeightKg: \(profile.programStartWeightKg)")
-        print("📊 Profile.currentWeightKg: \(profile.currentWeightKg)")
-        print("📊 Earliest snapshot weight: \(earliestSnapshot?.weightKg ?? -1)")
-        print("📊 Snapshots count for program: \(snapshots.filter { $0.date >= profile.createdAt }.count)")
 
         // Derive direction from program start weight, not current weight
         let direction: GoalDirection
@@ -358,9 +361,11 @@ class StatisticsService {
             } else { worstDay = nil }
         }
 
-        // Streaks
+        // Streaks — skip today (still in progress)
+        let todayStart = calendar.startOfDay(for: .now)
         var currentStrk = 0
         for stat in allStats.reversed() {
+            if calendar.startOfDay(for: stat.date) == todayStart { continue }
             guard stat.hasData, stat.targetCalories > 0 else { break }
             let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
             if ratio >= 0.9 && ratio <= 1.1 { currentStrk += 1 } else { break }
@@ -384,18 +389,11 @@ class StatisticsService {
         }
         let mostCommon = actCounts.max(by: { $0.value < $1.value })?.key ?? "rest"
 
-        print("📊 Total deficit kcal: \(totalDeficit)")
-        print("📊 Estimated change kg: \(estimatedChange)")
-        print("📊 Days with data: \(daysWithData)")
-
         // Use real weight (from HealthKit/profile) if it differs from start, else estimated
         let realWeight = profile.currentWeightKg
         let estimatedCurrentWeight = programStart - estimatedChange
         let effectiveCurrentWeight = (realWeight > 0 && abs(realWeight - programStart) > 0.01)
             ? realWeight : estimatedCurrentWeight
-        print("📊 Estimated current weight: \(estimatedCurrentWeight)")
-        print("📊 Real weight (currentWeightKg): \(realWeight)")
-        print("📊 Effective current weight: \(effectiveCurrentWeight)")
 
         // On track — use effective weight with 85% tolerance
         let totalToChange = programStart - profile.goalWeightKg
@@ -484,7 +482,7 @@ class StatisticsService {
         }
 
         // Activity multiplier from schedule
-        let calendar = Calendar.current
+        let calendar = Self.localCalendar
         let weekday = calendar.component(.weekday, from: date)
         let index: Int
         switch weekday {

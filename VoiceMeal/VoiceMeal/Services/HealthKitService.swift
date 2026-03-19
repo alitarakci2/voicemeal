@@ -90,7 +90,7 @@ class HealthKitService {
             permissionGranted = true
             return true
         } catch {
-            print("[HealthKit] Permission error: \(error)")
+
             permissionGranted = false
             return false
         }
@@ -149,7 +149,7 @@ class HealthKitService {
         let result: Double? = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if let error {
-                    print("[HealthKit] VO2Max query error: \(error)")
+                    // VO2Max query error
                 }
                 let value = (samples?.first as? HKQuantitySample)?
                     .quantity.doubleValue(for: HKUnit(from: "ml/kg*min"))
@@ -171,7 +171,7 @@ class HealthKitService {
         let result: (weight: Double, date: Date)? = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if let error {
-                    print("[HealthKit] Weight query error: \(error)")
+                    // Weight query error
                 }
                 if let sample = samples?.first as? HKQuantitySample {
                     let kg = sample.quantity.doubleValue(for: .gramUnit(with: .kilo))
@@ -204,7 +204,7 @@ class HealthKitService {
         let samples: [HKCategorySample] = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, results, error in
                 if let error {
-                    print("[HealthKit] Sleep query error: \(error)")
+                    // Sleep query error
                 }
                 let categorySamples = (results as? [HKCategorySample]) ?? []
                 continuation.resume(returning: categorySamples)
@@ -240,7 +240,7 @@ class HealthKitService {
 
         // Sanity cap: prevent multi-day accumulation errors
         if totalMinutes > 600 {
-            print("[HealthKit] Unusual sleep duration detected (\(totalMinutes) min), capping at 10h")
+            // Unusual sleep duration, capping at 10h
             totalMinutes = 600
         }
         let efficiency = totalSeconds > 0 ? deepSeconds / totalSeconds : 0
@@ -278,7 +278,7 @@ class HealthKitService {
         let result: Double? = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if let error {
-                    print("[HealthKit] HRV query error: \(error)")
+                    // HRV query error
                 }
                 let value = (samples?.first as? HKQuantitySample)?
                     .quantity.doubleValue(for: .secondUnit(with: .milli))
@@ -302,7 +302,7 @@ class HealthKitService {
         let values: [Double] = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if let error {
-                    print("[HealthKit] HRV baseline query error: \(error)")
+                    // HRV baseline query error
                 }
                 let vals = (samples as? [HKQuantitySample])?.map {
                     $0.quantity.doubleValue(for: .secondUnit(with: .milli))
@@ -326,7 +326,7 @@ class HealthKitService {
         await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
                 if let error {
-                    print("[HealthKit] Query error for \(type.identifier): \(error)")
+                    // Query error
                 }
                 let value = result?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0
                 continuation.resume(returning: value)

@@ -188,6 +188,25 @@ struct SettingsView: View {
                     }
                 }
 
+                // Save button at bottom
+                Section {
+                    Button {
+                        handleSave()
+                    } label: {
+                        Text("Kaydet")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color(hex: "6C63FF"))
+                            .foregroundColor(.white)
+                            .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isSaveDisabled)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color.clear)
+                }
+
                 // Section 5: App
                 Section("Uygulama") {
                     HStack {
@@ -215,6 +234,17 @@ struct SettingsView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(isSaveDisabled)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Bitti") {
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder),
+                            to: nil, from: nil, for: nil
+                        )
+                    }
+                    .foregroundColor(Color(hex: "6C63FF"))
+                    .fontWeight(.semibold)
                 }
             }
             .overlay(alignment: .bottom) {
@@ -265,6 +295,12 @@ struct SettingsView: View {
                 Button("\u{0130}ptal", role: .cancel) {}
             } message: {
                 Text("T\u{00FC}m profil bilgilerin silinecek ve kurulum yeniden ba\u{015F}layacak.")
+            }
+            .onTapGesture {
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder),
+                    to: nil, from: nil, for: nil
+                )
             }
             .onAppear {
                 loadProfile()
@@ -415,8 +451,6 @@ struct SettingsView: View {
     private func performSave() {
         guard let p = profiles.first else { return }
 
-        print("[Settings] BEFORE save - startWeight: \(p.programStartWeightKg)")
-
         p.name = name
         p.gender = gender
         p.age = age
@@ -438,7 +472,6 @@ struct SettingsView: View {
         originalSchedule = weeklySchedule
 
         try? modelContext.save()
-        print("[Settings] AFTER save - startWeight: \(p.programStartWeightKg)")
         NotificationService.shared.reschedule(profile: p)
         NotificationCenter.default.post(name: .profileUpdated, object: nil)
 

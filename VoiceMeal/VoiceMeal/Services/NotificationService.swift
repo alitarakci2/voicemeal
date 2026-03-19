@@ -65,7 +65,6 @@ class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
             return granted
         } catch {
-            print("[NotificationService] Permission error: \(error)")
             return false
         }
     }
@@ -98,13 +97,7 @@ class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             trigger: trigger
         )
 
-        center.add(request) { error in
-            if let error {
-                print("[NotificationService] Schedule error: \(error)")
-            } else {
-                print("[NotificationService] Scheduled \(type.rawValue) at \(hour):\(String(format: "%02d", minute))")
-            }
-        }
+        center.add(request)
     }
 
     func cancelAll() {

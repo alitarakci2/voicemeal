@@ -97,9 +97,7 @@ class GroqService {
 
     func parseMeals(transcript: String) async throws -> MealParseResponse {
         let apiKey = Config.groqAPIKey
-        print("[GroqService] API key present: \(!apiKey.isEmpty), length: \(apiKey.count)")
         guard !apiKey.isEmpty else {
-            print("[GroqService] ERROR: API key is empty")
             throw GroqError.missingAPIKey
         }
 
@@ -118,45 +116,18 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        print("[GroqService] REQUEST: \(request.httpMethod!) \(endpoint)")
-        print("[GroqService] Headers: \(request.allHTTPHeaderFields ?? [:])")
-        if let httpBody = request.httpBody, let bodyString = String(data: httpBody, encoding: .utf8) {
-            print("[GroqService] Body: \(bodyString)")
-        }
-
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            print("[GroqService] ERROR: Network request failed: \(error)")
-            throw error
-        }
-
-        let rawResponse = String(data: data, encoding: .utf8) ?? "<non-utf8 data>"
+        let (data, response) = try await URLSession.shared.data(for: request)
         let httpResponse = response as? HTTPURLResponse
-        print("[GroqService] RESPONSE status: \(httpResponse?.statusCode ?? -1)")
-        print("[GroqService] RESPONSE body: \(rawResponse)")
 
         guard let httpResponse, (200...299).contains(httpResponse.statusCode) else {
-            print("[GroqService] ERROR: Bad status code \(httpResponse?.statusCode ?? -1)")
             throw GroqError.apiError
         }
 
-        let chatResponse: ChatCompletionResponse
-        do {
-            chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
-        } catch {
-            print("[GroqService] ERROR: Failed to decode ChatCompletionResponse: \(error)")
-            throw error
-        }
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
 
         guard let content = chatResponse.choices.first?.message.content else {
-            print("[GroqService] ERROR: No content in response choices")
             throw GroqError.emptyResponse
         }
-
-        print("[GroqService] LLM content: \(content)")
 
         // Strip markdown code fences if present
         let jsonString = content
@@ -165,17 +136,12 @@ class GroqService {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let jsonData = jsonString.data(using: .utf8) else {
-            print("[GroqService] ERROR: Could not convert cleaned JSON to data")
             throw GroqError.invalidJSON
         }
 
         do {
-            let result = try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
-            print("[GroqService] SUCCESS: Parsed \(result.meals.count) meals")
-            return result
+            return try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
         } catch {
-            print("[GroqService] ERROR: Failed to decode MealParseResponse: \(error)")
-            print("[GroqService] Cleaned JSON was: \(jsonString)")
             throw GroqError.invalidJSON
         }
     }
