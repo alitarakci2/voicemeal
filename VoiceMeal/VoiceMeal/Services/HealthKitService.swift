@@ -110,6 +110,13 @@ class HealthKitService {
         return total
     }
 
+    func fetchTodayActiveEnergy() async -> Double {
+        guard let store else { return 0 }
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: .now, options: .strictStartDate)
+        return await fetchSum(store: store, type: HKQuantityType(.activeEnergyBurned), predicate: predicate)
+    }
+
     func fetchTodayBurnExtrapolated(bmr: Double, calculatedTDEE: Double) async -> Double {
         let rawBurn = await fetchTodayTotalBurn()
 

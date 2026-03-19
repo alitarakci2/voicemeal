@@ -26,6 +26,7 @@ struct MealParseResponse: Codable {
     let correctedCarbs: Double?
     let correctedFat: Double?
     let correctedAmount: String?
+    let waterMl: Int?
 }
 
 struct MealSuggestion: Codable {
@@ -71,6 +72,12 @@ class GroqService {
         correctedFat alanlar\u{0131}n\u{0131} MUTLAKA doldur. \
         Hi\u{00E7}bir zaman sadece miktar\u{0131} de\u{011F}i\u{015F}tirip makrolar\u{0131} bo\u{015F} b\u{0131}rakma.
 
+        E\u{011F}er kullan\u{0131}c\u{0131} su i\u{00E7}ti\u{011F}ini belirtiyorsa ("su i\u{00E7}tim", "bir bardak su", \
+        "500ml su", "2 bardak su"), waterMl alan\u{0131}na ml cinsinden yaz. \
+        1 bardak = 200ml, 1 \u{015F}i\u{015F}e = 500ml. \
+        Su ile birlikte yemek de varsa hem meals hem waterMl doldur. \
+        Su yoksa waterMl: null yaz.
+
         JSON format\u{0131} kesinlikle \u{015F}u \u{015F}ekilde olmal\u{0131}, ba\u{015F}ka hi\u{00E7}bir \u{015F}ey yazma:
         {
           "meals": [
@@ -91,7 +98,8 @@ class GroqService {
           "correctedProtein": "number or null",
           "correctedCarbs": "number or null",
           "correctedFat": "number or null",
-          "correctedAmount": "string or null"
+          "correctedAmount": "string or null",
+          "waterMl": "number or null"
         }
         """
 
@@ -204,7 +212,9 @@ class GroqService {
         proteinConsumed: Double,
         proteinTarget: Int,
         tdee: Int,
-        intensityLevel: Double
+        intensityLevel: Double,
+        waterMl: Int = 0,
+        waterGoalMl: Int = 0
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -258,6 +268,9 @@ class GroqService {
 
             Protein: \(String(format: "%.0f", proteinConsumed))g / \(proteinTarget)g hedef
             TDEE: \(tdee) kcal
+
+            --- SU DURUMU ---
+            İçilen su: \(waterMl) ml / \(waterGoalMl) ml hedef
             """
 
         let body: [String: Any] = [

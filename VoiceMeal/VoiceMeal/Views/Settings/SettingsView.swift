@@ -28,6 +28,10 @@ struct SettingsView: View {
     // Intensity
     @State private var intensityLevel: Double = 0.5
 
+    // Water
+    @State private var waterGoalAuto = true
+    @State private var waterGoalManualMl: Double = 2500
+
     // Notifications
     @State private var notification1Enabled = true
     @State private var notification1Time = Calendar.current.date(from: DateComponents(hour: 16, minute: 0)) ?? .now
@@ -161,6 +165,34 @@ struct SettingsView: View {
                     Text("Yoğunluk")
                 } footer: {
                     Text("Yüksek yoğunluk daha hızlı sonuç verir ama sürdürülebilirliği düşer.")
+                }
+
+                // Section: Water Goal
+                Section {
+                    Toggle("Otomatik Hesapla", isOn: $waterGoalAuto)
+
+                    if !waterGoalAuto {
+                        HStack {
+                            Text("Su Hedefi")
+                            Spacer()
+                            Text("\(Int(waterGoalManualMl)) ml")
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        HStack {
+                            Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
+                                .tint(Theme.blue)
+                            TextField("", value: $waterGoalManualMl, format: .number.precision(.fractionLength(0)))
+                                .keyboardType(.numberPad)
+                                .frame(width: 60)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    } else {
+                        Text("Kilo \u{00D7} 33 + aktif enerji bonusu (max 5L)")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                } header: {
+                    Text("\u{1F4A7} Su Hedefi")
                 }
 
                 // Section 4: Weekly Schedule
@@ -418,6 +450,12 @@ struct SettingsView: View {
         intensityLevel = p.intensityLevel
         weeklySchedule = p.weeklySchedule
         originalSchedule = p.weeklySchedule
+        if let override = p.waterGoalOverrideMl {
+            waterGoalAuto = false
+            waterGoalManualMl = Double(override)
+        } else {
+            waterGoalAuto = true
+        }
         notification1Enabled = p.notification1Enabled
         notification2Enabled = p.notification2Enabled
         notification1Time = Calendar.current.date(from: DateComponents(hour: p.notification1Hour, minute: p.notification1Minute)) ?? .now
@@ -467,6 +505,7 @@ struct SettingsView: View {
         p.notification2Hour = Calendar.current.component(.hour, from: notification2Time)
         p.notification2Minute = Calendar.current.component(.minute, from: notification2Time)
         p.preferredProteins = Array(preferredProteins)
+        p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
         p.updatedAt = .now
 
         originalSchedule = weeklySchedule

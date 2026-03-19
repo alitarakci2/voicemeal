@@ -15,7 +15,9 @@ struct SnapshotService {
         consumedProtein: Double,
         consumedCarbs: Double,
         consumedFat: Double,
-        modelContext: ModelContext
+        modelContext: ModelContext,
+        totalWaterMl: Int = 0,
+        waterGoalMl: Int = 0
     ) {
         let startOfDay = Calendar.current.startOfDay(for: date)
 
@@ -35,6 +37,8 @@ struct SnapshotService {
             snapshot.weightKg = goalEngine.profile?.currentWeightKg ?? 0
             snapshot.targetDeficit = Int(goalEngine.cappedDailyDeficit)
             snapshot.actualDeficitAtClose = Int(goalEngine.tdee) - consumedCalories
+            snapshot.totalWaterMl = totalWaterMl
+            snapshot.waterGoalMl = waterGoalMl
             snapshot.savedAt = .now
         } else {
             let snapshot = DailySnapshot(
@@ -53,6 +57,8 @@ struct SnapshotService {
                 targetDeficit: Int(goalEngine.cappedDailyDeficit),
                 actualDeficitAtClose: Int(goalEngine.tdee) - consumedCalories
             )
+            snapshot.totalWaterMl = totalWaterMl
+            snapshot.waterGoalMl = waterGoalMl
             modelContext.insert(snapshot)
         }
     }

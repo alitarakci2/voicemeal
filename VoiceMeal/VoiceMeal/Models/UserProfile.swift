@@ -26,6 +26,7 @@ final class UserProfile {
     var notification2Minute: Int
     var preferredProteinsJSON: String
     var programStartWeightKg: Double = 0
+    var waterGoalOverrideMl: Int?
     var createdAt: Date
     var updatedAt: Date
 

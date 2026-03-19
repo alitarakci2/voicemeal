@@ -11,6 +11,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var speechService = SpeechService()
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
+    @Query(sort: \WaterEntry.date, order: .reverse) private var allWaterEntries: [WaterEntry]
     @Query private var profiles: [UserProfile]
     @State private var permissionGranted = false
     @State private var isAnalyzing = false
@@ -31,6 +32,7 @@ struct HomeView: View {
     @State private var correctionPickerEntries: [FoodEntry]?
     @Environment(GoalEngine.self) private var goalEngine
     @State private var healthKitService = HealthKitService()
+    @State private var waterGoalService = WaterGoalService()
 
     private let groqService = GroqService()
 
@@ -45,6 +47,13 @@ struct HomeView: View {
         if hour >= 15 { return .afternoon }
         return nil
     }
+
+    private var todayWaterEntries: [WaterEntry] {
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        return allWaterEntries.filter { $0.date >= startOfDay }
+    }
+
+    private var todayWaterMl: Int { todayWaterEntries.reduce(0) { $0 + $1.amountMl } }
 
     private var eatenCalories: Int { todayEntries.reduce(0) { $0 + $1.calories } }
     private var eatenProtein: Double { todayEntries.reduce(0.0) { $0 + $1.protein } }
@@ -92,7 +101,23 @@ struct HomeView: View {
                         proteinConsumed: eatenProtein,
                         proteinTarget: goalEngine.proteinTarget,
                         tdee: Int(goalEngine.tdee),
-                        intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5
+                        intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
+                        waterMl: todayWaterMl,
+                        waterGoalMl: waterGoalService.dailyGoalMl
+                    )
+
+                    WaterTrackingCard(
+                        todayWaterMl: todayWaterMl,
+                        goalMl: waterGoalService.dailyGoalMl,
+                        todayEntries: todayWaterEntries,
+                        onAdd: { ml, source in
+                            addWater(ml: ml, source: source)
+                        },
+                        onDelete: { entry in
+                            modelContext.delete(entry)
+                            try? modelContext.save()
+                            saveTodaySnapshot()
+                        }
                     )
 
                     // Meal suggestion button
@@ -725,6 +750,13 @@ struct HomeView: View {
             goalEngine.isUsingExtrapolatedTDEE = false
         }
 
+        let activeEnergy = await healthKitService.fetchTodayActiveEnergy()
+        waterGoalService.calculate(
+            weightKg: profiles.first?.currentWeightKg ?? 70,
+            activeEnergyKcal: activeEnergy,
+            overrideMl: profiles.first?.waterGoalOverrideMl
+        )
+
         let vo2 = await healthKitService.fetchLatestVO2Max()
         goalEngine.updateVO2Max(vo2)
 
@@ -752,7 +784,9 @@ struct HomeView: View {
             consumedProtein: eatenProtein,
             consumedCarbs: eatenCarbs,
             consumedFat: eatenFat,
-            modelContext: modelContext
+            modelContext: modelContext,
+            totalWaterMl: todayWaterMl,
+            waterGoalMl: waterGoalService.dailyGoalMl
         )
     }
 
@@ -815,6 +849,11 @@ struct HomeView: View {
             do {
                 let response = try await groqService.parseMeals(transcript: fullTranscript)
 
+                // Handle water if detected
+                if let waterMl = response.waterMl, waterMl > 0 {
+                    addWater(ml: waterMl, source: "voice")
+                }
+
                 if response.isCorrection == true {
                     handleCorrection(response)
                 } else if response.clarification_needed {
@@ -823,7 +862,15 @@ struct HomeView: View {
                 } else {
                     parsedMeals = response.meals
                     clarificationQuestion = nil
-                    saveEntries(from: response.meals)
+                    if !response.meals.isEmpty {
+                        saveEntries(from: response.meals)
+                    } else if response.waterMl != nil {
+                        showSavedConfirmation = true
+                        Task {
+                            try? await Task.sleep(for: .seconds(2))
+                            showSavedConfirmation = false
+                        }
+                    }
                 }
             } catch {
                 errorMessage = "Bir hata olu\u{015F}tu, tekrar deneyin"
@@ -895,6 +942,13 @@ struct HomeView: View {
         return newNum / oldNum
     }
 
+    private func addWater(ml: Int, source: String) {
+        let entry = WaterEntry(amountMl: ml, source: source)
+        modelContext.insert(entry)
+        try? modelContext.save()
+        saveTodaySnapshot()
+    }
+
     private func saveEntries(from meals: [ParsedMeal]) {
         for meal in meals {
             let entry = FoodEntry(
@@ -919,5 +973,5 @@ struct HomeView: View {
 #Preview {
     HomeView()
         .environment(GoalEngine())
-        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self], inMemory: true)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self], inMemory: true)
 }
