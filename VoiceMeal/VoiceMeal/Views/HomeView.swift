@@ -41,6 +41,7 @@ struct HomeView: View {
     @State private var capturedImageData: Data?
     @State private var showPhotoAnalysis = false
     @State private var showCameraPermissionDenied = false
+    @State private var showNutritionCheck = false
 
     @Environment(GroqService.self) private var groqService
 
@@ -281,12 +282,23 @@ struct HomeView: View {
                 // Today's meal list
                 if !todayEntries.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("Bug\u{00FC}nk\u{00FC} Yemekler")
-                            .font(Theme.headlineFont)
-                            .foregroundStyle(Theme.textPrimary)
-                            .padding(.horizontal)
-                            .padding(.top)
-                            .padding(.bottom, 8)
+                        HStack {
+                            Text("Bug\u{00FC}nk\u{00FC} Yemekler")
+                                .font(Theme.headlineFont)
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Button {
+                                showNutritionCheck = true
+                            } label: {
+                                Image(systemName: "checkmark.circle")
+                                    .font(Theme.bodyFont)
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top)
+                        .padding(.bottom, 8)
 
                         ForEach(todayEntries, id: \.id) { entry in
                             HStack(alignment: .top) {
@@ -504,6 +516,9 @@ struct HomeView: View {
         } message: {
             Text("Yemek foto\u{011F}raf\u{0131} \u{00E7}ekmek i\u{00E7}in kamera iznine ihtiyac\u{0131}m\u{0131}z var. Ayarlar'dan kamera iznini a\u{00E7}abilirsiniz.")
         }
+        .sheet(isPresented: $showNutritionCheck) {
+            nutritionCheckSheet
+        }
     }
 
     // MARK: - Daily Goal Card
@@ -703,6 +718,51 @@ struct HomeView: View {
                 }
             }
             .frame(width: 95, alignment: .trailing)
+        }
+    }
+
+    // MARK: - Nutrition Check Sheet
+
+    private func generateNutritionCheckText(entries: [FoodEntry]) -> String {
+        var lines: [String] = []
+        for entry in entries {
+            if !entry.amount.isEmpty {
+                lines.append("\(entry.amount) \(entry.name)")
+            } else {
+                lines.append(entry.name)
+            }
+        }
+        let foodList = lines.joined(separator: ", ")
+        return "Bug\u{00FC}n \u{015F}unlar\u{0131} yedim: \(foodList).\n\nBu yiyeceklerin toplam kalori, protein, karbonhidrat ve ya\u{011F} de\u{011F}erlerini hesaplar m\u{0131}s\u{0131}n?"
+    }
+
+    private var nutritionCheckSheet: some View {
+        let text = generateNutritionCheckText(entries: todayEntries)
+        return NavigationStack {
+            ScrollView {
+                Text(text)
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textPrimary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(Theme.background)
+            .navigationTitle("Besin Do\u{011F}rulama")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Kapat") {
+                        showNutritionCheck = false
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        UIPasteboard.general.string = text
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                    }
+                }
+            }
         }
     }
 
