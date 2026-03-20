@@ -725,7 +725,7 @@ struct DayDetailSheetView: View {
 
     private var deficitCard: some View {
         let actualDeficit = plan.tdee - plan.consumedCalories
-        let targetDeficit = plan.tdee - plan.targetCalories
+        let targetDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
         let deficitGap = targetDeficit - actualDeficit
         let deficitProgress: Double = targetDeficit > 0 ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
         let deficitPercent = targetDeficit > 0 ? Int(deficitProgress * 100) : 0
