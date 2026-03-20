@@ -14,7 +14,7 @@ class PlanService {
         refreshID = UUID()
     }
 
-    func generateDayPlans(profile: UserProfile, entries: [FoodEntry], goalEngine: GoalEngine) -> [DayPlan] {
+    func generateDayPlans(profile: UserProfile, entries: [FoodEntry], snapshots: [DailySnapshot] = [], goalEngine: GoalEngine) -> [DayPlan] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
         let vo2Adjustment = goalEngine.vo2MaxAdjustment
@@ -39,6 +39,16 @@ class PlanService {
             let target: (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int)
             if isToday {
                 target = (Int(goalEngine.tdee), goalEngine.dailyCalorieTarget, goalEngine.proteinTarget, goalEngine.carbTarget, goalEngine.fatTarget)
+            } else if current < today,
+                      let snapshot = snapshotForDate(current, snapshots: snapshots),
+                      snapshot.dailyCalorieTarget > 0 {
+                target = (
+                    tdee: Int(snapshot.tdee),
+                    calories: snapshot.dailyCalorieTarget,
+                    protein: snapshot.proteinTarget,
+                    carbs: snapshot.carbTarget,
+                    fat: snapshot.fatTarget
+                )
             } else {
                 target = calculateTargets(profile: profile, activities: activities, vo2MaxAdjustment: vo2Adjustment)
             }
@@ -55,12 +65,16 @@ class PlanService {
                 status = .planned
             } else if dayEntries.isEmpty {
                 status = .missed
-            } else if consumedCal > Int(Double(target.calories) * 1.1) {
-                status = .exceeded
-            } else if consumedCal < Int(Double(target.calories) * 0.85) {
-                status = .underate
             } else {
-                status = .completed
+                let actualDeficit = target.tdee - consumedCal
+                let targetDeficit = target.tdee - target.calories
+                if actualDeficit <= 0 {
+                    status = .exceeded
+                } else if targetDeficit > 0 && actualDeficit >= Int(Double(targetDeficit) * 0.80) {
+                    status = .completed
+                } else {
+                    status = .underate
+                }
             }
 
             let plan = DayPlan(
@@ -105,9 +119,12 @@ class PlanService {
         return activities.isEmpty ? ["rest"] : activities
     }
 
-    // NOTE: Historical accuracy requires a DailySnapshot model to store
-    // per-day weight/profile values at the time. Currently all days use
-    // today's profile values. Planned for a future sprint.
+    private func snapshotForDate(_ date: Date, snapshots: [DailySnapshot]) -> DailySnapshot? {
+        let calendar = Calendar.current
+        return snapshots.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    // Fallback for days without a snapshot — uses current profile values.
     private func calculateTargets(profile: UserProfile, activities: [String], vo2MaxAdjustment: Double = 0) -> (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int) {
         let bmr: Double
         if profile.gender == "male" {

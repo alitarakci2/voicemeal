@@ -9,6 +9,7 @@ import SwiftUI
 struct PlanView: View {
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
+    @Query private var allSnapshots: [DailySnapshot]
     @State private var planService = PlanService()
     @Environment(GoalEngine.self) private var goalEngine
     @State private var selectedPlan: DayPlan?
@@ -19,7 +20,7 @@ struct PlanView: View {
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
         guard let profile = profiles.first else { return [] }
-        return planService.generateDayPlans(profile: profile, entries: allEntries, goalEngine: goalEngine)
+        return planService.generateDayPlans(profile: profile, entries: allEntries, snapshots: allSnapshots, goalEngine: goalEngine)
     }
 
     private var todayID: Date {
@@ -366,9 +367,9 @@ struct DayRowView: View {
     private var statusIcon: String {
         switch plan.status {
         case .completed: return "checkmark.circle.fill"
-        case .exceeded: return "exclamationmark.triangle.fill"
-        case .underate: return "arrow.down.circle.fill"
-        case .missed: return "xmark.circle.fill"
+        case .exceeded: return "xmark.circle.fill"
+        case .underate: return "exclamationmark.triangle.fill"
+        case .missed: return "minus.circle.fill"
         case .today: return "location.fill"
         case .planned: return "doc.text"
         }
@@ -377,8 +378,8 @@ struct DayRowView: View {
     private var statusColor: Color {
         switch plan.status {
         case .completed: return Theme.green
-        case .exceeded: return Theme.orange
-        case .underate: return Theme.blue
+        case .exceeded: return Theme.red
+        case .underate: return Theme.orange
         case .missed: return Theme.textTertiary
         case .today: return Theme.blue
         case .planned: return Theme.textTertiary
@@ -510,23 +511,12 @@ struct DayDetailSheetView: View {
                     // Status banner
                     statusBanner
 
-                    // Calorie + macro progress
-                    calorieSection
+                    // Section 1: Yeme Hedefi
+                    eatingTargetCard
 
-                    // Daily deficit (past and today only)
+                    // Section 2: Kalori Açığı
                     if plan.status != .planned {
-                        let deficit = plan.tdee - plan.consumedCalories
-                        HStack {
-                            if deficit > 0 {
-                                Text("\u{1F525} \(deficit) kcal a\u{00E7}\u{0131}k")
-                                    .foregroundStyle(Theme.green)
-                            } else {
-                                Text("\u{26A0}\u{FE0F} \(abs(deficit)) kcal fazla")
-                                    .foregroundStyle(Theme.red)
-                            }
-                        }
-                        .font(Theme.bodyFont)
-                        .fontWeight(.medium)
+                        deficitCard
                     }
 
                     macroSection
@@ -589,19 +579,19 @@ struct DayDetailSheetView: View {
     private var statusBanner: some View {
         switch plan.status {
         case .completed:
-            Label("Hedefe ula\u{015F}\u{0131}ld\u{0131}", systemImage: "checkmark.circle.fill")
+            Label("Kalori a\u{00E7}\u{0131}\u{011F}\u{0131} hedefine ula\u{015F}t\u{0131}n", systemImage: "checkmark.circle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.green)
         case .exceeded:
-            Label("Hedef a\u{015F}\u{0131}ld\u{0131}", systemImage: "exclamationmark.triangle.fill")
+            Label("Kalori fazlas\u{0131} \u{2014} a\u{00E7}\u{0131}k veremadin", systemImage: "xmark.circle.fill")
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.red)
+        case .underate:
+            Label("A\u{00E7}\u{0131}k hedefinin gerisinde kald\u{0131}n", systemImage: "exclamationmark.triangle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.orange)
-        case .underate:
-            Label("Hedefin alt\u{0131}nda kald\u{0131}n \u{2014} \u{00E7}ok az yedin", systemImage: "arrow.down.circle.fill")
-                .font(Theme.bodyFont)
-                .foregroundStyle(Theme.blue)
         case .missed:
-            Label("Ka\u{00E7}\u{0131}r\u{0131}ld\u{0131}", systemImage: "xmark.circle.fill")
+            Label("Bu g\u{00FC}n i\u{00E7}in kay\u{0131}t yok", systemImage: "xmark.circle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textTertiary)
         case .today:
@@ -621,37 +611,159 @@ struct DayDetailSheetView: View {
         }
     }
 
-    private var calorieSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Kalori")
-                .font(Theme.bodyFont)
-                .fontWeight(.medium)
+    // MARK: - Yeme Hedefi Card
 
-            let progress = plan.targetCalories > 0 ? min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0) : 0
+    private var eatingTargetCard: some View {
+        let diff = plan.consumedCalories - plan.targetCalories
+        let progress = plan.targetCalories > 0 ? min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0) : 0
+        let progressColor: Color = diff > 0 ? Theme.orange : Theme.green
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("\u{1F3AF} Yeme Hedefi")
+                    .font(Theme.headlineFont)
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                if plan.status != .planned {
+                    Text("%\(plan.caloriePercentage)")
+                        .font(Theme.captionFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(progressColor)
+                }
+            }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 6)
                         .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(plan.status == .exceeded ? Theme.orange : plan.status == .underate ? Theme.blue : Theme.green)
+                        .fill(progressColor)
                         .frame(width: geo.size.width * progress)
                 }
             }
             .frame(height: 12)
 
             HStack {
-                Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
+                Text("Hedef: \(plan.targetCalories)")
                     .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
                 Spacer()
-                if plan.status != .planned {
-                    Text("%\(plan.caloriePercentage)")
+                Text("Yenen: \(plan.consumedCalories)")
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textPrimary)
+            }
+
+            if plan.status != .planned {
+                if diff > 0 {
+                    Label("Hedefi \(diff) kcal a\u{015F}t\u{0131}n", systemImage: "exclamationmark.triangle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
+                        .foregroundStyle(Theme.orange)
+                } else if diff == 0 {
+                    Label("Hedefe tam ula\u{015F}t\u{0131}n", systemImage: "checkmark.circle.fill")
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.green)
+                } else {
+                    Label("\(abs(diff)) kcal kalori kald\u{0131}", systemImage: "checkmark.circle.fill")
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.green)
                 }
             }
-            .foregroundStyle(Theme.textSecondary)
         }
+        .padding()
+        .themeCard()
+    }
+
+    // MARK: - Kalori Açığı Card
+
+    private var deficitCard: some View {
+        let actualDeficit = plan.tdee - plan.consumedCalories
+        let targetDeficit = plan.tdee - plan.targetCalories
+        let deficitGap = targetDeficit - actualDeficit
+        let deficitProgress: Double = targetDeficit > 0 ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
+        let deficitPercent = targetDeficit > 0 ? Int(deficitProgress * 100) : 0
+
+        let deficitColor: Color
+        if actualDeficit <= 0 {
+            deficitColor = Theme.red
+        } else if targetDeficit > 0 && actualDeficit >= Int(Double(targetDeficit) * 0.80) {
+            deficitColor = Theme.green
+        } else {
+            deficitColor = Theme.orange
+        }
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("\u{1F525} Kalori A\u{00E7}\u{0131}\u{011F}\u{0131}")
+                .font(Theme.headlineFont)
+                .foregroundStyle(Theme.textPrimary)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Yak\u{0131}m (TDEE):")
+                        .foregroundStyle(Theme.textSecondary)
+                    Spacer()
+                    Text("\(plan.tdee) kcal")
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                HStack {
+                    Text("Yenen:")
+                        .foregroundStyle(Theme.textSecondary)
+                    Spacer()
+                    Text("\(plan.consumedCalories) kcal")
+                        .foregroundStyle(Theme.textPrimary)
+                }
+            }
+            .font(Theme.captionFont)
+
+            Divider()
+                .overlay(Theme.cardBorder)
+
+            // Deficit progress bar
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Ger\u{00E7}ek a\u{00E7}\u{0131}k: \(actualDeficit) kcal")
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(deficitColor)
+                    Spacer()
+                    Text("Hedef: \(targetDeficit) kcal")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Theme.trackBackground)
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(deficitColor)
+                            .frame(width: geo.size.width * deficitProgress)
+                    }
+                }
+                .frame(height: 12)
+
+                if actualDeficit <= 0 {
+                    Label("A\u{00E7}\u{0131}k yok \u{2014} \(abs(actualDeficit)) kcal fazla", systemImage: "exclamationmark.triangle.fill")
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.red)
+                } else if deficitGap > 0 {
+                    Label("Hedef a\u{00E7}\u{0131}\u{011F}\u{0131}n \(deficitGap) kcal gerisinde (%\(deficitPercent))", systemImage: "arrow.down.right")
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(deficitColor)
+                } else {
+                    Label("Hedef a\u{00E7}\u{0131}\u{011F}\u{0131} tutturuldu (%\(deficitPercent))", systemImage: "checkmark.circle.fill")
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.green)
+                }
+            }
+        }
+        .padding()
+        .themeCard()
     }
 
     private var macroSection: some View {
