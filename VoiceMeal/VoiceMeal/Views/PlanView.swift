@@ -53,10 +53,13 @@ struct PlanView: View {
     // MARK: - Weekly Helpers
 
     private var thisWeekDays: [DayPlan] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        guard let weekStart = calendar.date(byAdding: .day, value: -6, to: today) else { return [] }
-        return dayPlans.filter { $0.date >= weekStart && $0.date <= today }
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2 // Monday
+        let mondayStart = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
+        )!
+        let sundayEnd = calendar.date(byAdding: .day, value: 6, to: mondayStart)!
+        return dayPlans.filter { $0.date >= mondayStart && $0.date <= sundayEnd }
     }
 
     private func dayHasData(_ day: DayPlan) -> Bool {
@@ -114,11 +117,17 @@ struct PlanView: View {
     }
 
     private func shortDayName(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "EEE"
-        let name = formatter.string(from: date)
-        return String(name.prefix(3)).capitalized
+        let weekday = Calendar.current.component(.weekday, from: date)
+        switch weekday {
+        case 1: return "Paz"
+        case 2: return "Pzt"
+        case 3: return "Sal"
+        case 4: return "\u{00C7}ar"
+        case 5: return "Per"
+        case 6: return "Cum"
+        case 7: return "Cmt"
+        default: return "?"
+        }
     }
 
     private func statusEmoji(_ day: DayPlan) -> String {
