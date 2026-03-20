@@ -37,8 +37,10 @@ class PlanService {
             let isToday = calendar.isDate(current, inSameDayAs: today)
 
             let target: (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int)
+            var snapTargetDeficit = 0
             if isToday {
                 target = (Int(goalEngine.tdee), goalEngine.dailyCalorieTarget, goalEngine.proteinTarget, goalEngine.carbTarget, goalEngine.fatTarget)
+                snapTargetDeficit = Int(goalEngine.cappedDailyDeficit)
             } else if current < today,
                       let snapshot = snapshotForDate(current, snapshots: snapshots),
                       snapshot.dailyCalorieTarget > 0 {
@@ -49,6 +51,7 @@ class PlanService {
                     carbs: snapshot.carbTarget,
                     fat: snapshot.fatTarget
                 )
+                snapTargetDeficit = snapshot.targetDeficit
             } else {
                 target = calculateTargets(profile: profile, activities: activities, vo2MaxAdjustment: vo2Adjustment)
             }
@@ -67,7 +70,7 @@ class PlanService {
                 status = .missed
             } else {
                 let actualDeficit = target.tdee - consumedCal
-                let targetDeficit = target.tdee - target.calories
+                let targetDeficit = snapTargetDeficit > 0 ? snapTargetDeficit : target.tdee - target.calories
                 if actualDeficit <= 0 {
                     status = .exceeded
                 } else if targetDeficit > 0 && actualDeficit >= Int(Double(targetDeficit) * 0.80) {
@@ -89,7 +92,8 @@ class PlanService {
                 consumedProtein: current > today ? 0 : consumedP,
                 consumedCarbs: current > today ? 0 : consumedC,
                 consumedFat: current > today ? 0 : consumedF,
-                status: status
+                status: status,
+                snapshotTargetDeficit: snapTargetDeficit
             )
             plans.append(plan)
 

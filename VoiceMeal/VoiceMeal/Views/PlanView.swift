@@ -464,7 +464,7 @@ struct DayRowView: View {
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.textSecondary)
                     Spacer()
-                    let plannedDeficit = plan.tdee - plan.targetCalories
+                    let plannedDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
                     Text("~\(plannedDeficit) a\u{00E7}\u{0131}k")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
@@ -476,15 +476,16 @@ struct DayRowView: View {
                     Spacer()
 
                 default:
+                    let actualDeficit = plan.tdee - plan.consumedCalories
+                    let targetDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
                     Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
-                    let weightChange = plan.estimatedWeightChangeKg
-                    Text("\u{2248} \(String(format: "%+.2f", weightChange)) kg")
+                    Text("\(actualDeficit) a\u{00E7}\u{0131}k")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
-                        .foregroundStyle(weightChange <= 0 ? Theme.green : Theme.orange)
+                        .foregroundStyle(deficitRowColor(actual: actualDeficit, target: targetDeficit))
                 }
             }
         }
@@ -496,6 +497,16 @@ struct DayRowView: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(plan.status == .today ? Theme.accent.opacity(0.4) : Theme.cardBorder, lineWidth: plan.status == .today ? 2 : 1)
         )
+    }
+
+    private func deficitRowColor(actual: Int, target: Int) -> Color {
+        if actual <= 0 {
+            return Theme.red
+        } else if target > 0 && actual >= Int(Double(target) * 0.80) {
+            return Theme.green
+        } else {
+            return Theme.orange
+        }
     }
 
     private func activityEmoji(_ activity: String) -> String {

@@ -21,6 +21,7 @@ struct DayStat: Identifiable {
     let activities: [String]
     let hasData: Bool
     let hasSnapshot: Bool
+    let snapshotTargetDeficit: Int
 }
 
 enum TrendDirection: String {
@@ -152,7 +153,8 @@ class StatisticsService {
                 fat: fat,
                 activities: activities,
                 hasData: hasData,
-                hasSnapshot: snapshot != nil
+                hasSnapshot: snapshot != nil,
+                snapshotTargetDeficit: snapshot?.targetDeficit ?? 0
             ))
 
             current = calendar.date(byAdding: .day, value: 1, to: current)!
@@ -202,9 +204,10 @@ class StatisticsService {
         var streak = 0
         for stat in weeklyStats.reversed() {
             if calendar.startOfDay(for: stat.date) == todayStart { continue }
-            guard stat.hasData, stat.targetCalories > 0 else { break }
-            let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
-            if ratio >= 0.9 && ratio <= 1.1 {
+            guard stat.hasData, stat.tdee > 0 else { break }
+            let targetDeficit = stat.snapshotTargetDeficit > 0 ? stat.snapshotTargetDeficit : stat.tdee - stat.targetCalories
+            let deficitRatio = targetDeficit > 0 ? Double(stat.deficit) / Double(targetDeficit) : 0
+            if deficitRatio >= 0.80 {
                 streak += 1
             } else {
                 break
@@ -217,12 +220,13 @@ class StatisticsService {
         var best = 0
         var current = 0
         for stat in monthlyStats {
-            guard stat.hasData, stat.targetCalories > 0 else {
+            guard stat.hasData, stat.tdee > 0 else {
                 current = 0
                 continue
             }
-            let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
-            if ratio >= 0.9 && ratio <= 1.1 {
+            let targetDeficit = stat.snapshotTargetDeficit > 0 ? stat.snapshotTargetDeficit : stat.tdee - stat.targetCalories
+            let deficitRatio = targetDeficit > 0 ? Double(stat.deficit) / Double(targetDeficit) : 0
+            if deficitRatio >= 0.80 {
                 current += 1
                 best = max(best, current)
             } else {
@@ -368,21 +372,24 @@ class StatisticsService {
             } else { worstDay = nil }
         }
 
-        // Streaks — skip today (still in progress)
+        // Streaks — skip today (still in progress), use deficit-based criteria
         let todayStart = calendar.startOfDay(for: .now)
         var currentStrk = 0
         for stat in allStats.reversed() {
-            if calendar.startOfDay(for: stat.date) == todayStart { continue }
-            guard stat.hasData, stat.targetCalories > 0 else { break }
-            let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
-            if ratio >= 0.9 && ratio <= 1.1 { currentStrk += 1 } else { break }
+            let statDay = calendar.startOfDay(for: stat.date)
+            if statDay == todayStart { continue }
+            guard stat.hasData, stat.tdee > 0 else { break }
+            let targetDeficit = stat.snapshotTargetDeficit > 0 ? stat.snapshotTargetDeficit : stat.tdee - stat.targetCalories
+            let deficitRatio = targetDeficit > 0 ? Double(stat.deficit) / Double(targetDeficit) : 0
+            if deficitRatio >= 0.80 { currentStrk += 1 } else { break }
         }
         var bestStrk = 0
         var runStrk = 0
         for stat in allStats {
-            guard stat.hasData, stat.targetCalories > 0 else { runStrk = 0; continue }
-            let ratio = Double(stat.consumedCalories) / Double(stat.targetCalories)
-            if ratio >= 0.9 && ratio <= 1.1 {
+            guard stat.hasData, stat.tdee > 0 else { runStrk = 0; continue }
+            let targetDeficit = stat.snapshotTargetDeficit > 0 ? stat.snapshotTargetDeficit : stat.tdee - stat.targetCalories
+            let deficitRatio = targetDeficit > 0 ? Double(stat.deficit) / Double(targetDeficit) : 0
+            if deficitRatio >= 0.80 {
                 runStrk += 1
                 bestStrk = max(bestStrk, runStrk)
             } else { runStrk = 0 }
@@ -469,12 +476,7 @@ class StatisticsService {
             daysRemaining: daysRemaining,
             goalDirection: direction,
             startWeight: programStart,
-            currentWeight: { () -> Double in
-                print("📊 [StatService] programStart: \(programStart)")
-                print("📊 [StatService] profile.currentWeightKg: \(profile.currentWeightKg)")
-                print("📊 [StatService] profile.programStartWeightKg: \(profile.programStartWeightKg)")
-                return profile.currentWeightKg
-            }(),
+            currentWeight: profile.currentWeightKg,
             goalWeight: profile.goalWeightKg,
             expectedChangeByNow: expectedByNow
         )

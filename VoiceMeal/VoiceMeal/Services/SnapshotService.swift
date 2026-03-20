@@ -24,19 +24,12 @@ struct SnapshotService {
         let existing = fetchSnapshot(for: startOfDay, modelContext: modelContext)
 
         if let snapshot = existing {
-            snapshot.tdee = goalEngine.tdee
-            snapshot.dailyCalorieTarget = goalEngine.dailyCalorieTarget
-            snapshot.proteinTarget = goalEngine.proteinTarget
-            snapshot.carbTarget = goalEngine.carbTarget
-            snapshot.fatTarget = goalEngine.fatTarget
+            // Only update consumed values — target values were set when the day started
             snapshot.consumedCalories = consumedCalories
             snapshot.consumedProtein = consumedProtein
             snapshot.consumedCarbs = consumedCarbs
             snapshot.consumedFat = consumedFat
-            snapshot.usedHealthKit = goalEngine.usingHealthKit || goalEngine.isUsingExtrapolatedTDEE
-            snapshot.weightKg = goalEngine.profile?.currentWeightKg ?? 0
-            snapshot.targetDeficit = Int(goalEngine.cappedDailyDeficit)
-            snapshot.actualDeficitAtClose = Int(goalEngine.tdee) - consumedCalories
+            snapshot.actualDeficitAtClose = Int(snapshot.tdee) - consumedCalories
             snapshot.totalWaterMl = totalWaterMl
             snapshot.waterGoalMl = waterGoalMl
             snapshot.savedAt = .now

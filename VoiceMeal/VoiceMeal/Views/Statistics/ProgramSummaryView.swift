@@ -210,14 +210,6 @@ struct ProgramSummaryView: View {
 
                 let estimatedWeight = summary.startWeight - (Double(summary.totalDeficitKcal) / 7700.0)
                 let diff = estimatedWeight - realWeight
-                let _ = {
-                    print("📊 startWeight: \(summary.startWeight)")
-                    print("📊 totalDeficitKcal: \(summary.totalDeficitKcal)")
-                    print("📊 estimatedWeight: \(estimatedWeight)")
-                    print("📊 realWeight (summary.currentWeight): \(realWeight)")
-                    print("📊 diff (estimated - real): \(diff)")
-                    print("📊 label: \(diff > 0.1 ? "fazla verdin" : diff < -0.1 ? "geride" : "ortusuyor")")
-                }()
 
                 if diff > 0.1 {
                     Text("✅ Beklenenden \(String(format: "%.1f", diff)) kg fazla verdin!")
