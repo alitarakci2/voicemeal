@@ -88,6 +88,14 @@ class StatisticsService {
     func refresh(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?) {
         weeklyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 7)
         monthlyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 30)
+        let calendar = Self.localCalendar
+        let todayStart = calendar.startOfDay(for: .now)
+        print("📊 [WeeklyStats] todayStart=\(todayStart)")
+        for stat in weeklyStats {
+            let statDay = calendar.startOfDay(for: stat.date)
+            let isPast = statDay < todayStart
+            print("📊 \(statDay) hasData:\(stat.hasData) consumed:\(stat.consumedCalories) deficit:\(stat.deficit) isPast:\(isPast)")
+        }
     }
 
     private func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, days: Int) -> [DayStat] {
@@ -105,9 +113,8 @@ class StatisticsService {
         while current <= today {
             let snapshot = snapshotsByDay[current]?.first
             let dayEntries = entriesByDay[current] ?? []
-            let hasData = !dayEntries.isEmpty || snapshot != nil
-
             let consumed = snapshot?.consumedCalories ?? dayEntries.reduce(0) { $0 + $1.calories }
+            let hasData = consumed > 0
             let target = snapshot?.dailyCalorieTarget ?? calculateTargetForDate(current, profile: profile)
             let dayTDEE = snapshot != nil ? Int(snapshot!.tdee) : calculateTDEEForDate(current, profile: profile)
             let deficit = hasData && dayTDEE > 0 ? dayTDEE - consumed : 0  // real deficit, only for days with data
@@ -184,6 +191,14 @@ class StatisticsService {
 
     var estimatedWeightLostMonthKg: Double {
         Double(totalDeficitThisMonth) / 7700.0
+    }
+
+    var completedDaysThisWeek: Int {
+        excludingToday(weeklyStats).count
+    }
+
+    var completedDaysThisMonth: Int {
+        excludingToday(monthlyStats).count
     }
 
     var averageCaloriesThisWeek: Int {
