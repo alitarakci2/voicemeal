@@ -14,6 +14,7 @@ struct PlanView: View {
     @State private var selectedPlan: DayPlan?
     @State private var showPastDays = false
     @State private var showFutureDays = false
+    @State private var weeklyCardExpanded = false
 
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
@@ -49,16 +50,86 @@ struct PlanView: View {
         return first.date == last.date ? f : "\(f) - \(l)"
     }
 
-    private var weeklyStats: (totalDeficit: Int, estimatedChangeKg: Double) {
+    // MARK: - Weekly Helpers
+
+    private var thisWeekDays: [DayPlan] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        guard let weekStart = calendar.date(byAdding: .day, value: -6, to: today) else {
-            return (0, 0)
+        guard let weekStart = calendar.date(byAdding: .day, value: -6, to: today) else { return [] }
+        return dayPlans.filter { $0.date >= weekStart && $0.date <= today }
+    }
+
+    private func dayHasData(_ day: DayPlan) -> Bool {
+        day.status != .missed && day.status != .planned
+    }
+
+    private var daysWithData: Int {
+        thisWeekDays.filter { dayHasData($0) }.count
+    }
+
+    private var totalDeficitThisWeek: Int {
+        thisWeekDays.filter { dayHasData($0) }.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) }
+    }
+
+    private var weeklyEstimatedChangeKg: Double {
+        thisWeekDays.filter { dayHasData($0) }.reduce(0.0) { $0 + $1.estimatedWeightChangeKg }
+    }
+
+    private var weeklyAvgCalories: Int {
+        let days = thisWeekDays.filter { dayHasData($0) }
+        guard !days.isEmpty else { return 0 }
+        return days.reduce(0) { $0 + $1.consumedCalories } / days.count
+    }
+
+    private var weeklyAvgProtein: Double {
+        let days = thisWeekDays.filter { dayHasData($0) }
+        guard !days.isEmpty else { return 0 }
+        return days.reduce(0.0) { $0 + $1.consumedProtein } / Double(days.count)
+    }
+
+    private var weeklyAvgCarbs: Double {
+        let days = thisWeekDays.filter { dayHasData($0) }
+        guard !days.isEmpty else { return 0 }
+        return days.reduce(0.0) { $0 + $1.consumedCarbs } / Double(days.count)
+    }
+
+    private var weeklyAvgFat: Double {
+        let days = thisWeekDays.filter { dayHasData($0) }
+        guard !days.isEmpty else { return 0 }
+        return days.reduce(0.0) { $0 + $1.consumedFat } / Double(days.count)
+    }
+
+    private var trendText: String {
+        let change = weeklyEstimatedChangeKg
+        if change < -0.05 { return "\u{2193} Kilo veriyor" }
+        if change > 0.05 { return "\u{2191} Dikkat" }
+        return "\u{2192} Sabit"
+    }
+
+    private var trendColor: Color {
+        let change = weeklyEstimatedChangeKg
+        if change < -0.05 { return Theme.green }
+        if change > 0.05 { return Theme.orange }
+        return Theme.textSecondary
+    }
+
+    private func shortDayName(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "tr_TR")
+        formatter.dateFormat = "EEE"
+        let name = formatter.string(from: date)
+        return String(name.prefix(3)).capitalized
+    }
+
+    private func statusEmoji(_ day: DayPlan) -> String {
+        switch day.status {
+        case .completed: return "\u{2705}"
+        case .exceeded: return "\u{26A0}\u{FE0F}"
+        case .underate: return "\u{2B07}\u{FE0F}"
+        case .missed: return "\u{274C}"
+        case .today: return "\u{1F4CD}"
+        case .planned: return "\u{1F4CB}"
         }
-        let weekPlans = dayPlans.filter { $0.date >= weekStart && $0.date <= today && $0.status != .planned }
-        let totalDeficit = weekPlans.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) }
-        let estimatedChange = weekPlans.reduce(0.0) { $0 + $1.estimatedWeightChangeKg }
-        return (totalDeficit, estimatedChange)
     }
 
     var body: some View {
@@ -68,6 +139,7 @@ struct PlanView: View {
                     LazyVStack(spacing: 8) {
                         // Weekly summary
                         weeklySummaryCard
+                            .id("weeklyCard")
                             .padding(.bottom, 4)
 
                         // Collapsible past section
@@ -130,7 +202,7 @@ struct PlanView: View {
                 .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         withAnimation {
-                            proxy.scrollTo(todayID, anchor: .center)
+                            proxy.scrollTo("weeklyCard", anchor: .top)
                         }
                     }
                 }
@@ -146,25 +218,134 @@ struct PlanView: View {
     }
 
     private var weeklySummaryCard: some View {
-        let stats = weeklyStats
-        return VStack(alignment: .leading, spacing: 6) {
-            Text("\u{1F4CA} Bu Hafta")
-                .font(Theme.bodyFont)
-                .fontWeight(.semibold)
-                .foregroundStyle(Theme.textPrimary)
-            HStack {
-                Text("Toplam a\u{00E7}\u{0131}k: \(stats.totalDeficit) kcal")
-                    .font(Theme.captionFont)
-                    .foregroundStyle(Theme.textSecondary)
-                Spacer()
-                Text("Tahmini: \u{2248} \(String(format: "%+.2f", stats.estimatedChangeKg)) kg")
-                    .font(Theme.captionFont)
-                    .fontWeight(.medium)
-                    .foregroundStyle(stats.estimatedChangeKg <= 0 ? Theme.green : Theme.orange)
+        DisclosureGroup(isExpanded: $weeklyCardExpanded) {
+            VStack(spacing: 0) {
+                Divider()
+                    .overlay(Theme.cardBorder)
+                    .padding(.vertical, 8)
+
+                // Header row
+                HStack(spacing: 0) {
+                    Text("")
+                        .frame(width: 40, alignment: .leading)
+                    Text("Kal")
+                        .frame(maxWidth: .infinity)
+                    Text("Pro")
+                        .frame(maxWidth: .infinity)
+                    Text("Kar")
+                        .frame(maxWidth: .infinity)
+                    Text("Ya\u{011F}")
+                        .frame(maxWidth: .infinity)
+                }
+                .font(Theme.microFont)
+                .foregroundStyle(Theme.textTertiary)
+                .padding(.bottom, 6)
+
+                // Day rows
+                ForEach(thisWeekDays) { day in
+                    VStack(spacing: 0) {
+                        HStack(spacing: 0) {
+                            HStack(spacing: 3) {
+                                Text(statusEmoji(day))
+                                    .font(.system(size: 10))
+                                Text(shortDayName(day.date))
+                                    .font(Theme.microFont)
+                                    .foregroundStyle(day.status == .today ? Theme.accent : Theme.textSecondary)
+                            }
+                            .frame(width: 40, alignment: .leading)
+
+                            if dayHasData(day) || day.status == .today {
+                                Text("\(day.consumedCalories)")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textPrimary)
+                                Text("\(Int(day.consumedProtein))g")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textSecondary)
+                                Text("\(Int(day.consumedCarbs))g")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textSecondary)
+                                Text("\(Int(day.consumedFat))g")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textSecondary)
+                            } else {
+                                Text("\u{2014}")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textTertiary)
+                                Text("\u{2014}")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textTertiary)
+                                Text("\u{2014}")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textTertiary)
+                                Text("\u{2014}")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textTertiary)
+                            }
+                        }
+                        .font(Theme.captionFont)
+                        .padding(.vertical, 6)
+
+                        Divider()
+                            .overlay(Theme.cardBorder.opacity(0.5))
+                    }
+                }
+
+                // Average row
+                HStack(spacing: 0) {
+                    Text("Ort")
+                        .frame(width: 40, alignment: .leading)
+                        .fontWeight(.bold)
+                    Text("\(weeklyAvgCalories)")
+                        .frame(maxWidth: .infinity)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("\(Int(weeklyAvgProtein))g")
+                        .frame(maxWidth: .infinity)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.textSecondary)
+                    Text("\(Int(weeklyAvgCarbs))g")
+                        .frame(maxWidth: .infinity)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.textSecondary)
+                    Text("\(Int(weeklyAvgFat))g")
+                        .frame(maxWidth: .infinity)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .font(Theme.captionFont)
+                .padding(.vertical, 8)
             }
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\u{1F4CA} Bu Hafta")
+                        .font(Theme.headlineFont)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("\(daysWithData)/7 g\u{00FC}nde veri")
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("\u{1F525} \(totalDeficitThisWeek) kcal a\u{00E7}\u{0131}k")
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.orange)
+                    Text(trendText)
+                        .font(Theme.microFont)
+                        .foregroundStyle(trendColor)
+                }
+            }
+            .padding(.vertical, 4)
         }
+        .tint(Theme.textSecondary)
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.cardBorder, lineWidth: 1)
+        )
     }
 }
 
