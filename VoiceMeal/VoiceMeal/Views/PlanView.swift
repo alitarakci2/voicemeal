@@ -12,6 +12,8 @@ struct PlanView: View {
     @State private var planService = PlanService()
     @Environment(GoalEngine.self) private var goalEngine
     @State private var selectedPlan: DayPlan?
+    @State private var showPastDays = false
+    @State private var showFutureDays = false
 
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
@@ -21,6 +23,30 @@ struct PlanView: View {
 
     private var todayID: Date {
         Calendar.current.startOfDay(for: .now)
+    }
+
+    private var pastDays: [DayPlan] {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -3, to: todayID)!
+        return dayPlans.filter { $0.date < cutoff }
+    }
+
+    private var visibleDays: [DayPlan] {
+        let calendar = Calendar.current
+        let start = calendar.date(byAdding: .day, value: -3, to: todayID)!
+        let end = calendar.date(byAdding: .day, value: 3, to: todayID)!
+        return dayPlans.filter { $0.date >= start && $0.date <= end }
+    }
+
+    private var futureDays: [DayPlan] {
+        let cutoff = Calendar.current.date(byAdding: .day, value: 3, to: todayID)!
+        return dayPlans.filter { $0.date > cutoff }
+    }
+
+    private func dateRangeText(_ days: [DayPlan]) -> String {
+        guard let first = days.first, let last = days.last else { return "" }
+        let f = first.date.formatted(.dateTime.day().month(.abbreviated))
+        let l = last.date.formatted(.dateTime.day().month(.abbreviated))
+        return first.date == last.date ? f : "\(f) - \(l)"
     }
 
     private var weeklyStats: (totalDeficit: Int, estimatedChangeKg: Double) {
@@ -44,12 +70,57 @@ struct PlanView: View {
                         weeklySummaryCard
                             .padding(.bottom, 4)
 
-                        ForEach(dayPlans) { plan in
+                        // Collapsible past section
+                        if !pastDays.isEmpty {
+                            DisclosureGroup(isExpanded: $showPastDays) {
+                                ForEach(pastDays) { plan in
+                                    DayRowView(plan: plan)
+                                        .id(plan.date)
+                                        .onTapGesture { selectedPlan = plan }
+                                }
+                            } label: {
+                                HStack {
+                                    Text("\u{25B6} \u{00D6}nceki g\u{00FC}nler")
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.textSecondary)
+                                    Spacer()
+                                    Text(dateRangeText(pastDays))
+                                        .font(Theme.microFont)
+                                        .foregroundStyle(Theme.textTertiary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            .tint(Theme.textSecondary)
+                        }
+
+                        // Always visible: 3 days before + today + 3 days after
+                        ForEach(visibleDays) { plan in
                             DayRowView(plan: plan)
                                 .id(plan.date)
-                                .onTapGesture {
-                                    selectedPlan = plan
+                                .onTapGesture { selectedPlan = plan }
+                        }
+
+                        // Collapsible future section
+                        if !futureDays.isEmpty {
+                            DisclosureGroup(isExpanded: $showFutureDays) {
+                                ForEach(futureDays) { plan in
+                                    DayRowView(plan: plan)
+                                        .id(plan.date)
+                                        .onTapGesture { selectedPlan = plan }
                                 }
+                            } label: {
+                                HStack {
+                                    Text("\u{25B6} Sonraki g\u{00FC}nler")
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.textSecondary)
+                                    Spacer()
+                                    Text(dateRangeText(futureDays))
+                                        .font(Theme.microFont)
+                                        .foregroundStyle(Theme.textTertiary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            .tint(Theme.textSecondary)
                         }
                     }
                     .padding(.horizontal)
