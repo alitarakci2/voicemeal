@@ -33,7 +33,7 @@ struct DailyInsightCard: View {
     @State private var lastTimeOfDay: GroqService.TimeOfDay?
     @State private var isAutoRefreshing = false
 
-    private let groqService = GroqService()
+    @Environment(GroqService.self) private var groqService
 
     private var sleepSummary: String? {
         guard let s = sleep else { return nil }

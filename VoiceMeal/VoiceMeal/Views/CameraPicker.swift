@@ -33,6 +33,8 @@ struct CameraPicker: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
                 parent.onImagePicked(image)
+            } else {
+                print("📷 [ERROR] Could not extract UIImage from picker")
             }
             parent.dismiss()
         }

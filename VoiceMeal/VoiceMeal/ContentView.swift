@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var onboardingComplete = false
     @State private var selectedTab = 0
     @State private var goalEngine = GoalEngine()
+    @State private var groqService = GroqService()
 
     private var hasProfile: Bool {
         !profiles.isEmpty || onboardingComplete
@@ -45,6 +46,7 @@ struct ContentView: View {
             }
             .tint(Theme.accent)
             .environment(goalEngine)
+            .environment(groqService)
             .onAppear {
                 goalEngine.update(with: profiles.first)
             }

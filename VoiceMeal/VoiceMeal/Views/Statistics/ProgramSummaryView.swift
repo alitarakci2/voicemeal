@@ -15,7 +15,7 @@ struct ProgramSummaryView: View {
     @State private var insightText: String?
     @State private var insightLoading = false
 
-    private let groqService = GroqService()
+    @Environment(GroqService.self) private var groqService
 
     var body: some View {
         if summary.totalDays < 3 {

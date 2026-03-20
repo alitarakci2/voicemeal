@@ -52,6 +52,7 @@ struct PhotoAnalysisResponse: Codable {
     let description: String
 }
 
+@Observable
 class GroqService {
 
     private let endpoint = URL(string: "https://api.groq.com/openai/v1/chat/completions")!
@@ -619,7 +620,10 @@ class GroqService {
 
     func analyzeFood(imageData: Data) async throws -> PhotoAnalysisResponse {
         let apiKey = Config.groqAPIKey
-        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+        guard !apiKey.isEmpty else {
+            print("📷 [ERROR] Missing API key")
+            throw GroqError.missingAPIKey
+        }
 
         let base64Image = imageData.base64EncodedString()
 
@@ -656,11 +660,15 @@ class GroqService {
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
+            if let errorBody = String(data: data, encoding: .utf8) {
+                print("📷 [ERROR] API error: \(errorBody)")
+            }
             throw GroqError.apiError
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
         guard let content = chatResponse.choices.first?.message.content else {
+            print("📷 [ERROR] Empty response content")
             throw GroqError.emptyResponse
         }
 
@@ -670,10 +678,16 @@ class GroqService {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let jsonData = jsonString.data(using: .utf8) else {
+            print("📷 [ERROR] Could not convert JSON string to data")
             throw GroqError.invalidJSON
         }
 
-        return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+        do {
+            return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+        } catch {
+            print("📷 [ERROR] JSON decode failed: \(error)")
+            throw GroqError.invalidJSON
+        }
     }
 
     func clarifyFoodAnalysis(
@@ -682,7 +696,10 @@ class GroqService {
         imageData: Data
     ) async throws -> PhotoAnalysisResponse {
         let apiKey = Config.groqAPIKey
-        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+        guard !apiKey.isEmpty else {
+            print("📷 [ERROR] Missing API key")
+            throw GroqError.missingAPIKey
+        }
 
         let base64Image = imageData.base64EncodedString()
 
@@ -731,11 +748,15 @@ class GroqService {
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
+            if let errorBody = String(data: data, encoding: .utf8) {
+                print("📷 [ERROR] API error: \(errorBody)")
+            }
             throw GroqError.apiError
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
         guard let content = chatResponse.choices.first?.message.content else {
+            print("📷 [ERROR] Empty clarification response")
             throw GroqError.emptyResponse
         }
 
@@ -745,16 +766,22 @@ class GroqService {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let jsonData = jsonString.data(using: .utf8) else {
+            print("📷 [ERROR] Could not convert JSON to data")
             throw GroqError.invalidJSON
         }
 
-        return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+        do {
+            return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+        } catch {
+            print("📷 [ERROR] JSON decode failed: \(error)")
+            throw GroqError.invalidJSON
+        }
     }
 
     // MARK: - Image Compression
 
     static func compressImage(_ image: UIImage) -> Data? {
-        let maxSize: CGFloat = 800
+        let maxSize: CGFloat = 512
         var targetImage = image
 
         if max(image.size.width, image.size.height) > maxSize {
@@ -766,7 +793,12 @@ class GroqService {
             }
         }
 
-        return targetImage.jpegData(compressionQuality: 0.7)
+        let maxBytes = 300_000
+        if let data = targetImage.jpegData(compressionQuality: 0.5), data.count <= maxBytes {
+            return data
+        }
+
+        return targetImage.jpegData(compressionQuality: 0.3)
     }
 }
 

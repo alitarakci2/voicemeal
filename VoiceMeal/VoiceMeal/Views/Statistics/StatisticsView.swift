@@ -17,7 +17,7 @@ struct StatisticsView: View {
     @State private var weeklyInsight: String?
     @State private var insightLoading = false
 
-    private let groqService = GroqService()
+    @Environment(GroqService.self) private var groqService
 
     private var monthlyHasEnoughData: Bool {
         statisticsService.monthlyStats.filter { $0.hasData }.count >= 14

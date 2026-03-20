@@ -42,7 +42,7 @@ struct HomeView: View {
     @State private var showPhotoAnalysis = false
     @State private var showCameraPermissionDenied = false
 
-    private let groqService = GroqService()
+    @Environment(GroqService.self) private var groqService
 
     private var todayEntries: [FoodEntry] {
         let startOfDay = Calendar.current.startOfDay(for: .now)
@@ -454,10 +454,17 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { image in
-                if let data = GroqService.compressImage(image) {
-                    capturedImage = image
-                    capturedImageData = data
-                    showPhotoAnalysis = true
+                capturedImage = image
+                Task.detached(priority: .userInitiated) {
+                    let data = GroqService.compressImage(image)
+                    await MainActor.run {
+                        if let data {
+                            capturedImageData = data
+                            showPhotoAnalysis = true
+                        } else {
+                            print("📷 [ERROR] Compression returned nil")
+                        }
+                    }
                 }
             }
             .ignoresSafeArea()
@@ -897,7 +904,8 @@ struct HomeView: View {
         #if targetEnvironment(simulator)
         errorMessage = "Kamera simülatörde kullanılamaz"
         #else
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
         case .authorized:
             showCamera = true
         case .notDetermined:

@@ -23,7 +23,7 @@ struct MealSuggestionView: View {
     @State private var errorMessage: String?
     @State private var cachedAt: Date?
 
-    private let groqService = GroqService()
+    @Environment(GroqService.self) private var groqService
 
     var body: some View {
         NavigationStack {
