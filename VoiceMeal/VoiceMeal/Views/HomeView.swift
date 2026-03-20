@@ -289,29 +289,16 @@ struct HomeView: View {
                             .padding(.bottom, 8)
 
                         ForEach(todayEntries, id: \.id) { entry in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(entry.name)
-                                        .font(Theme.bodyFont)
-                                        .foregroundStyle(Theme.textPrimary)
-                                    Text(entry.amount)
-                                        .font(Theme.captionFont)
-                                        .foregroundStyle(Theme.textSecondary)
-                                    Text("P:\(Int(entry.protein))g K:\(Int(entry.carbs))g Y:\(Int(entry.fat))g")
-                                        .font(Theme.captionFont)
-                                        .foregroundStyle(Theme.textTertiary)
-                                }
-                                Spacer()
-                                Text("\(entry.calories) kcal")
-                                    .font(Theme.bodyFont)
-                                    .foregroundStyle(Theme.textSecondary)
+                            HStack(alignment: .top) {
+                                FoodEntryRowView(entry: entry)
+
                                 Button {
                                     entryToEdit = entry
                                 } label: {
                                     Image(systemName: "pencil")
                                         .font(Theme.captionFont)
                                         .foregroundStyle(Theme.accent)
-                                        .frame(width: 44, height: 44)
+                                        .frame(width: 36, height: 36)
                                 }
                                 .buttonStyle(.plain)
                                 Button {
@@ -321,19 +308,43 @@ struct HomeView: View {
                                     Image(systemName: "trash")
                                         .font(Theme.captionFont)
                                         .foregroundStyle(Theme.red)
-                                        .frame(width: 44, height: 44)
+                                        .frame(width: 36, height: 36)
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal)
-                            .padding(.vertical, 8)
                             if entry.id != todayEntries.last?.id {
-                                Theme.cardBorder
-                                    .frame(height: 1)
+                                Divider()
+                                    .overlay(Theme.cardBorder.opacity(0.5))
                                     .padding(.leading)
                             }
                         }
-                        .padding(.bottom, 8)
+
+                        // Total row
+                        Divider()
+                            .overlay(Theme.cardBorder)
+                            .padding(.horizontal)
+
+                        HStack {
+                            Text("Toplam")
+                                .font(Theme.bodyFont)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Text("\(eatenCalories) kcal")
+                                .font(Theme.bodyFont)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 4)
+
+                        Text("P: \(Int(eatenProtein))g  K: \(Int(eatenCarbs))g  Y: \(Int(eatenFat))g")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.horizontal)
+                            .padding(.bottom, 8)
                     }
                     .themeCard()
                 }

@@ -585,35 +585,7 @@ struct DayDetailSheetView: View {
                             .font(Theme.headlineFont)
                             .padding(.top, 4)
                         ForEach(dayEntries, id: \.id) { entry in
-                            HStack(alignment: .top, spacing: 8) {
-                                Text(foodEmoji(entry.name))
-                                    .font(.title3)
-                                    .frame(width: 28)
-
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(entry.name)
-                                        .font(Theme.bodyFont)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(Theme.textPrimary)
-
-                                    if !entry.amount.isEmpty {
-                                        Text("\(entry.amount)  \u{2022}  \(entry.calories) kcal")
-                                            .font(Theme.captionFont)
-                                            .foregroundStyle(Theme.textSecondary)
-                                    } else {
-                                        Text("\(entry.calories) kcal")
-                                            .font(Theme.captionFont)
-                                            .foregroundStyle(Theme.textSecondary)
-                                    }
-
-                                    Text("P: \(Int(entry.protein))g  K: \(Int(entry.carbs))g  Y: \(Int(entry.fat))g")
-                                        .font(Theme.microFont)
-                                        .foregroundStyle(Theme.textTertiary)
-                                }
-
-                                Spacer()
-                            }
-                            .padding(.vertical, 6)
+                            FoodEntryRowView(entry: entry)
 
                             if entry.id != dayEntries.last?.id {
                                 Divider()
@@ -659,29 +631,6 @@ struct DayDetailSheetView: View {
             }
         }
         .presentationDetents([.medium, .large])
-    }
-
-    private func foodEmoji(_ name: String) -> String {
-        let lower = name.lowercased()
-        if lower.contains("tavuk") || lower.contains("chicken") { return "\u{1F357}" }
-        if lower.contains("et") || lower.contains("dana") || lower.contains("k\u{0131}yma") || lower.contains("biftek") || lower.contains("kuzu") { return "\u{1F969}" }
-        if lower.contains("bal\u{0131}k") || lower.contains("somon") || lower.contains("ton") { return "\u{1F41F}" }
-        if lower.contains("yumurta") { return "\u{1F95A}" }
-        if lower.contains("s\u{00FC}t") || lower.contains("yo\u{011F}urt") || lower.contains("kefir") || lower.contains("peynir") { return "\u{1F95B}" }
-        if lower.contains("ekmek") || lower.contains("tost") { return "\u{1F35E}" }
-        if lower.contains("pirin\u{00E7}") || lower.contains("bulgur") || lower.contains("makarna") || lower.contains("noodle") { return "\u{1F35A}" }
-        if lower.contains("salata") || lower.contains("sebze") || lower.contains("brokoli") || lower.contains("biber") || lower.contains("\u{0131}spanak") { return "\u{1F966}" }
-        if lower.contains("ya\u{011F}") || lower.contains("zeytinya\u{011F}\u{0131}") { return "\u{1FAD2}" }
-        if lower.contains("meyve") || lower.contains("elma") || lower.contains("muz") || lower.contains("portakal") { return "\u{1F34E}" }
-        if lower.contains("kahve") || lower.contains("coffee") { return "\u{2615}" }
-        if lower.contains("\u{00E7}ay") || lower.contains("tea") { return "\u{1FAD6}" }
-        if lower.contains("su") || lower.contains("water") { return "\u{1F4A7}" }
-        if lower.contains("patates") || lower.contains("k\u{0131}zartma") { return "\u{1F35F}" }
-        if lower.contains("pizza") { return "\u{1F355}" }
-        if lower.contains("hamburger") || lower.contains("burger") { return "\u{1F354}" }
-        if lower.contains("pilav") { return "\u{1F35A}" }
-        if lower.contains("corba") || lower.contains("\u{00E7}orba") { return "\u{1F372}" }
-        return "\u{1F37D}\u{FE0F}"
     }
 
     private var isPastOlderThan7Days: Bool {

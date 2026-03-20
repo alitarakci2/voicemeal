@@ -88,14 +88,6 @@ class StatisticsService {
     func refresh(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?) {
         weeklyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 7)
         monthlyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 30)
-        let calendar = Self.localCalendar
-        let todayStart = calendar.startOfDay(for: .now)
-        print("📊 [WeeklyStats] todayStart=\(todayStart)")
-        for stat in weeklyStats {
-            let statDay = calendar.startOfDay(for: stat.date)
-            let isPast = statDay < todayStart
-            print("📊 \(statDay) hasData:\(stat.hasData) consumed:\(stat.consumedCalories) deficit:\(stat.deficit) isPast:\(isPast)")
-        }
     }
 
     private func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, days: Int) -> [DayStat] {
