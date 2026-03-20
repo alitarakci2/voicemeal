@@ -32,9 +32,6 @@ struct SettingsView: View {
     @State private var waterGoalAuto = true
     @State private var waterGoalManualMl: Double = 2500
 
-    // Favorite foods
-    @State private var favoriteFoods: Set<String> = []
-
     // Notifications
     @State private var notification1Enabled = true
     @State private var notification1Time = Calendar.current.date(from: DateComponents(hour: 16, minute: 0)) ?? .now
@@ -196,15 +193,6 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("\u{1F4A7} Su Hedefi")
-                }
-
-                // Favorite foods section
-                Section {
-                    favoriteFoodChips
-                } header: {
-                    Text("\u{1F372} Favori Malzemeler")
-                } footer: {
-                    Text("\u{00D6}\u{011F}\u{00FC}n plan\u{0131} bu malzemelere g\u{00F6}re haz\u{0131}rlan\u{0131}r.")
                 }
 
                 // Section 4: Weekly Schedule
@@ -430,56 +418,6 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Favorite food chips
-
-    private static let allFavoriteFoods: [(key: String, label: String)] = [
-        ("tavuk", "Tavuk"),
-        ("somon", "Somon"),
-        ("dana", "Dana/K\u{0131}yma"),
-        ("yumurta", "Yumurta"),
-        ("lor peyniri", "Lor Peyniri"),
-        ("ka\u{015F}ar", "Ka\u{015F}ar"),
-        ("yo\u{011F}urt", "Yo\u{011F}urt"),
-        ("kefir", "Kefir"),
-        ("yulaf", "Yulaf"),
-        ("bulgur", "Bulgur"),
-        ("pirin\u{00E7}", "Pirin\u{00E7}"),
-        ("makarna", "Makarna"),
-        ("nohut", "Nohut"),
-        ("mercimek", "Mercimek"),
-        ("brokoli", "Brokoli"),
-        ("\u{0131}spanak", "Ispanak"),
-    ]
-
-    private var favoriteFoodChips: some View {
-        let columns = [GridItem(.adaptive(minimum: 90))]
-        return LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(Self.allFavoriteFoods, id: \.key) { food in
-                let isSelected = favoriteFoods.contains(food.key)
-                Button {
-                    if isSelected {
-                        favoriteFoods.remove(food.key)
-                    } else {
-                        favoriteFoods.insert(food.key)
-                    }
-                } label: {
-                    Text(food.label)
-                        .font(Theme.captionFont)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .frame(maxWidth: .infinity)
-                        .background(isSelected ? Theme.blue.opacity(0.2) : Theme.cardBackground)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isSelected ? Theme.blue : Color.clear, lineWidth: 1.5)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
     // MARK: - Intensity helpers
 
     private var intensityLabel: String {
@@ -512,7 +450,6 @@ struct SettingsView: View {
         intensityLevel = p.intensityLevel
         weeklySchedule = p.weeklySchedule
         originalSchedule = p.weeklySchedule
-        favoriteFoods = Set(p.favoriteFoods)
         if let override = p.waterGoalOverrideMl {
             waterGoalAuto = false
             waterGoalManualMl = Double(override)
@@ -569,7 +506,6 @@ struct SettingsView: View {
         p.notification2Minute = Calendar.current.component(.minute, from: notification2Time)
         p.preferredProteins = Array(preferredProteins)
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
-        p.favoriteFoods = Array(favoriteFoods)
         p.updatedAt = .now
 
         originalSchedule = weeklySchedule

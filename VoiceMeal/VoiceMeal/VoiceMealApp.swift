@@ -17,6 +17,6 @@ struct VoiceMealApp: App {
                     _ = await NotificationService.shared.requestPermission()
                 }
         }
-        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self, MealPlan.self])
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self])
     }
 }

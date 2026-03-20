@@ -9,21 +9,9 @@ import SwiftUI
 struct PlanView: View {
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
-    @Query private var mealPlans: [MealPlan]
     @State private var planService = PlanService()
     @Environment(GoalEngine.self) private var goalEngine
-    @Environment(\.modelContext) private var modelContext
     @State private var selectedPlan: DayPlan?
-    @State private var healthKitService = HealthKitService()
-
-    // Meal plan state
-    @State private var isGeneratingMealPlan = false
-    @State private var mealPlanError: String?
-    @State private var selectedMealDetail: MealPlanSuggestion?
-    @State private var showSavedToast = false
-    @State private var savedMealType: String?
-
-    private let groqService = GroqService()
 
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
@@ -33,11 +21,6 @@ struct PlanView: View {
 
     private var todayID: Date {
         Calendar.current.startOfDay(for: .now)
-    }
-
-    private var todayMealPlan: MealPlan? {
-        let startOfDay = Calendar.current.startOfDay(for: .now)
-        return mealPlans.first { Calendar.current.isDate($0.date, inSameDayAs: startOfDay) }
     }
 
     private var weeklyStats: (totalDeficit: Int, estimatedChangeKg: Double) {
@@ -57,10 +40,6 @@ struct PlanView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
-                        // Meal plan section
-                        mealPlanSection
-                            .padding(.bottom, 8)
-
                         // Weekly summary
                         weeklySummaryCard
                             .padding(.bottom, 4)
@@ -92,220 +71,8 @@ struct PlanView: View {
             .sheet(item: $selectedPlan) { plan in
                 DayDetailSheetView(plan: plan)
             }
-            .sheet(item: $selectedMealDetail) { suggestion in
-                MealDetailSheet(suggestion: suggestion) {
-                    saveMealAsFoodEntry(suggestion)
-                }
-            }
-            .task {
-                if todayMealPlan == nil {
-                    await generateMealPlan()
-                }
-            }
-            .overlay(alignment: .bottom) {
-                if showSavedToast {
-                    let label = mealTypeLabel(savedMealType)
-                    Text("\(label) eklendi \u{2713}")
-                        .font(Theme.bodyFont)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Theme.green)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .padding(.bottom, 20)
-                }
-            }
-            .animation(.easeInOut, value: showSavedToast)
         }
     }
-
-    // MARK: - Meal Plan Section
-
-    private var mealPlanSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                Text("\u{1F4C5} Bug\u{00FC}n\u{00FC}n \u{00D6}\u{011F}\u{00FC}n Plan\u{0131}")
-                    .font(Theme.headlineFont)
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Button {
-                    Task { await generateMealPlan() }
-                } label: {
-                    Label("Yeniden \u{00DC}ret", systemImage: "arrow.clockwise")
-                        .font(Theme.captionFont)
-                }
-                .buttonStyle(.bordered)
-                .tint(Theme.accent)
-                .disabled(isGeneratingMealPlan)
-            }
-
-            if isGeneratingMealPlan {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text("\u{00D6}\u{011F}\u{00FC}n plan\u{0131} haz\u{0131}rlan\u{0131}yor...")
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    Spacer()
-                }
-                .padding(.vertical, 20)
-            } else if let plan = todayMealPlan {
-                mealSection("Kahvalt\u{0131}", suggestions: plan.breakfastSuggestions, selected: plan.selectedBreakfast, mealType: "breakfast")
-                mealSection("\u{00D6}\u{011F}le Yeme\u{011F}i", suggestions: plan.lunchSuggestions, selected: plan.selectedLunch, mealType: "lunch")
-                mealSection("Ak\u{015F}am Yeme\u{011F}i", suggestions: plan.dinnerSuggestions, selected: plan.selectedDinner, mealType: "dinner")
-            } else if let error = mealPlanError {
-                VStack(spacing: 8) {
-                    Text(error)
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.textSecondary)
-                    Button("Tekrar Dene") {
-                        Task { await generateMealPlan() }
-                    }
-                    .buttonStyle(.bordered)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-            } else {
-                Text("Y\u{00FC}kleniyor...")
-                    .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-            }
-        }
-        .padding()
-        .themeCard()
-    }
-
-    private func mealSection(_ title: String, suggestions: [MealPlanSuggestion], selected: MealPlanSuggestion?, mealType: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(Theme.bodyFont)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Theme.textPrimary)
-                if selected != nil {
-                    Text("\u{2705}")
-                        .font(Theme.captionFont)
-                }
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(suggestions) { suggestion in
-                        MealSuggestionCardView(
-                            suggestion: suggestion,
-                            isSelected: selected?.id == suggestion.id,
-                            isDimmed: selected != nil && selected?.id != suggestion.id,
-                            onSelect: {
-                                selectMeal(suggestion, mealType: mealType)
-                            },
-                            onTap: {
-                                selectedMealDetail = suggestion
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Actions
-
-    private func generateMealPlan() async {
-        guard let profile = profiles.first else { return }
-
-        isGeneratingMealPlan = true
-        mealPlanError = nil
-
-        do {
-            // Fetch HRV for context
-            if healthKitService.isAvailable {
-                await healthKitService.requestPermission()
-                _ = await healthKitService.fetchTodayHRV()
-                _ = await healthKitService.fetchHRVBaseline()
-            }
-
-            let frequentFoods = FrequentFoodService.getFrequentFoods(entries: allEntries)
-
-            let response = try await groqService.generateDailyMealPlan(
-                dailyCalorieTarget: goalEngine.dailyCalorieTarget,
-                proteinTarget: goalEngine.proteinTarget,
-                carbTarget: goalEngine.carbTarget,
-                fatTarget: goalEngine.fatTarget,
-                favoriteFoods: profile.favoriteFoods,
-                frequentFoods: frequentFoods,
-                todayActivities: goalEngine.todayActivityNames,
-                hrvStatus: healthKitService.hrvStatus
-            )
-
-            // Delete old plan for today if exists
-            if let existing = todayMealPlan {
-                modelContext.delete(existing)
-            }
-
-            let plan = MealPlan(
-                date: .now,
-                breakfast: response.breakfast,
-                lunch: response.lunch,
-                dinner: response.dinner
-            )
-            modelContext.insert(plan)
-            try? modelContext.save()
-        } catch {
-            mealPlanError = "\u{00D6}\u{011F}\u{00FC}n plan\u{0131} olu\u{015F}turulamad\u{0131}. \u{0130}nternet ba\u{011F}lant\u{0131}n\u{0131} kontrol et."
-        }
-
-        isGeneratingMealPlan = false
-    }
-
-    private func selectMeal(_ suggestion: MealPlanSuggestion, mealType: String) {
-        guard let plan = todayMealPlan else { return }
-
-        switch mealType {
-        case "breakfast": plan.selectedBreakfast = suggestion
-        case "lunch": plan.selectedLunch = suggestion
-        case "dinner": plan.selectedDinner = suggestion
-        default: break
-        }
-        try? modelContext.save()
-
-        savedMealType = mealType
-        showSavedToast = true
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            showSavedToast = false
-        }
-    }
-
-    private func saveMealAsFoodEntry(_ suggestion: MealPlanSuggestion) {
-        let entry = FoodEntry(
-            name: suggestion.name,
-            amount: suggestion.ingredients.joined(separator: ", "),
-            calories: suggestion.calories,
-            protein: suggestion.protein,
-            carbs: suggestion.carbs,
-            fat: suggestion.fat
-        )
-        modelContext.insert(entry)
-        try? modelContext.save()
-    }
-
-    private func mealTypeLabel(_ type: String?) -> String {
-        switch type {
-        case "breakfast": return "Kahvalt\u{0131}"
-        case "lunch": return "\u{00D6}\u{011F}le"
-        case "dinner": return "Ak\u{015F}am"
-        default: return "\u{00D6}\u{011F}\u{00FC}n"
-        }
-    }
-
-    // MARK: - Weekly Summary
 
     private var weeklySummaryCard: some View {
         let stats = weeklyStats
@@ -663,5 +430,5 @@ struct DayDetailSheetView: View {
 #Preview {
     PlanView()
         .environment(GoalEngine())
-        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, MealPlan.self], inMemory: true)
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self], inMemory: true)
 }

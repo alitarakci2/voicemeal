@@ -27,7 +27,6 @@ final class UserProfile {
     var preferredProteinsJSON: String
     var programStartWeightKg: Double = 0
     var waterGoalOverrideMl: Int?
-    var favoriteFoodsJSON: String = "[]"
     var createdAt: Date
     var updatedAt: Date
 
@@ -43,22 +42,6 @@ final class UserProfile {
             if let data = try? JSONEncoder().encode(newValue),
                let json = String(data: data, encoding: .utf8) {
                 preferredProteinsJSON = json
-            }
-        }
-    }
-
-    var favoriteFoods: [String] {
-        get {
-            guard let data = favoriteFoodsJSON.data(using: .utf8),
-                  let decoded = try? JSONDecoder().decode([String].self, from: data) else {
-                return []
-            }
-            return decoded
-        }
-        set {
-            if let data = try? JSONEncoder().encode(newValue),
-               let json = String(data: data, encoding: .utf8) {
-                favoriteFoodsJSON = json
             }
         }
     }

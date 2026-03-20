@@ -13,7 +13,6 @@ struct HomeView: View {
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query(sort: \WaterEntry.date, order: .reverse) private var allWaterEntries: [WaterEntry]
     @Query private var profiles: [UserProfile]
-    @Query private var mealPlans: [MealPlan]
     @State private var permissionGranted = false
     @State private var isAnalyzing = false
     @State private var parsedMeals: [ParsedMeal] = []
@@ -47,14 +46,6 @@ struct HomeView: View {
         if hour >= 20 { return .evening }
         if hour >= 15 { return .afternoon }
         return nil
-    }
-
-    private var todayMealPlanNames: String? {
-        let startOfDay = Calendar.current.startOfDay(for: .now)
-        guard let plan = mealPlans.first(where: { Calendar.current.isDate($0.date, inSameDayAs: startOfDay) }) else { return nil }
-        let meals = [plan.selectedBreakfast, plan.selectedLunch, plan.selectedDinner].compactMap(\.self)
-        guard !meals.isEmpty else { return nil }
-        return meals.map(\.name).joined(separator: ", ")
     }
 
     private var todayWaterEntries: [WaterEntry] {
@@ -112,8 +103,7 @@ struct HomeView: View {
                         tdee: Int(goalEngine.tdee),
                         intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
                         waterMl: todayWaterMl,
-                        waterGoalMl: waterGoalService.dailyGoalMl,
-                        plannedMeals: todayMealPlanNames
+                        waterGoalMl: waterGoalService.dailyGoalMl
                     )
 
                     WaterTrackingCard(
