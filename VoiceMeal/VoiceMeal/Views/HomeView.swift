@@ -3,6 +3,7 @@
 //  VoiceMeal
 //
 
+import AVFoundation
 import SwiftData
 import SwiftUI
 
@@ -33,6 +34,13 @@ struct HomeView: View {
     @Environment(GoalEngine.self) private var goalEngine
     @State private var healthKitService = HealthKitService()
     @State private var waterGoalService = WaterGoalService()
+
+    // Camera state
+    @State private var showCamera = false
+    @State private var capturedImage: UIImage?
+    @State private var capturedImageData: Data?
+    @State private var showPhotoAnalysis = false
+    @State private var showCameraPermissionDenied = false
 
     private let groqService = GroqService()
 
@@ -136,33 +144,70 @@ struct HomeView: View {
                     }
                 }
 
-                // Mic button
-                Button {
-                    handleMicTap()
-                } label: {
-                    Image(systemName: speechService.isRecording ? "mic.fill" : "mic")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.white)
-                        .frame(width: 88, height: 88)
-                        .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
-                        .clipShape(Circle())
-                        .overlay(
-                            Group {
-                                if speechService.isRecording {
-                                    Circle()
-                                        .stroke(Theme.red.opacity(0.4), lineWidth: 3)
-                                        .scaleEffect(speechService.isRecording ? 1.3 : 1.0)
-                                        .opacity(speechService.isRecording ? 0 : 1)
-                                        .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: false), value: speechService.isRecording)
-                                } else {
+                // Input label
+                Text("Ne yedin?")
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textSecondary)
+
+                // Dual buttons: Mic + Camera
+                HStack(spacing: 24) {
+                    // Mic button
+                    VStack(spacing: 8) {
+                        Button {
+                            handleMicTap()
+                        } label: {
+                            Image(systemName: speechService.isRecording ? "mic.fill" : "mic")
+                                .font(.system(size: 36))
+                                .foregroundStyle(.white)
+                                .frame(width: 80, height: 80)
+                                .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Group {
+                                        if speechService.isRecording {
+                                            Circle()
+                                                .stroke(Theme.red.opacity(0.4), lineWidth: 3)
+                                                .scaleEffect(1.3)
+                                                .opacity(0)
+                                                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: false), value: speechService.isRecording)
+                                        } else {
+                                            Circle()
+                                                .stroke(Theme.cardBorder, lineWidth: 2)
+                                        }
+                                    }
+                                )
+                        }
+                        .disabled(isAnalyzing)
+                        .sensoryFeedback(.impact, trigger: speechService.isRecording)
+
+                        Text("Sesle Kaydet")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+
+                    // Camera button
+                    VStack(spacing: 8) {
+                        Button {
+                            handleCameraTap()
+                        } label: {
+                            Image(systemName: "camera")
+                                .font(.system(size: 36))
+                                .foregroundStyle(.white)
+                                .frame(width: 80, height: 80)
+                                .background(Theme.cardBackground)
+                                .clipShape(Circle())
+                                .overlay(
                                     Circle()
                                         .stroke(Theme.cardBorder, lineWidth: 2)
-                                }
-                            }
-                        )
+                                )
+                        }
+                        .disabled(isAnalyzing)
+
+                        Text("Foto\u{011F}rafla")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
                 }
-                .disabled(isAnalyzing)
-                .sensoryFeedback(.impact, trigger: speechService.isRecording)
 
                 // Status label
                 if isAnalyzing {
@@ -176,7 +221,7 @@ struct HomeView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Theme.green)
                 } else {
-                    Text(speechService.isRecording ? "Dinliyorum..." : "Hazır")
+                    Text(speechService.isRecording ? "Dinliyorum..." : "Haz\u{0131}r")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
                 }
@@ -406,6 +451,40 @@ struct HomeView: View {
                     hrvStatus: healthKitService.hrvStatus
                 )
             }
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker { image in
+                if let data = GroqService.compressImage(image) {
+                    capturedImage = image
+                    capturedImageData = data
+                    showPhotoAnalysis = true
+                }
+            }
+            .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showPhotoAnalysis) {
+            if let image = capturedImage, let data = capturedImageData {
+                PhotoAnalysisView(
+                    image: image,
+                    imageData: data,
+                    onSave: { meals in
+                        saveEntries(from: meals)
+                    },
+                    onRetake: {
+                        showCamera = true
+                    }
+                )
+            }
+        }
+        .alert("Kamera \u{0130}zni Gerekli", isPresented: $showCameraPermissionDenied) {
+            Button("Ayarlar\u{0131} A\u{00E7}") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("\u{0130}ptal", role: .cancel) {}
+        } message: {
+            Text("Yemek foto\u{011F}raf\u{0131} \u{00E7}ekmek i\u{00E7}in kamera iznine ihtiyac\u{0131}m\u{0131}z var. Ayarlar'dan kamera iznini a\u{00E7}abilirsiniz.")
         }
     }
 
@@ -813,6 +892,31 @@ struct HomeView: View {
     }
 
     // MARK: - Actions
+
+    private func handleCameraTap() {
+        #if targetEnvironment(simulator)
+        errorMessage = "Kamera simülatörde kullanılamaz"
+        #else
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            showCamera = true
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        showCamera = true
+                    } else {
+                        showCameraPermissionDenied = true
+                    }
+                }
+            }
+        case .denied, .restricted:
+            showCameraPermissionDenied = true
+        @unknown default:
+            showCameraPermissionDenied = true
+        }
+        #endif
+    }
 
     private func handleMicTap() {
         if speechService.isRecording {

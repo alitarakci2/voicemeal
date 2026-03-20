@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import UIKit
 
 struct ParsedMeal: Codable, Identifiable {
     var id: String { name }
@@ -40,6 +41,15 @@ struct SuggestedMeal: Codable {
     let portion: String
     let calories: Int
     let protein: Int
+}
+
+struct PhotoAnalysisResponse: Codable {
+    let detected: Bool
+    let meals: [ParsedMeal]?
+    let clarification_needed: Bool
+    let clarification_question: String?
+    let confidence: String
+    let description: String
 }
 
 class GroqService {
@@ -577,6 +587,187 @@ class GroqService {
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    // MARK: - Photo Food Analysis
+
+    private let photoAnalysisPrompt = """
+        Sen bir beslenme uzman\u{0131}s\u{0131}n. Foto\u{011F}raftaki yiyece\u{011F}i analiz et.
+
+        SADECE JSON format\u{0131}nda yan\u{0131}t ver, ba\u{015F}ka hi\u{00E7}bir \u{015F}ey yazma:
+        {
+          "detected": true/false,
+          "meals": [
+            {
+              "name": "yemek ad\u{0131}",
+              "amount": "tahmini miktar (gram veya porsiyon)",
+              "calories": say\u{0131},
+              "protein": say\u{0131},
+              "carbs": say\u{0131},
+              "fat": say\u{0131}
+            }
+          ],
+          "clarification_needed": true/false,
+          "clarification_question": "T\u{00FC}rk\u{00E7}e soru veya null",
+          "confidence": "high/medium/low",
+          "description": "K\u{0131}sa T\u{00FC}rk\u{00E7}e a\u{00E7}\u{0131}klama"
+        }
+
+        E\u{011F}er yemek miktar\u{0131} belirsizse clarification_needed: true yap.
+        E\u{011F}er yemek tan\u{0131}nam\u{0131}yorsa detected: false d\u{00F6}nd\u{00FC}r.
+        Foto\u{011F}raf yemek i\u{00E7}ermiyorsa detected: false d\u{00F6}nd\u{00FC}r.
+        T\u{00FC}rk yemeklerini iyi tan\u{0131}. Tabaktaki her yeme\u{011F}i ayr\u{0131} listele.
+        """
+
+    func analyzeFood(imageData: Data) async throws -> PhotoAnalysisResponse {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let base64Image = imageData.base64EncodedString()
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                [
+                    "role": "user",
+                    "content": [
+                        [
+                            "type": "image_url",
+                            "image_url": [
+                                "url": "data:image/jpeg;base64,\(base64Image)"
+                            ]
+                        ],
+                        [
+                            "type": "text",
+                            "text": photoAnalysisPrompt
+                        ]
+                    ]
+                ]
+            ],
+            "temperature": 0.2,
+            "max_tokens": 600
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        let jsonString = content
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            throw GroqError.invalidJSON
+        }
+
+        return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+    }
+
+    func clarifyFoodAnalysis(
+        originalResponse: PhotoAnalysisResponse,
+        clarification: String,
+        imageData: Data
+    ) async throws -> PhotoAnalysisResponse {
+        let apiKey = Config.groqAPIKey
+        guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
+
+        let base64Image = imageData.base64EncodedString()
+
+        let contextPrompt = """
+            \(photoAnalysisPrompt)
+
+            \u{00D6}nceki analiz sonu\u{00E7}lar\u{0131}:
+            \(originalResponse.description)
+
+            Kullan\u{0131}c\u{0131} a\u{00E7}\u{0131}klamas\u{0131}: \(clarification)
+
+            Bu bilgilerle g\u{00FC}ncellenmi\u{015F} JSON d\u{00F6}nd\u{00FC}r.
+            clarification_needed: false yap \u{00E7}\u{00FC}nk\u{00FC} kullan\u{0131}c\u{0131} a\u{00E7}\u{0131}klad\u{0131}.
+            """
+
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [
+                [
+                    "role": "user",
+                    "content": [
+                        [
+                            "type": "image_url",
+                            "image_url": [
+                                "url": "data:image/jpeg;base64,\(base64Image)"
+                            ]
+                        ],
+                        [
+                            "type": "text",
+                            "text": contextPrompt
+                        ]
+                    ]
+                ]
+            ],
+            "temperature": 0.2,
+            "max_tokens": 600
+        ]
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw GroqError.apiError
+        }
+
+        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = chatResponse.choices.first?.message.content else {
+            throw GroqError.emptyResponse
+        }
+
+        let jsonString = content
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            throw GroqError.invalidJSON
+        }
+
+        return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+    }
+
+    // MARK: - Image Compression
+
+    static func compressImage(_ image: UIImage) -> Data? {
+        let maxSize: CGFloat = 800
+        var targetImage = image
+
+        if max(image.size.width, image.size.height) > maxSize {
+            let scale = maxSize / max(image.size.width, image.size.height)
+            let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            let renderer = UIGraphicsImageRenderer(size: newSize)
+            targetImage = renderer.image { _ in
+                image.draw(in: CGRect(origin: .zero, size: newSize))
+            }
+        }
+
+        return targetImage.jpegData(compressionQuality: 0.7)
+    }
 }
 
 // MARK: - Groq API response types
