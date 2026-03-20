@@ -163,12 +163,17 @@ class StatisticsService {
 
     // MARK: - Summary Properties
 
+    private func excludingToday(_ stats: [DayStat]) -> [DayStat] {
+        let todayStart = Self.localCalendar.startOfDay(for: .now)
+        return stats.filter { $0.hasData && Self.localCalendar.startOfDay(for: $0.date) < todayStart }
+    }
+
     var totalDeficitThisWeek: Int {
-        weeklyStats.filter { $0.hasData }.reduce(0) { $0 + $1.deficit }
+        excludingToday(weeklyStats).reduce(0) { $0 + $1.deficit }
     }
 
     var totalDeficitThisMonth: Int {
-        monthlyStats.filter { $0.hasData }.reduce(0) { $0 + $1.deficit }
+        excludingToday(monthlyStats).reduce(0) { $0 + $1.deficit }
     }
 
     var estimatedWeightLostWeekKg: Double {
@@ -180,15 +185,15 @@ class StatisticsService {
     }
 
     var averageCaloriesThisWeek: Int {
-        let withData = weeklyStats.filter { $0.hasData }
-        guard !withData.isEmpty else { return 0 }
-        return withData.reduce(0) { $0 + $1.consumedCalories } / withData.count
+        let completed = excludingToday(weeklyStats)
+        guard !completed.isEmpty else { return 0 }
+        return completed.reduce(0) { $0 + $1.consumedCalories } / completed.count
     }
 
     var averageProteinThisWeek: Double {
-        let withData = weeklyStats.filter { $0.hasData }
-        guard !withData.isEmpty else { return 0 }
-        return withData.reduce(0.0) { $0 + $1.protein } / Double(withData.count)
+        let completed = excludingToday(weeklyStats)
+        guard !completed.isEmpty else { return 0 }
+        return completed.reduce(0.0) { $0 + $1.protein } / Double(completed.count)
     }
 
     var currentStreak: Int {
@@ -265,15 +270,15 @@ class StatisticsService {
     var weeklyAverageProtein: Double { averageProteinThisWeek }
 
     var weeklyAverageCarbs: Double {
-        let withData = weeklyStats.filter { $0.hasData }
-        guard !withData.isEmpty else { return 0 }
-        return withData.reduce(0.0) { $0 + $1.carbs } / Double(withData.count)
+        let completed = excludingToday(weeklyStats)
+        guard !completed.isEmpty else { return 0 }
+        return completed.reduce(0.0) { $0 + $1.carbs } / Double(completed.count)
     }
 
     var weeklyAverageFat: Double {
-        let withData = weeklyStats.filter { $0.hasData }
-        guard !withData.isEmpty else { return 0 }
-        return withData.reduce(0.0) { $0 + $1.fat } / Double(withData.count)
+        let completed = excludingToday(weeklyStats)
+        guard !completed.isEmpty else { return 0 }
+        return completed.reduce(0.0) { $0 + $1.fat } / Double(completed.count)
     }
 
     // MARK: - Program Data
@@ -315,48 +320,50 @@ class StatisticsService {
 
         // Build all stats from program start
         let allStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: totalDays)
-        let withData = allStats.filter { $0.hasData }
-        let daysWithData = withData.count
+        // Exclude today from totals/averages (partial day)
+        let completedDays = excludingToday(allStats)
+        let allWithData = allStats.filter { $0.hasData }
+        let daysWithData = completedDays.count
         let adherence = totalDays > 0 ? (daysWithData * 100) / totalDays : 0
 
-        let totalConsumed = withData.reduce(0) { $0 + $1.consumedCalories }
-        let totalTarget = withData.reduce(0) { $0 + $1.targetCalories }
-        let totalDeficit = withData.reduce(0) { $0 + $1.deficit }
+        let totalConsumed = completedDays.reduce(0) { $0 + $1.consumedCalories }
+        let totalTarget = completedDays.reduce(0) { $0 + $1.targetCalories }
+        let totalDeficit = completedDays.reduce(0) { $0 + $1.deficit }
         let estimatedChange = Double(totalDeficit) / 7700.0
 
         let avgCalories = daysWithData > 0 ? totalConsumed / daysWithData : 0
-        let avgProtein = daysWithData > 0 ? withData.reduce(0.0) { $0 + $1.protein } / Double(daysWithData) : 0
-        let avgCarbs = daysWithData > 0 ? withData.reduce(0.0) { $0 + $1.carbs } / Double(daysWithData) : 0
-        let avgFat = daysWithData > 0 ? withData.reduce(0.0) { $0 + $1.fat } / Double(daysWithData) : 0
+        let avgProtein = daysWithData > 0 ? completedDays.reduce(0.0) { $0 + $1.protein } / Double(daysWithData) : 0
+        let avgCarbs = daysWithData > 0 ? completedDays.reduce(0.0) { $0 + $1.carbs } / Double(daysWithData) : 0
+        let avgFat = daysWithData > 0 ? completedDays.reduce(0.0) { $0 + $1.fat } / Double(daysWithData) : 0
         let avgDeficit = daysWithData > 0 ? totalDeficit / daysWithData : 0
 
-        // Best/worst day depends on goal direction
+        // Best/worst day depends on goal direction (only completed days)
         let bestDay: (date: Date, value: Int)?
         let worstDay: (date: Date, value: Int)?
 
         switch direction {
         case .losing:
             // Best = highest deficit, worst = most over target (lowest deficit / highest surplus)
-            if let best = withData.max(by: { $0.deficit < $1.deficit }) {
+            if let best = completedDays.max(by: { $0.deficit < $1.deficit }) {
                 bestDay = (best.date, best.deficit)
             } else { bestDay = nil }
-            if let worst = withData.min(by: { $0.deficit < $1.deficit }) {
+            if let worst = completedDays.min(by: { $0.deficit < $1.deficit }) {
                 worstDay = (worst.date, worst.deficit)
             } else { worstDay = nil }
         case .gaining:
             // Best = most surplus (most negative deficit), worst = most deficit
-            if let best = withData.min(by: { $0.deficit < $1.deficit }) {
+            if let best = completedDays.min(by: { $0.deficit < $1.deficit }) {
                 bestDay = (best.date, -best.deficit)
             } else { bestDay = nil }
-            if let worst = withData.max(by: { $0.deficit < $1.deficit }) {
+            if let worst = completedDays.max(by: { $0.deficit < $1.deficit }) {
                 worstDay = (worst.date, -worst.deficit)
             } else { worstDay = nil }
         case .maintenance:
             // Best = closest to target, worst = furthest
-            if let best = withData.min(by: { abs($0.deficit) < abs($1.deficit) }) {
+            if let best = completedDays.min(by: { abs($0.deficit) < abs($1.deficit) }) {
                 bestDay = (best.date, abs(best.deficit))
             } else { bestDay = nil }
-            if let worst = withData.max(by: { abs($0.deficit) < abs($1.deficit) }) {
+            if let worst = completedDays.max(by: { abs($0.deficit) < abs($1.deficit) }) {
                 worstDay = (worst.date, abs(worst.deficit))
             } else { worstDay = nil }
         }
@@ -381,10 +388,10 @@ class StatisticsService {
             } else { runStrk = 0 }
         }
 
-        // Workout days + most common activity
-        let workoutDays = allStats.filter { $0.hasData && $0.activities != ["rest"] }.count
+        // Workout days + most common activity (use allWithData — includes today for activity counts)
+        let workoutDays = allWithData.filter { $0.activities != ["rest"] }.count
         var actCounts: [String: Int] = [:]
-        for stat in allStats where stat.hasData {
+        for stat in allWithData {
             for a in stat.activities where a != "rest" { actCounts[a, default: 0] += 1 }
         }
         let mostCommon = actCounts.max(by: { $0.value < $1.value })?.key ?? "rest"
@@ -462,7 +469,12 @@ class StatisticsService {
             daysRemaining: daysRemaining,
             goalDirection: direction,
             startWeight: programStart,
-            currentWeight: profile.currentWeightKg, // best approximation
+            currentWeight: { () -> Double in
+                print("📊 [StatService] programStart: \(programStart)")
+                print("📊 [StatService] profile.currentWeightKg: \(profile.currentWeightKg)")
+                print("📊 [StatService] profile.programStartWeightKg: \(profile.programStartWeightKg)")
+                return profile.currentWeightKg
+            }(),
             goalWeight: profile.goalWeightKg,
             expectedChangeByNow: expectedByNow
         )

@@ -77,46 +77,50 @@ struct PlanView: View {
         }
     }
 
+    // Completed past days only (excludes today's partial data)
+    private var completedWeekDays: [DayPlan] {
+        let todayStart = Calendar.current.startOfDay(for: Date())
+        return thisWeekDays.filter { day in
+            let dayStart = Calendar.current.startOfDay(for: day.date)
+            return dayHasData(day) && dayStart < todayStart
+        }
+    }
+
     private var daysWithData: Int {
-        thisWeekDays.filter { dayHasData($0) }.count
+        completedWeekDays.count
     }
 
     private var totalDeficitThisWeek: Int {
-        thisWeekDays.filter { dayHasData($0) }.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) }
+        completedWeekDays.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) }
     }
 
     private var weeklyEstimatedChangeKg: Double {
-        thisWeekDays.filter { dayHasData($0) }.reduce(0.0) { $0 + $1.estimatedWeightChangeKg }
+        completedWeekDays.reduce(0.0) { $0 + $1.estimatedWeightChangeKg }
     }
 
     private var weeklyAvgDeficit: Int {
-        let days = thisWeekDays.filter { dayHasData($0) }
-        guard !days.isEmpty else { return 0 }
-        return days.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) } / days.count
+        guard !completedWeekDays.isEmpty else { return 0 }
+        return completedWeekDays.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) } / completedWeekDays.count
     }
 
     private var weeklyAvgCalories: Int {
-        let days = thisWeekDays.filter { dayHasData($0) }
-        guard !days.isEmpty else { return 0 }
-        return days.reduce(0) { $0 + $1.consumedCalories } / days.count
+        guard !completedWeekDays.isEmpty else { return 0 }
+        return completedWeekDays.reduce(0) { $0 + $1.consumedCalories } / completedWeekDays.count
     }
 
     private var weeklyAvgProtein: Double {
-        let days = thisWeekDays.filter { dayHasData($0) }
-        guard !days.isEmpty else { return 0 }
-        return days.reduce(0.0) { $0 + $1.consumedProtein } / Double(days.count)
+        guard !completedWeekDays.isEmpty else { return 0 }
+        return completedWeekDays.reduce(0.0) { $0 + $1.consumedProtein } / Double(completedWeekDays.count)
     }
 
     private var weeklyAvgCarbs: Double {
-        let days = thisWeekDays.filter { dayHasData($0) }
-        guard !days.isEmpty else { return 0 }
-        return days.reduce(0.0) { $0 + $1.consumedCarbs } / Double(days.count)
+        guard !completedWeekDays.isEmpty else { return 0 }
+        return completedWeekDays.reduce(0.0) { $0 + $1.consumedCarbs } / Double(completedWeekDays.count)
     }
 
     private var weeklyAvgFat: Double {
-        let days = thisWeekDays.filter { dayHasData($0) }
-        guard !days.isEmpty else { return 0 }
-        return days.reduce(0.0) { $0 + $1.consumedFat } / Double(days.count)
+        guard !completedWeekDays.isEmpty else { return 0 }
+        return completedWeekDays.reduce(0.0) { $0 + $1.consumedFat } / Double(completedWeekDays.count)
     }
 
     private var trendText: String {
