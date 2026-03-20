@@ -200,8 +200,9 @@ struct StatisticsView: View {
                     Text("\(trendEmoji) Trend: \(statisticsService.trend.rawValue)")
                         .font(Theme.headlineFont)
                     let avgDef = statisticsService.last3DaysAvgDeficit
-                    if avgDef != 0 {
-                        Text("Son 3 g\u{00FC}nde ortalama \(abs(avgDef)) kcal \(avgDef > 0 ? "a\u{00E7}\u{0131}k" : "fazla")")
+                    let dayCount = statisticsService.last3ValidDayCount
+                    if avgDef != 0 && dayCount > 0 {
+                        Text("Son \(dayCount) g\u{00FC}nde ortalama \(abs(avgDef)) kcal \(avgDef > 0 ? "a\u{00E7}\u{0131}k" : "fazla")")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }

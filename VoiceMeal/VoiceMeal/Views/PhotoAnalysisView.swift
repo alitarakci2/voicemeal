@@ -35,10 +35,8 @@ struct PhotoAnalysisView: View {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Photo
                         photoSection
 
-                        // State content
                         switch analysisState {
                         case .analyzing:
                             EmptyView()
@@ -54,7 +52,6 @@ struct PhotoAnalysisView: View {
                     .padding(.bottom, 120)
                 }
 
-                // Fixed bottom actions
                 bottomActions
             }
             .background(Theme.background)
@@ -96,7 +93,7 @@ struct PhotoAnalysisView: View {
 
             if analysisState.isAnalyzing {
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.black.opacity(0.45))
+                    .fill(.black.opacity(0.5))
                     .frame(maxWidth: .infinity)
                     .frame(height: 300)
 
@@ -104,13 +101,13 @@ struct PhotoAnalysisView: View {
                     ProgressView()
                         .controlSize(.large)
                         .tint(.white)
-                    Text("Analiz ediliyor...")
+                    Text("Yemek analiz ediliyor...")
                         .font(Theme.bodyFont)
                         .fontWeight(.medium)
                         .foregroundStyle(.white)
-                    Text("Genellikle 5-10 saniye s\u{00FC}rer")
+                    Text("Bu i\u{015F}lem 5-15 saniye s\u{00FC}rebilir")
                         .font(Theme.captionFont)
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
             }
         }
@@ -138,7 +135,6 @@ struct PhotoAnalysisView: View {
                 Divider()
                     .overlay(Theme.cardBorder)
 
-                // Macro summary
                 if let meals = response?.meals {
                     let totalP = meals.reduce(0.0) { $0 + $1.protein }
                     let totalC = meals.reduce(0.0) { $0 + $1.carbs }
@@ -224,14 +220,12 @@ struct PhotoAnalysisView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
 
-            // Detected meals preview
             if let meals = response?.meals, !meals.isEmpty {
                 ForEach(meals) { meal in
                     mealRow(meal)
                 }
             }
 
-            // Input buttons
             HStack(spacing: 10) {
                 Button {
                     if speechService.isRecording {
@@ -289,7 +283,6 @@ struct PhotoAnalysisView: View {
                 }
             }
 
-            // Quick confirm
             Button {
                 analysisState = .confirmed
             } label: {
@@ -424,7 +417,7 @@ struct PhotoAnalysisView: View {
             }
         } catch {
             if Task.isCancelled { return }
-            print("📷 [ERROR] \(type(of: error)): \(error)")
+            print("\u{1F4F7} [ERROR] \(type(of: error)): \(error)")
             analysisState = .error("Analiz s\u{0131}ras\u{0131}nda hata olu\u{015F}tu: \(error.localizedDescription)")
         }
     }
@@ -447,7 +440,7 @@ struct PhotoAnalysisView: View {
                 analysisState = .confirmed
             }
         } catch {
-            print("📷 [ERROR] Clarification failed: \(type(of: error)): \(error)")
+            print("\u{1F4F7} [ERROR] Clarification failed: \(type(of: error)): \(error)")
             analysisState = .error("A\u{00E7}\u{0131}klama i\u{015F}lenemedi: \(error.localizedDescription)")
         }
     }

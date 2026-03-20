@@ -257,7 +257,8 @@ class StatisticsService {
     }
 
     var trend: TrendDirection {
-        let last3 = weeklyStats.suffix(3).filter { $0.hasData }
+        let valid = excludingToday(weeklyStats)
+        let last3 = valid.suffix(3)
         guard !last3.isEmpty else { return .stable }
         let avgDeficit = Double(last3.reduce(0) { $0 + $1.deficit }) / Double(last3.count)
         if avgDeficit > 100 { return .losing }
@@ -266,9 +267,14 @@ class StatisticsService {
     }
 
     var last3DaysAvgDeficit: Int {
-        let last3 = weeklyStats.suffix(3).filter { $0.hasData }
+        let valid = excludingToday(weeklyStats)
+        let last3 = valid.suffix(3)
         guard !last3.isEmpty else { return 0 }
         return last3.reduce(0) { $0 + $1.deficit } / last3.count
+    }
+
+    var last3ValidDayCount: Int {
+        min(excludingToday(weeklyStats).count, 3)
     }
 
     var weeklyAverageProtein: Double { averageProteinThisWeek }
