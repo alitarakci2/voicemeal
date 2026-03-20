@@ -67,6 +67,16 @@ struct PlanView: View {
         day.status != .missed && day.status != .planned
     }
 
+    private func deficitColor(actual: Int, target: Int) -> Color {
+        if actual <= 0 {
+            return Theme.red
+        } else if target > 0 && actual >= Int(Double(target) * 0.80) {
+            return Theme.green
+        } else {
+            return Theme.orange
+        }
+    }
+
     private var daysWithData: Int {
         thisWeekDays.filter { dayHasData($0) }.count
     }
@@ -77,6 +87,12 @@ struct PlanView: View {
 
     private var weeklyEstimatedChangeKg: Double {
         thisWeekDays.filter { dayHasData($0) }.reduce(0.0) { $0 + $1.estimatedWeightChangeKg }
+    }
+
+    private var weeklyAvgDeficit: Int {
+        let days = thisWeekDays.filter { dayHasData($0) }
+        guard !days.isEmpty else { return 0 }
+        return days.reduce(0) { $0 + ($1.tdee - $1.consumedCalories) } / days.count
     }
 
     private var weeklyAvgCalories: Int {
@@ -240,6 +256,8 @@ struct PlanView: View {
                         .frame(width: 40, alignment: .leading)
                     Text("Kal")
                         .frame(maxWidth: .infinity)
+                    Text("Açık")
+                        .frame(maxWidth: .infinity)
                     Text("Pro")
                         .frame(maxWidth: .infinity)
                     Text("Kar")
@@ -268,6 +286,11 @@ struct PlanView: View {
                                 Text("\(day.consumedCalories)")
                                     .frame(maxWidth: .infinity)
                                     .foregroundStyle(Theme.textPrimary)
+                                let deficit = day.tdee - day.consumedCalories
+                                let targetDeficit = day.tdee - day.targetCalories
+                                Text("\(deficit)")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(deficitColor(actual: deficit, target: targetDeficit))
                                 Text("\(Int(day.consumedProtein))g")
                                     .frame(maxWidth: .infinity)
                                     .foregroundStyle(Theme.textSecondary)
@@ -278,6 +301,9 @@ struct PlanView: View {
                                     .frame(maxWidth: .infinity)
                                     .foregroundStyle(Theme.textSecondary)
                             } else {
+                                Text("\u{2014}")
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundStyle(Theme.textTertiary)
                                 Text("\u{2014}")
                                     .frame(maxWidth: .infinity)
                                     .foregroundStyle(Theme.textTertiary)
@@ -309,6 +335,10 @@ struct PlanView: View {
                         .frame(maxWidth: .infinity)
                         .fontWeight(.bold)
                         .foregroundStyle(Theme.textPrimary)
+                    Text("\(weeklyAvgDeficit)")
+                        .frame(maxWidth: .infinity)
+                        .fontWeight(.bold)
+                        .foregroundStyle(weeklyAvgDeficit > 0 ? Theme.green : Theme.red)
                     Text("\(Int(weeklyAvgProtein))g")
                         .frame(maxWidth: .infinity)
                         .fontWeight(.medium)
