@@ -1012,6 +1012,21 @@ struct HomeView: View {
             totalWaterMl: todayWaterMl,
             waterGoalMl: waterGoalService.dailyGoalMl
         )
+        updateWidgetData()
+    }
+
+    private func updateWidgetData() {
+        let data = WidgetData(
+            consumedCalories: eatenCalories,
+            targetCalories: goalEngine.dailyCalorieTarget,
+            remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
+            targetDeficit: Int(goalEngine.cappedDailyDeficit),
+            actualDeficit: Int(goalEngine.tdee) - eatenCalories,
+            waterConsumed: todayWaterMl,
+            waterGoal: waterGoalService.dailyGoalMl,
+            lastUpdated: Date()
+        )
+        WidgetDataStore.shared.save(data)
     }
 
     private func saveYesterdaySnapshot() {
