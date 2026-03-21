@@ -55,13 +55,13 @@ struct PhotoAnalysisView: View {
                 bottomActions
             }
             .background(Theme.background)
-            .navigationTitle("Foto\u{011F}raf Analizi")
+            .navigationTitle(L.photoAnalysis.localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.cardBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("\u{0130}ptal") { dismiss() }
+                    Button(L.cancel.localized) { dismiss() }
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
@@ -101,11 +101,11 @@ struct PhotoAnalysisView: View {
                     ProgressView()
                         .controlSize(.large)
                         .tint(.white)
-                    Text("Yemek analiz ediliyor...")
+                    Text(L.analyzing.localized)
                         .font(Theme.bodyFont)
                         .fontWeight(.medium)
                         .foregroundStyle(.white)
-                    Text("Bu i\u{015F}lem 5-15 saniye s\u{00FC}rebilir")
+                    Text("analyzing_subtitle".localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(.white.opacity(0.6))
                 }
@@ -122,7 +122,7 @@ struct PhotoAnalysisView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title2)
                     .foregroundStyle(Theme.green)
-                Text("Tespit Edildi")
+                Text(L.detected.localized)
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
             }
@@ -141,9 +141,9 @@ struct PhotoAnalysisView: View {
                     let totalF = meals.reduce(0.0) { $0 + $1.fat }
 
                     HStack(spacing: 16) {
-                        macroItem(icon: "\u{1F969}", label: "Protein", value: "\(Int(totalP))g")
-                        macroItem(icon: "\u{1F33E}", label: "Karb", value: "\(Int(totalC))g")
-                        macroItem(icon: "\u{1FAD2}", label: "Ya\u{011F}", value: "\(Int(totalF))g")
+                        macroItem(icon: "\u{1F969}", label: L.protein.localized, value: "\(Int(totalP))g")
+                        macroItem(icon: "\u{1F33E}", label: L.carbs.localized, value: "\(Int(totalC))g")
+                        macroItem(icon: "\u{1FAD2}", label: L.fat.localized, value: "\(Int(totalF))g")
                     }
                 }
             }
@@ -196,7 +196,7 @@ struct PhotoAnalysisView: View {
                 Image(systemName: "questionmark.circle.fill")
                     .font(.title2)
                     .foregroundStyle(Theme.orange)
-                Text("Emin de\u{011F}ilim")
+                Text(L.notSure.localized)
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
             }
@@ -235,7 +235,7 @@ struct PhotoAnalysisView: View {
                     }
                 } label: {
                     Label(
-                        speechService.isRecording ? "Dinliyorum..." : "Sesle",
+                        speechService.isRecording ? "listening".localized : L.voice.localized,
                         systemImage: speechService.isRecording ? "mic.fill" : "mic"
                     )
                     .font(Theme.captionFont)
@@ -255,7 +255,7 @@ struct PhotoAnalysisView: View {
                 Button {
                     showTextField = true
                 } label: {
-                    Label("Yaz", systemImage: "pencil")
+                    Label(L.typeText.localized, systemImage: "pencil")
                         .font(Theme.captionFont)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
@@ -266,7 +266,7 @@ struct PhotoAnalysisView: View {
 
             if showTextField {
                 HStack(spacing: 8) {
-                    TextField("Miktar veya a\u{00E7}\u{0131}klama...", text: $clarificationText)
+                    TextField(L.amountOrDescription.localized, text: $clarificationText)
                         .font(Theme.bodyFont)
                         .padding(10)
                         .background(Theme.cardBorder.opacity(0.5))
@@ -288,7 +288,7 @@ struct PhotoAnalysisView: View {
             } label: {
                 HStack {
                     Image(systemName: "checkmark")
-                    Text("Bu do\u{011F}ru, devam et")
+                    Text(L.confirmContinue.localized)
                 }
                 .font(Theme.captionFont)
                 .fontWeight(.semibold)
@@ -315,7 +315,7 @@ struct PhotoAnalysisView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(Theme.red)
 
-            Text("Yeme\u{011F}i tan\u{0131}yamad\u{0131}m")
+            Text("not_detected".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
@@ -345,7 +345,7 @@ struct PhotoAnalysisView: View {
                         onSave(meals)
                         dismiss()
                     } label: {
-                        Text("Kaydet")
+                        Text(L.save.localized)
                             .font(Theme.bodyFont)
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
@@ -356,7 +356,7 @@ struct PhotoAnalysisView: View {
                     Button {
                         analysisState = .clarificationNeeded
                     } label: {
-                        Text("D\u{00FC}zenle")
+                        Text(L.edit.localized)
                             .font(Theme.bodyFont)
                             .fontWeight(.medium)
                             .foregroundStyle(Theme.textSecondary)
@@ -370,7 +370,7 @@ struct PhotoAnalysisView: View {
                         onRetake()
                     }
                 } label: {
-                    Label("Tekrar \u{00C7}ek", systemImage: "camera")
+                    Label(L.retakePhoto.localized, systemImage: "camera")
                         .font(Theme.bodyFont)
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
@@ -381,7 +381,7 @@ struct PhotoAnalysisView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("\u{0130}ptal")
+                    Text(L.cancel.localized)
                         .font(Theme.bodyFont)
                         .fontWeight(.medium)
                         .foregroundStyle(Theme.textSecondary)
@@ -418,7 +418,7 @@ struct PhotoAnalysisView: View {
         } catch {
             if Task.isCancelled { return }
             print("\u{1F4F7} [ERROR] \(type(of: error)): \(error)")
-            analysisState = .error("Analiz s\u{0131}ras\u{0131}nda hata olu\u{015F}tu: \(error.localizedDescription)")
+            analysisState = .error("\(L.analysisError.localized) \(error.localizedDescription)")
         }
     }
 
@@ -441,7 +441,7 @@ struct PhotoAnalysisView: View {
             }
         } catch {
             print("\u{1F4F7} [ERROR] Clarification failed: \(type(of: error)): \(error)")
-            analysisState = .error("A\u{00E7}\u{0131}klama i\u{015F}lenemedi: \(error.localizedDescription)")
+            analysisState = .error("\(L.clarificationError.localized) \(error.localizedDescription)")
         }
     }
 }

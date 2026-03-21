@@ -11,12 +11,12 @@ struct CalorieChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Kalori Takibi")
+            Text("calorie_tracking".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
             if stats.isEmpty || stats.allSatisfy({ !$0.hasData }) {
-                Text("Hen\u{00FC}z yeterli veri yok")
+                Text("no_data_yet".localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: 150)

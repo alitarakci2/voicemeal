@@ -22,25 +22,25 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 HomeView()
                     .tabItem {
-                        Label("Kayıt", systemImage: "mic")
+                        Label("tab_record".localized, systemImage: "mic")
                     }
                     .tag(0)
 
                 PlanView()
                     .tabItem {
-                        Label("Plan", systemImage: "calendar")
+                        Label("tab_plan".localized, systemImage: "calendar")
                     }
                     .tag(1)
 
                 StatisticsView()
                     .tabItem {
-                        Label("\u{0130}statistik", systemImage: "chart.bar.fill")
+                        Label("tab_statistics".localized, systemImage: "chart.bar.fill")
                     }
                     .tag(2)
 
                 SettingsView()
                     .tabItem {
-                        Label("Ayarlar", systemImage: "gearshape")
+                        Label("tab_settings".localized, systemImage: "gearshape")
                     }
                     .tag(3)
             }

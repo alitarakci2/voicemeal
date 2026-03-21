@@ -35,7 +35,7 @@ struct WaterTrackingCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack {
-                Text("\u{1F4A7} Su Takibi")
+                Text("\u{1F4A7} \("water_tracking".localized)")
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -59,11 +59,11 @@ struct WaterTrackingCard: View {
             // Status line
             HStack {
                 if todayWaterMl >= goalMl {
-                    Text("\u{2705} Hedefe ula\u{015F}t\u{0131}n!")
+                    Text("\u{2705} \("water_goal_reached_emoji".localized)")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.green)
                 } else {
-                    Text("%\(percent) \u{2014} \(remainingMl) ml kald\u{0131}")
+                    Text(String(format: "water_remaining_format".localized, percent, remainingMl))
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -102,7 +102,7 @@ struct WaterTrackingCard: View {
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 80)
 
-                    Button("Ekle") {
+                    Button("water_add_custom".localized) {
                         if let amount = Int(customAmount), amount > 0 {
                             onAdd(amount, "manual")
                             customAmount = ""
@@ -115,7 +115,7 @@ struct WaterTrackingCard: View {
 
                     Spacer()
 
-                    Button("Kapat") {
+                    Button(L.close.localized) {
                         showCustomInput = false
                         customAmount = ""
                     }

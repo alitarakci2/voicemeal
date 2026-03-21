@@ -131,7 +131,7 @@ struct BarcodeResultView: View {
                 if showSavedToast {
                     VStack {
                         Spacer()
-                        Text("Kaydedildi \u{2713}")
+                        Text("saved_confirmation".localized)
                             .font(Theme.headlineFont)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 24)
@@ -146,7 +146,7 @@ struct BarcodeResultView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("\u{0130}ptal") {
+                    Button(L.cancel.localized) {
                         if speechService.isRecording { speechService.stopListening() }
                         dismiss()
                     }
@@ -159,13 +159,13 @@ struct BarcodeResultView: View {
 
     private var loadingView: some View {
         VStack(spacing: 16) {
-            Text("Barkod: \(scannedCode)")
+            Text("\("barcode_label".localized): \(scannedCode)")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
 
             HStack(spacing: 8) {
                 ProgressView()
-                Text("\u{00DC}r\u{00FC}n aran\u{0131}yor...")
+                Text("product_searching".localized)
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
             }
@@ -184,7 +184,7 @@ struct BarcodeResultView: View {
                 // Product info
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("\u{2705} \u{00DC}r\u{00FC}n Bulundu")
+                        Text("\u{2705} \("product_found".localized)")
                             .font(Theme.headlineFont)
                             .foregroundStyle(Theme.green)
                         Spacer()
@@ -195,13 +195,13 @@ struct BarcodeResultView: View {
                         .foregroundStyle(Theme.textPrimary)
 
                     if let brands = product.brands, !brands.isEmpty {
-                        Text("Marka: \(brands)")
+                        Text("\("brand".localized): \(brands)")
                             .font(Theme.bodyFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
 
                     if let quantity = product.quantity, !quantity.isEmpty {
-                        Text("Paket: \(quantity)")
+                        Text("\("package".localized): \(quantity)")
                             .font(Theme.bodyFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -212,7 +212,7 @@ struct BarcodeResultView: View {
                 // Nutrition per 100g/100ml
                 if product.caloriesPer100g != nil {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("100\(unit) ba\u{015F}\u{0131}na:")
+                        Text(String(format: "per_hundred".localized, unit))
                             .font(Theme.headlineFont)
                             .foregroundStyle(Theme.textPrimary)
 
@@ -229,11 +229,11 @@ struct BarcodeResultView: View {
 
                 // Portion calculator
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Porsiyon Hesapla")
+                    Text("portion_calculator".localized)
                         .font(Theme.headlineFont)
                         .foregroundStyle(Theme.textPrimary)
 
-                    Text("Ne kadar yediniz?")
+                    Text("how_much".localized)
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.textSecondary)
 
@@ -262,7 +262,7 @@ struct BarcodeResultView: View {
 
                     if quantityIsDefault {
                         HStack(spacing: 8) {
-                            Text("\u{26A0}\u{FE0F} Paket miktar\u{0131} bilinmiyor")
+                            Text("\u{26A0}\u{FE0F} \("quantity_unknown".localized)")
                                 .font(Theme.captionFont)
                                 .foregroundStyle(Theme.orange)
                             Spacer()
@@ -312,7 +312,7 @@ struct BarcodeResultView: View {
                     Button {
                         saveEntry(product)
                     } label: {
-                        Text("Kaydet")
+                        Text(L.save.localized)
                             .font(Theme.headlineFont)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -324,7 +324,7 @@ struct BarcodeResultView: View {
                     Button {
                         resetScanner()
                     } label: {
-                        Text("Tekrar Tara")
+                        Text("rescan".localized)
                             .font(Theme.bodyFont)
                             .foregroundStyle(Theme.accent)
                     }
@@ -341,11 +341,11 @@ struct BarcodeResultView: View {
 
     private var notFoundView: some View {
         VStack(spacing: 20) {
-            Text("\u{2753} \u{00DC}r\u{00FC}n Bulunamad\u{0131}")
+            Text("\u{2753} \("product_not_found".localized)")
                 .font(Theme.titleFont)
                 .foregroundStyle(Theme.textPrimary)
 
-            Text("Bu barkod veritaban\u{0131}nda yok.")
+            Text("barcode_not_in_db".localized)
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
 
@@ -359,7 +359,7 @@ struct BarcodeResultView: View {
                 Button {
                     resetScanner()
                 } label: {
-                    Text("Tekrar Dene")
+                    Text(L.retry.localized)
                         .font(Theme.headlineFont)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -371,7 +371,7 @@ struct BarcodeResultView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("Sesle Anlat")
+                    Text("voice_describe".localized)
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.accent)
                 }
@@ -408,7 +408,7 @@ struct BarcodeResultView: View {
                 phase = .notFound
             }
         } catch {
-            errorMessage = "Ba\u{011F}lant\u{0131} hatas\u{0131}: \(error.localizedDescription)"
+            errorMessage = "\("connection_error".localized): \(error.localizedDescription)"
             phase = .notFound
         }
     }
@@ -483,9 +483,9 @@ struct BarcodeResultView: View {
             if let parsed {
                 let clamped = min(max(parsed, 10), maxAmount)
                 selectedAmount = clamped
-                voiceConfirmation = "\u{1F3A4} \(Int(clamped))\(unit) se\u{00E7}ildi"
+                voiceConfirmation = String(format: "selected_amount".localized, Int(clamped), unit)
             } else if !text.isEmpty {
-                voiceConfirmation = "Anla\u{015F}\u{0131}lamad\u{0131}: \"\(text)\""
+                voiceConfirmation = "\("not_understood".localized): \"\(text)\""
             }
         } else {
             voiceConfirmation = nil

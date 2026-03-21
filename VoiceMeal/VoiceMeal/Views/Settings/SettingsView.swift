@@ -43,6 +43,10 @@ struct SettingsView: View {
     @State private var weeklySchedule: [[String]] = Array(repeating: ["rest"], count: 7)
     @State private var originalSchedule: [[String]] = Array(repeating: ["rest"], count: 7)
 
+    // Language
+    @State private var selectedLanguage = ""
+    @State private var showLanguageRestart = false
+
     // UI state
     @State private var showSavedToast = false
     @State private var showScheduleAlert = false
@@ -57,18 +61,18 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 // Section 1: Profile
-                Section("Profil") {
-                    TextField("Ad", text: $name)
+                Section(L.profile.localized) {
+                    TextField(L.nameField.localized, text: $name)
 
-                    Picker("Cinsiyet", selection: $gender) {
-                        Text("Erkek").tag("male")
-                        Text("Kadın").tag("female")
+                    Picker(L.gender.localized, selection: $gender) {
+                        Text(L.male.localized).tag("male")
+                        Text(L.female.localized).tag("female")
                     }
 
-                    Stepper("Yaş: \(age)", value: $age, in: 15...80)
+                    Stepper("\(L.age.localized): \(age)", value: $age, in: 15...80)
 
                     HStack {
-                        Text("Boy")
+                        Text(L.height.localized)
                         Spacer()
                         Text("\(Int(heightCm)) cm")
                             .foregroundStyle(Theme.textSecondary)
@@ -83,7 +87,7 @@ struct SettingsView: View {
                     }
 
                     HStack {
-                        Text("Kilo")
+                        Text(L.weight.localized)
                         Spacer()
                         Text("\(String(format: "%.2f", currentWeightKg)) kg")
                             .foregroundStyle(Theme.textSecondary)
@@ -99,9 +103,9 @@ struct SettingsView: View {
                 }
 
                 // Section 2: Goals
-                Section("Hedef") {
+                Section(L.goal.localized) {
                     HStack {
-                        Text("Hedef Kilo")
+                        Text("target_weight".localized)
                         Spacer()
                         Text("\(String(format: "%.2f", goalWeightKg)) kg")
                             .foregroundStyle(Theme.textSecondary)
@@ -115,32 +119,32 @@ struct SettingsView: View {
                             .textFieldStyle(.roundedBorder)
                     }
 
-                    Stepper("Hedef Süre: \(goalDays) gün", value: $goalDays, in: 14...365, step: 7)
+                    Stepper(String(format: "goal_duration".localized, goalDays), value: $goalDays, in: 14...365, step: 7)
 
                     // Weight loss warnings
                     if weeklyChange > 1.0 {
-                        Label("Sa\u{011F}l\u{0131}ks\u{0131}z h\u{0131}z! S\u{00FC}reyi uzatman\u{0131} \u{00F6}neririz", systemImage: "light.beacon.max.fill")
+                        Label("unhealthy_pace".localized, systemImage: "light.beacon.max.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.red)
                     } else if weeklyChange > 0.75 {
-                        Label("Agresif hedef \u{2014} dikkatli ilerle", systemImage: "exclamationmark.triangle.fill")
+                        Label("aggressive_goal".localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                     }
                     // Weight gain warnings
                     if weeklyChange < -1.0 {
-                        Label("\u{00C7}ok h\u{0131}zl\u{0131} kilo alma \u{2014} s\u{00FC}reyi uzatman\u{0131} \u{00F6}neririz", systemImage: "light.beacon.max.fill")
+                        Label(L.weightGainTooFast.localized, systemImage: "light.beacon.max.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.red)
                     } else if weeklyChange < -0.5 {
-                        Label("H\u{0131}zl\u{0131} kilo alma hedefi \u{2014} dikkatli ilerle", systemImage: "exclamationmark.triangle.fill")
+                        Label(L.weightGainFast.localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                     }
 
                     // Safety cap info
                     if isDeficitCapped {
-                        Label("Hedef \u{00E7}ok agresif, g\u{00FC}venli s\u{0131}n\u{0131}ra ayarlanacak", systemImage: "exclamationmark.triangle.fill")
+                        Label(L.deficitCapped.localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                     }
@@ -150,7 +154,7 @@ struct SettingsView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Yoğunluk")
+                            Text(L.intensity.localized)
                             Spacer()
                             Text(intensityLabel)
                                 .foregroundStyle(Theme.textSecondary)
@@ -162,18 +166,18 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                 } header: {
-                    Text("Yoğunluk")
+                    Text(L.intensity.localized)
                 } footer: {
-                    Text("Yüksek yoğunluk daha hızlı sonuç verir ama sürdürülebilirliği düşer.")
+                    Text(L.intensityFooter.localized)
                 }
 
                 // Section: Water Goal
                 Section {
-                    Toggle("Otomatik Hesapla", isOn: $waterGoalAuto)
+                    Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
 
                     if !waterGoalAuto {
                         HStack {
-                            Text("Su Hedefi")
+                            Text(L.waterGoal.localized)
                             Spacer()
                             Text("\(Int(waterGoalManualMl)) ml")
                                 .foregroundStyle(Theme.textSecondary)
@@ -187,34 +191,34 @@ struct SettingsView: View {
                                 .textFieldStyle(.roundedBorder)
                         }
                     } else {
-                        Text("Kilo \u{00D7} 33 + aktif enerji bonusu (max 5L)")
+                        Text(L.waterFormula.localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
                 } header: {
-                    Text("\u{1F4A7} Su Hedefi")
+                    Text("💧 \(L.waterGoal.localized)")
                 }
 
                 // Section 4: Weekly Schedule
-                Section("Haftalık Program") {
+                Section(L.weeklySchedule.localized) {
                     Step5ScheduleView(weeklySchedule: $weeklySchedule)
                         .listRowInsets(EdgeInsets())
                 }
 
                 // Section 6: Notifications
-                Section("Bildirimler") {
-                    Toggle("\u{00D6}\u{011F}le/Ak\u{015F}am Hat\u{0131}rlatmas\u{0131}", isOn: $notification1Enabled)
+                Section(L.notifications.localized) {
+                    Toggle(L.afternoonReminder.localized, isOn: $notification1Enabled)
                     if notification1Enabled {
-                        DatePicker("Saat", selection: $notification1Time, displayedComponents: .hourAndMinute)
+                        DatePicker(L.time.localized, selection: $notification1Time, displayedComponents: .hourAndMinute)
                     }
 
-                    Toggle("Gece Kapan\u{0131}\u{015F} Hat\u{0131}rlatmas\u{0131}", isOn: $notification2Enabled)
+                    Toggle(L.eveningReminder.localized, isOn: $notification2Enabled)
                     if notification2Enabled {
-                        DatePicker("Saat", selection: $notification2Time, displayedComponents: .hourAndMinute)
+                        DatePicker(L.time.localized, selection: $notification2Time, displayedComponents: .hourAndMinute)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Tercih Etti\u{011F}in Protein Kaynaklar\u{0131}")
+                        Text(L.preferredProteins.localized)
                             .font(Theme.bodyFont)
                         proteinChips
                     }
@@ -225,7 +229,7 @@ struct SettingsView: View {
                     Button {
                         handleSave()
                     } label: {
-                        Text("Kaydet")
+                        Text(L.save.localized)
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -239,10 +243,23 @@ struct SettingsView: View {
                     .listRowBackground(Color.clear)
                 }
 
+                // Section: Language
+                Section(L.language.localized) {
+                    Picker(L.language.localized, selection: $selectedLanguage) {
+                        Text(L.systemDefault.localized).tag("")
+                        Text("Türkçe").tag("tr")
+                        Text("English").tag("en")
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: selectedLanguage) { _, newValue in
+                        applyLanguage(newValue)
+                    }
+                }
+
                 // Section 5: App
-                Section("Uygulama") {
+                Section(L.appSection.localized) {
                     HStack {
-                        Text("Versiyon")
+                        Text(L.version.localized)
                         Spacer()
                         Text("1.0.0")
                             .foregroundStyle(Theme.textSecondary)
@@ -251,17 +268,17 @@ struct SettingsView: View {
                     Button(role: .destructive) {
                         showResetAlert = true
                     } label: {
-                        Label("Onboarding'i S\u{0131}f\u{0131}rla", systemImage: "arrow.counterclockwise")
+                        Label(L.resetOnboarding.localized, systemImage: "arrow.counterclockwise")
                     }
                 }
             }
-            .navigationTitle("Ayarlar")
+            .navigationTitle(L.settings.localized)
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Kaydet") {
+                    Button(L.save.localized) {
                         handleSave()
                     }
                     .fontWeight(.semibold)
@@ -269,7 +286,7 @@ struct SettingsView: View {
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Bitti") {
+                    Button(L.done.localized) {
                         UIApplication.shared.sendAction(
                             #selector(UIResponder.resignFirstResponder),
                             to: nil, from: nil, for: nil
@@ -281,7 +298,7 @@ struct SettingsView: View {
             }
             .overlay(alignment: .bottom) {
                 if showSavedToast {
-                    Text("Kaydedildi")
+                    Text(L.savedToast.localized)
                         .font(Theme.bodyFont)
                         .fontWeight(.medium)
                         .padding(.horizontal, 24)
@@ -294,39 +311,44 @@ struct SettingsView: View {
                 }
             }
             .animation(.easeInOut, value: showSavedToast)
-            .alert("Program Değişikliği", isPresented: $showScheduleAlert) {
-                Button("Kaydet", role: .destructive) {
+            .alert(L.scheduleChange.localized, isPresented: $showScheduleAlert) {
+                Button(L.save.localized, role: .destructive) {
                     performSave()
                 }
-                Button("İptal", role: .cancel) {
+                Button(L.cancel.localized, role: .cancel) {
                     weeklySchedule = originalSchedule
                 }
             } message: {
-                Text("Haftalık programı değiştirdiniz. Bu, günlük kalori hedeflerinizi etkileyecek. Kaydetmek istiyor musunuz?")
+                Text(L.scheduleChangeMessage.localized)
             }
-            .alert("Kilo Çakışması", isPresented: $showWeightConflictAlert) {
-                Button("Elle girilen kilom (\(String(format: "%.2f", currentWeightKg)) kg)") {
+            .alert(L.weightConflict.localized, isPresented: $showWeightConflictAlert) {
+                Button("\("manual_weight".localized) (\(String(format: "%.2f", currentWeightKg)) kg)") {
                     performSave()
                 }
                 Button("HealthKit (\(String(format: "%.2f", healthKitWeight ?? 0)) kg)") {
                     currentWeightKg = healthKitWeight ?? currentWeightKg
                     performSave()
                 }
-                Button("İptal", role: .cancel) {}
+                Button(L.cancel.localized, role: .cancel) {}
             } message: {
                 if let hkDate = healthKitWeightDate {
-                    Text("HealthKit'ten farklı bir kilo verisi var (\(hkDate.formatted(.dateTime.day().month(.abbreviated)))). Hangisini kullanmak istersiniz?")
+                    Text(String(format: L.weightConflictMessage.localized, hkDate.formatted(.dateTime.day().month(.abbreviated))))
                 } else {
-                    Text("HealthKit'ten farklı bir kilo verisi var. Hangisini kullanmak istersiniz?")
+                    Text(L.weightConflictMessageAlt.localized)
                 }
             }
-            .alert("S\u{0131}f\u{0131}rla?", isPresented: $showResetAlert) {
-                Button("S\u{0131}f\u{0131}rla", role: .destructive) {
+            .alert(L.resetConfirm.localized, isPresented: $showResetAlert) {
+                Button(L.resetConfirm.localized, role: .destructive) {
                     resetOnboarding()
                 }
-                Button("\u{0130}ptal", role: .cancel) {}
+                Button(L.cancel.localized, role: .cancel) {}
             } message: {
-                Text("T\u{00FC}m profil bilgilerin silinecek ve kurulum yeniden ba\u{015F}layacak.")
+                Text(L.resetConfirmMessage.localized)
+            }
+            .alert(L.language.localized, isPresented: $showLanguageRestart) {
+                Button("OK") {}
+            } message: {
+                Text(L.languageRestart.localized)
             }
             .onTapGesture {
                 UIApplication.shared.sendAction(
@@ -380,19 +402,19 @@ struct SettingsView: View {
 
     // MARK: - Protein chips
 
-    private static let allProteins: [(key: String, label: String)] = [
-        ("tavuk", "Tavuk"),
-        ("bal\u{0131}k", "Bal\u{0131}k/Somon"),
-        ("dana", "Dana/K\u{0131}yma"),
-        ("yumurta", "Yumurta"),
-        ("baklagil", "Baklagil"),
-        ("s\u{00FC}t \u{00FC}r\u{00FC}nleri", "S\u{00FC}t \u{00DC}r\u{00FC}nleri"),
+    private static let allProteinKeys: [(key: String, labelKey: String)] = [
+        ("tavuk", "protein_chicken"),
+        ("balık", "protein_fish"),
+        ("dana", "protein_beef"),
+        ("yumurta", "protein_egg"),
+        ("baklagil", "protein_legume"),
+        ("süt ürünleri", "protein_dairy"),
     ]
 
     private var proteinChips: some View {
         let columns = [GridItem(.adaptive(minimum: 100))]
         return LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(Self.allProteins, id: \.key) { protein in
+            ForEach(Self.allProteinKeys, id: \.key) { protein in
                 let isSelected = preferredProteins.contains(protein.key)
                 Button {
                     if isSelected {
@@ -401,7 +423,7 @@ struct SettingsView: View {
                         preferredProteins.insert(protein.key)
                     }
                 } label: {
-                    Text(protein.label)
+                    Text(protein.labelKey.localized)
                         .font(Theme.captionFont)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -422,21 +444,31 @@ struct SettingsView: View {
 
     private var intensityLabel: String {
         switch intensityLevel {
-        case ...0.3: return "Hafif"
-        case 0.3...0.7: return "Orta"
-        default: return "Yoğun"
+        case ...0.3: return L.intensityLight.localized
+        case 0.3...0.7: return L.intensityModerate.localized
+        default: return L.intensityIntense.localized
         }
     }
 
     private var intensityDescription: String {
         switch intensityLevel {
-        case ...0.3: return "Günlük açık ~%10 — yavaş ve sürdürülebilir"
-        case 0.3...0.7: return "Günlük açık ~%20 — dengeli ilerleme"
-        default: return "Günlük açık ~%28 — hızlı ama zorlayıcı"
+        case ...0.3: return L.intensityLightDesc.localized
+        case 0.3...0.7: return L.intensityModerateDesc.localized
+        default: return L.intensityIntenseDesc.localized
         }
     }
 
     // MARK: - Load / Save
+
+    private func applyLanguage(_ lang: String) {
+        if lang.isEmpty {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([lang], forKey: "AppleLanguages")
+        }
+        UserDefaults.standard.synchronize()
+        showLanguageRestart = true
+    }
 
     private func loadProfile() {
         guard let p = profiles.first else { return }
@@ -450,6 +482,7 @@ struct SettingsView: View {
         intensityLevel = p.intensityLevel
         weeklySchedule = p.weeklySchedule
         originalSchedule = p.weeklySchedule
+        selectedLanguage = p.preferredLanguage
         if let override = p.waterGoalOverrideMl {
             waterGoalAuto = false
             waterGoalManualMl = Double(override)
@@ -506,6 +539,7 @@ struct SettingsView: View {
         p.notification2Minute = Calendar.current.component(.minute, from: notification2Time)
         p.preferredProteins = Array(preferredProteins)
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
+        p.preferredLanguage = selectedLanguage
         p.updatedAt = .now
 
         originalSchedule = weeklySchedule

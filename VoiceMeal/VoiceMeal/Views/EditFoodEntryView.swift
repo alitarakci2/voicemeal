@@ -33,14 +33,14 @@ struct EditFoodEntryView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Yemek") {
-                    TextField("\u{0130}sim", text: $name)
-                    TextField("Porsiyon", text: $amount)
+                Section(L.food.localized) {
+                    TextField(L.namePlaceholder.localized, text: $name)
+                    TextField(L.portion.localized, text: $amount)
                 }
 
-                Section("Besin De\u{011F}erleri") {
+                Section(L.nutritionValues.localized) {
                     HStack {
-                        Text("Kalori")
+                        Text(L.calorie.localized)
                         Spacer()
                         TextField("kcal", text: $caloriesText)
                             .keyboardType(.numberPad)
@@ -48,7 +48,7 @@ struct EditFoodEntryView: View {
                             .frame(width: 80)
                     }
                     HStack {
-                        Text("Protein (g)")
+                        Text(L.proteinG.localized)
                         Spacer()
                         TextField("g", text: $proteinText)
                             .keyboardType(.decimalPad)
@@ -56,7 +56,7 @@ struct EditFoodEntryView: View {
                             .frame(width: 80)
                     }
                     HStack {
-                        Text("Karb (g)")
+                        Text(L.carbsG.localized)
                         Spacer()
                         TextField("g", text: $carbsText)
                             .keyboardType(.decimalPad)
@@ -64,7 +64,7 @@ struct EditFoodEntryView: View {
                             .frame(width: 80)
                     }
                     HStack {
-                        Text("Ya\u{011F} (g)")
+                        Text(L.fatG.localized)
                         Spacer()
                         TextField("g", text: $fatText)
                             .keyboardType(.decimalPad)
@@ -73,16 +73,16 @@ struct EditFoodEntryView: View {
                     }
                 }
             }
-            .navigationTitle("Kayd\u{0131} D\u{00FC}zenle")
+            .navigationTitle(L.editEntry.localized)
             .navigationBarTitleDisplayMode(.inline)
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("\u{0130}ptal") { dismiss() }
+                    Button(L.cancel.localized) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Kaydet") {
+                    Button(L.save.localized) {
                         saveChanges()
                     }
                     .fontWeight(.semibold)

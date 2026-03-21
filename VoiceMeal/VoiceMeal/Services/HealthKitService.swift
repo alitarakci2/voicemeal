@@ -11,6 +11,15 @@ enum SleepQuality: String {
     case good = "\u{0130}yi"
     case fair = "Orta"
     case poor = "K\u{00F6}t\u{00FC}"
+
+    var localized: String {
+        switch self {
+        case .excellent: return "quality_excellent".localized
+        case .good: return "quality_good".localized
+        case .fair: return "quality_fair".localized
+        case .poor: return "quality_poor".localized
+        }
+    }
 }
 
 struct SleepData {
@@ -26,6 +35,16 @@ enum HRVStatus: String {
     case tired = "Yorgun"
     case veryTired = "\u{00C7}ok Yorgun"
     case noData = "Veri Yok"
+
+    var localized: String {
+        switch self {
+        case .excellent: return "hrv_excellent".localized
+        case .normal: return "hrv_normal".localized
+        case .tired: return "hrv_tired".localized
+        case .veryTired: return "hrv_very_tired".localized
+        case .noData: return "hrv_no_data".localized
+        }
+    }
 }
 
 @Observable

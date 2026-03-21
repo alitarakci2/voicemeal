@@ -20,11 +20,11 @@ struct ActivityChartView: View {
             let emoji: String
             let label: String
             switch activity {
-            case "weights": emoji = "\u{1F3CB}\u{FE0F}"; label = "A\u{011F}\u{0131}rl\u{0131}k"
-            case "running": emoji = "\u{1F3C3}"; label = "Ko\u{015F}u"
-            case "cycling": emoji = "\u{1F6B4}"; label = "Bisiklet"
-            case "walking": emoji = "\u{1F6B6}"; label = "Y\u{00FC}r\u{00FC}y\u{00FC}\u{015F}"
-            case "rest": emoji = "\u{1F4A4}"; label = "Dinlenme"
+            case "weights": emoji = "\u{1F3CB}\u{FE0F}"; label = "activity_weights".localized
+            case "running": emoji = "\u{1F3C3}"; label = "activity_running".localized
+            case "cycling": emoji = "\u{1F6B4}"; label = "activity_cycling".localized
+            case "walking": emoji = "\u{1F6B6}"; label = "activity_walking".localized
+            case "rest": emoji = "\u{1F4A4}"; label = "activity_rest".localized
             default: emoji = "\u{2753}"; label = activity
             }
             return (activity, count, emoji, label)
@@ -33,12 +33,12 @@ struct ActivityChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Aktivite Da\u{011F}\u{0131}l\u{0131}m\u{0131}")
+            Text("activity_distribution".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
             if activityCounts.isEmpty {
-                Text("Hen\u{00FC}z veri yok")
+                Text("no_data_yet".localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             } else {
@@ -59,7 +59,7 @@ struct ActivityChartView: View {
                         }
                         .frame(height: 16)
 
-                        Text("\(item.count) g\u{00FC}n")
+                        Text("\(item.count) \("days_unit".localized)")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                             .frame(width: 45, alignment: .trailing)

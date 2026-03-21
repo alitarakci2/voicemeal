@@ -14,20 +14,20 @@ struct Step2BodyView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Text("Vücut Bilgilerin")
+                Text("body_metrics".localized)
                     .font(Theme.titleFont)
 
                 // Gender
                 HStack(spacing: 16) {
-                    genderCard(label: "Erkek", value: "male", icon: "figure.stand")
-                    genderCard(label: "Kadın", value: "female", icon: "figure.stand.dress")
+                    genderCard(label: L.male.localized, value: "male", icon: "figure.stand")
+                    genderCard(label: L.female.localized, value: "female", icon: "figure.stand.dress")
                 }
 
                 // Age
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Yaş: \(age)")
+                    Text("\(L.age.localized): \(age)")
                         .font(Theme.headlineFont)
-                    Picker("Yaş", selection: $age) {
+                    Picker(L.age.localized, selection: $age) {
                         ForEach(15...80, id: \.self) { y in
                             Text("\(y)").tag(y)
                         }
@@ -38,7 +38,7 @@ struct Step2BodyView: View {
 
                 // Height
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Boy: \(Int(heightCm)) cm")
+                    Text("\(L.height.localized): \(Int(heightCm)) cm")
                         .font(Theme.headlineFont)
                     HStack {
                         Slider(value: $heightCm, in: 140...220, step: 1)
@@ -59,7 +59,7 @@ struct Step2BodyView: View {
 
                 // Weight
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Kilo: \(String(format: "%.2f", currentWeightKg)) kg")
+                    Text("\("current_weight_label".localized): \(String(format: "%.2f", currentWeightKg)) kg")
                         .font(Theme.headlineFont)
                     HStack {
                         Slider(value: $currentWeightKg, in: 40...200, step: 0.05)

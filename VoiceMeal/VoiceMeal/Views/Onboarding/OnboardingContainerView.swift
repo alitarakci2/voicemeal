@@ -82,7 +82,7 @@ struct OnboardingContainerView: View {
                     Button {
                         step -= 1
                     } label: {
-                        Text("Geri")
+                        Text(L.back.localized)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                     }
@@ -96,7 +96,7 @@ struct OnboardingContainerView: View {
                         saveProfile()
                     }
                 } label: {
-                    Text(step == totalSteps ? "Başla" : "İleri")
+                    Text(step == totalSteps ? L.start.localized : L.next.localized)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)

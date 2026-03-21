@@ -45,7 +45,7 @@ struct DailyInsightCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("\u{1F9E0} Günlük Değerlendirme")
+                Text("\u{1F9E0} \(L.dailyAssessment.localized)")
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -57,10 +57,10 @@ struct DailyInsightCard: View {
                     PillBadge(text: "\u{1F634} \(summary)")
                 }
                 if let s = sleep {
-                    PillBadge(text: "Kalite: \(s.quality.rawValue)")
+                    PillBadge(text: s.quality.localized)
                 }
                 if hrvStatus != .noData {
-                    PillBadge(text: "\u{1FAC0} \(hrvStatus.rawValue)")
+                    PillBadge(text: "\u{1FAC0} \(hrvStatus.localized)")
                 }
             }
 
@@ -69,7 +69,7 @@ struct DailyInsightCard: View {
                 HStack {
                     ProgressView()
                         .controlSize(.small)
-                    Text("Analiz ediliyor...")
+                    Text(L.analyzingInsight.localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -81,7 +81,7 @@ struct DailyInsightCard: View {
                         .foregroundStyle(Theme.textPrimary)
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("Güncelleniyor...")
+                    Text(L.updating.localized)
                         .font(Theme.microFont)
                         .foregroundStyle(Theme.textTertiary)
                 }
@@ -92,11 +92,11 @@ struct DailyInsightCard: View {
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             } else if hasAttempted {
-                Text("Bugünkü veriler analiz edilemedi. Sağlıklı beslenmeye devam et!")
+                Text(L.insightFallback.localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             } else {
-                Text("Yeterli veri yok \u{2014} birkaç gün sonra görünür")
+                Text(L.insufficientData.localized)
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -106,7 +106,7 @@ struct DailyInsightCard: View {
                 Button {
                     Task { await generateInsight(force: true) }
                 } label: {
-                    Label("Yenile", systemImage: "arrow.clockwise")
+                    Label(L.refreshInsight.localized, systemImage: "arrow.clockwise")
                         .font(Theme.captionFont)
                 }
                 .buttonStyle(.bordered)
@@ -116,7 +116,7 @@ struct DailyInsightCard: View {
                 Spacer()
 
                 if let time = generatedAt {
-                    Text("\(time.formatted(.dateTime.hour().minute()))'de güncellendi")
+                    Text("\(time.formatted(.dateTime.hour().minute())) \(L.updatedAt.localized)")
                         .font(Theme.microFont)
                         .foregroundStyle(Theme.textTertiary)
                 }
@@ -216,7 +216,7 @@ struct DailyInsightCard: View {
         } catch {
             // Daily insight error
             if insightText == nil {
-                insightText = "Bugünkü veriler analiz edilemedi. Sağlıklı beslenmeye devam et!"
+                insightText = L.insightFallback.localized
             }
         }
 

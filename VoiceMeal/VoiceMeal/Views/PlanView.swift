@@ -125,9 +125,9 @@ struct PlanView: View {
 
     private var trendText: String {
         let change = weeklyEstimatedChangeKg
-        if change < -0.05 { return "\u{2193} Kilo veriyor" }
-        if change > 0.05 { return "\u{2191} Dikkat" }
-        return "\u{2192} Sabit"
+        if change < -0.05 { return "\u{2193} \(L.trendLosing.localized)" }
+        if change > 0.05 { return "\u{2191} \(L.trendWarning.localized)" }
+        return "\u{2192} \(L.trendStable.localized)"
     }
 
     private var trendColor: Color {
@@ -140,13 +140,13 @@ struct PlanView: View {
     private func shortDayName(_ date: Date) -> String {
         let weekday = Calendar.current.component(.weekday, from: date)
         switch weekday {
-        case 1: return "Paz"
-        case 2: return "Pzt"
-        case 3: return "Sal"
-        case 4: return "\u{00C7}ar"
-        case 5: return "Per"
-        case 6: return "Cum"
-        case 7: return "Cmt"
+        case 1: return "day_sun_short".localized
+        case 2: return "day_mon_short".localized
+        case 3: return "day_tue_short".localized
+        case 4: return "day_wed_short".localized
+        case 5: return "day_thu_short".localized
+        case 6: return "day_fri_short".localized
+        case 7: return "day_sat_short".localized
         default: return "?"
         }
     }
@@ -182,7 +182,7 @@ struct PlanView: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text("\u{25B6} \u{00D6}nceki g\u{00FC}nler")
+                                    Text("\u{25B6} \(L.previousDays.localized)")
                                         .font(Theme.captionFont)
                                         .foregroundStyle(Theme.textSecondary)
                                     Spacer()
@@ -212,7 +212,7 @@ struct PlanView: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text("\u{25B6} Sonraki g\u{00FC}nler")
+                                    Text("\u{25B6} \(L.nextDays.localized)")
                                         .font(Theme.captionFont)
                                         .foregroundStyle(Theme.textSecondary)
                                     Spacer()
@@ -258,15 +258,15 @@ struct PlanView: View {
                 HStack(spacing: 0) {
                     Text("")
                         .frame(width: 40, alignment: .leading)
-                    Text("Kal")
+                    Text(L.calShort.localized)
                         .frame(maxWidth: .infinity)
-                    Text("Açık")
+                    Text(L.deficitShort.localized)
                         .frame(maxWidth: .infinity)
-                    Text("Pro")
+                    Text(L.proShort.localized)
                         .frame(maxWidth: .infinity)
-                    Text("Kar")
+                    Text(L.carbShort.localized)
                         .frame(maxWidth: .infinity)
-                    Text("Ya\u{011F}")
+                    Text(L.fatShort.localized)
                         .frame(maxWidth: .infinity)
                 }
                 .font(Theme.microFont)
@@ -332,7 +332,7 @@ struct PlanView: View {
 
                 // Average row
                 HStack(spacing: 0) {
-                    Text("Ort")
+                    Text(L.average.localized)
                         .frame(width: 40, alignment: .leading)
                         .fontWeight(.bold)
                     Text("\(weeklyAvgCalories)")
@@ -362,16 +362,16 @@ struct PlanView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("\u{1F4CA} Bu Hafta")
+                    Text("\u{1F4CA} \(L.thisWeek.localized)")
                         .font(Theme.headlineFont)
                         .foregroundStyle(Theme.textPrimary)
-                    Text("\(daysWithData)/7 g\u{00FC}nde veri")
+                    Text(String(format: L.daysWithDataFormat.localized, daysWithData))
                         .font(Theme.microFont)
                         .foregroundStyle(Theme.textTertiary)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text("\u{1F525} \(totalDeficitThisWeek) kcal a\u{00E7}\u{0131}k")
+                    Text("\u{1F525} \(String(format: L.kcalDeficitFormat.localized, totalDeficitThisWeek))")
                         .font(Theme.bodyFont)
                         .fontWeight(.bold)
                         .foregroundStyle(Theme.orange)
@@ -422,7 +422,7 @@ struct DayRowView: View {
 
     private var dateLabel: String {
         if plan.status == .today {
-            return "Bug\u{00FC}n"
+            return L.today.localized
         }
         return plan.date.formatted(.dateTime.day().month(.abbreviated))
     }
@@ -455,17 +455,17 @@ struct DayRowView: View {
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
-                    Text("devam ediyor...")
+                    Text(L.ongoing.localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.blue)
 
                 case .planned:
-                    Text("Hedef: \(plan.targetCalories) kcal")
+                    Text(String(format: L.targetKcalFormat.localized, plan.targetCalories))
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.textSecondary)
                     Spacer()
                     let plannedDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-                    Text("~\(plannedDeficit) a\u{00E7}\u{0131}k")
+                    Text(String(format: L.deficitApproxFormat.localized, plannedDeficit))
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
 
@@ -482,7 +482,7 @@ struct DayRowView: View {
                         .font(Theme.bodyFont)
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
-                    Text("\(actualDeficit) a\u{00E7}\u{0131}k")
+                    Text(String(format: L.deficitValueFormat.localized, actualDeficit))
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(deficitRowColor(actual: actualDeficit, target: targetDeficit))
@@ -539,7 +539,7 @@ struct DayDetailSheetView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Date + activities
                     HStack {
-                        Text(plan.status == .today ? "Bug\u{00FC}n" : plan.date.formatted(.dateTime.day().month(.wide).year()))
+                        Text(plan.status == .today ? L.today.localized : plan.date.formatted(.dateTime.day().month(.wide).year()))
                             .font(Theme.titleFont)
                             .fontWeight(.bold)
                         Spacer()
@@ -556,10 +556,10 @@ struct DayDetailSheetView: View {
                     // Status banner
                     statusBanner
 
-                    // Section 1: Yeme Hedefi
+                    // Section 1: Eating Target
                     eatingTargetCard
 
-                    // Section 2: Kalori Açığı
+                    // Section 2: Calorie Deficit
                     if plan.status != .planned {
                         deficitCard
                     }
@@ -568,20 +568,20 @@ struct DayDetailSheetView: View {
 
                     // Food entries
                     if plan.status == .planned {
-                        Text("Bu g\u{00FC}n i\u{00E7}in plan")
+                        Text("plan_for_today_label".localized)
                             .font(Theme.headlineFont)
                             .padding(.top, 4)
-                        Text("Hedef: \(plan.targetCalories) kcal")
+                        Text("\(L.goal.localized): \(plan.targetCalories) kcal")
                             .foregroundStyle(Theme.textSecondary)
                         Text("P: \(plan.targetProtein)g  K: \(plan.targetCarbs)g  Y: \(plan.targetFat)g")
                             .font(Theme.bodyFont)
                             .foregroundStyle(Theme.textSecondary)
                     } else if dayEntries.isEmpty {
-                        Text("Yemek kayd\u{0131} yok")
+                        Text(L.noFoodLog.localized)
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 4)
                     } else {
-                        Text("Yemekler")
+                        Text(L.foods.localized)
                             .font(Theme.headlineFont)
                             .padding(.top, 4)
                         ForEach(dayEntries, id: \.id) { entry in
@@ -599,7 +599,7 @@ struct DayDetailSheetView: View {
                             .padding(.top, 4)
 
                         HStack {
-                            Text("Toplam")
+                            Text(L.total.localized)
                                 .font(Theme.bodyFont)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Theme.textPrimary)
@@ -622,11 +622,11 @@ struct DayDetailSheetView: View {
                 }
                 .padding()
             }
-            .navigationTitle("G\u{00FC}n Detay\u{0131}")
+            .navigationTitle(L.dayDetail.localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Kapat") { dismiss() }
+                    Button(L.close.localized) { dismiss() }
                 }
             }
         }
@@ -642,33 +642,33 @@ struct DayDetailSheetView: View {
     private var statusBanner: some View {
         switch plan.status {
         case .completed:
-            Label("Kalori a\u{00E7}\u{0131}\u{011F}\u{0131} hedefine ula\u{015F}t\u{0131}n", systemImage: "checkmark.circle.fill")
+            Label("goal_reached_status".localized, systemImage: "checkmark.circle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.green)
         case .exceeded:
-            Label("Kalori fazlas\u{0131} \u{2014} a\u{00E7}\u{0131}k veremadin", systemImage: "xmark.circle.fill")
+            Label("calorie_surplus_status".localized, systemImage: "xmark.circle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.red)
         case .underate:
-            Label("A\u{00E7}\u{0131}k hedefinin gerisinde kald\u{0131}n", systemImage: "exclamationmark.triangle.fill")
+            Label("behind_deficit_status".localized, systemImage: "exclamationmark.triangle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.orange)
         case .missed:
-            Label("Bu g\u{00FC}n i\u{00E7}in kay\u{0131}t yok", systemImage: "xmark.circle.fill")
+            Label("no_log_status".localized, systemImage: "xmark.circle.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textTertiary)
         case .today:
-            Label("Devam ediyor", systemImage: "location.fill")
+            Label("in_progress_status".localized, systemImage: "location.fill")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.blue)
         case .planned:
-            Label("Planland\u{0131}", systemImage: "doc.text")
+            Label("planned_status".localized, systemImage: "doc.text")
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
         }
 
         if isPastOlderThan7Days {
-            Text("* Hedef, mevcut profil de\u{011F}erleriyle hesaplanm\u{0131}\u{015F}t\u{0131}r")
+            Text("goal_note_old_text".localized)
                 .font(Theme.microFont)
                 .foregroundStyle(Theme.textSecondary)
         }
@@ -683,7 +683,7 @@ struct DayDetailSheetView: View {
 
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("\u{1F3AF} Yeme Hedefi")
+                Text("🎯 \("eating_goal_card".localized)")
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -707,28 +707,28 @@ struct DayDetailSheetView: View {
             .frame(height: 12)
 
             HStack {
-                Text("Hedef: \(plan.targetCalories)")
+                Text("\(L.goal.localized): \(plan.targetCalories)")
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()
-                Text("Yenen: \(plan.consumedCalories)")
+                Text("\(L.eaten.localized): \(plan.consumedCalories)")
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.textPrimary)
             }
 
             if plan.status != .planned {
                 if diff > 0 {
-                    Label("Hedefi \(diff) kcal a\u{015F}t\u{0131}n", systemImage: "exclamationmark.triangle.fill")
+                    Label(String(format: "exceeded_by".localized, diff), systemImage: "exclamationmark.triangle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(Theme.orange)
                 } else if diff == 0 {
-                    Label("Hedefe tam ula\u{015F}t\u{0131}n", systemImage: "checkmark.circle.fill")
+                    Label("goal_reached_exact".localized, systemImage: "checkmark.circle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(Theme.green)
                 } else {
-                    Label("\(abs(diff)) kcal kalori kald\u{0131}", systemImage: "checkmark.circle.fill")
+                    Label(String(format: "calories_left".localized, abs(diff)), systemImage: "checkmark.circle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(Theme.green)
@@ -758,20 +758,20 @@ struct DayDetailSheetView: View {
         }
 
         return VStack(alignment: .leading, spacing: 10) {
-            Text("\u{1F525} Kalori A\u{00E7}\u{0131}\u{011F}\u{0131}")
+            Text("🔥 \("calorie_deficit_card".localized)")
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("Yak\u{0131}m (TDEE):")
+                    Text(L.burnTdee.localized)
                         .foregroundStyle(Theme.textSecondary)
                     Spacer()
                     Text("\(plan.tdee) kcal")
                         .foregroundStyle(Theme.textPrimary)
                 }
                 HStack {
-                    Text("Yenen:")
+                    Text("\(L.eaten.localized):")
                         .foregroundStyle(Theme.textSecondary)
                     Spacer()
                     Text("\(plan.consumedCalories) kcal")
@@ -786,12 +786,12 @@ struct DayDetailSheetView: View {
             // Deficit progress bar
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Ger\u{00E7}ek a\u{00E7}\u{0131}k: \(actualDeficit) kcal")
+                    Text("\(L.realDeficit.localized): \(actualDeficit) kcal")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(deficitColor)
                     Spacer()
-                    Text("Hedef: \(targetDeficit) kcal")
+                    Text("\(L.goal.localized): \(targetDeficit) kcal")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -808,17 +808,17 @@ struct DayDetailSheetView: View {
                 .frame(height: 12)
 
                 if actualDeficit <= 0 {
-                    Label("A\u{00E7}\u{0131}k yok \u{2014} \(abs(actualDeficit)) kcal fazla", systemImage: "exclamationmark.triangle.fill")
+                    Label(String(format: "no_deficit_surplus".localized, abs(actualDeficit)), systemImage: "exclamationmark.triangle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(Theme.red)
                 } else if deficitGap > 0 {
-                    Label("Hedef a\u{00E7}\u{0131}\u{011F}\u{0131}n \(deficitGap) kcal gerisinde (%\(deficitPercent))", systemImage: "arrow.down.right")
+                    Label(String(format: "deficit_behind_by".localized, deficitGap, deficitPercent), systemImage: "arrow.down.right")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(deficitColor)
                 } else {
-                    Label("Hedef a\u{00E7}\u{0131}\u{011F}\u{0131} tutturuldu (%\(deficitPercent))", systemImage: "checkmark.circle.fill")
+                    Label(String(format: "deficit_goal_reached".localized, deficitPercent), systemImage: "checkmark.circle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
                         .foregroundStyle(Theme.green)
@@ -831,9 +831,9 @@ struct DayDetailSheetView: View {
 
     private var macroSection: some View {
         VStack(spacing: 8) {
-            macroBar("Protein", eaten: Int(plan.consumedProtein), target: plan.targetProtein, color: .blue)
-            macroBar("Karb", eaten: Int(plan.consumedCarbs), target: plan.targetCarbs, color: .orange)
-            macroBar("Ya\u{011F}", eaten: Int(plan.consumedFat), target: plan.targetFat, color: .yellow)
+            macroBar("protein_label".localized, eaten: Int(plan.consumedProtein), target: plan.targetProtein, color: .blue)
+            macroBar("carb_label".localized, eaten: Int(plan.consumedCarbs), target: plan.targetCarbs, color: .orange)
+            macroBar("fat_label".localized, eaten: Int(plan.consumedFat), target: plan.targetFat, color: .yellow)
         }
     }
 

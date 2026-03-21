@@ -20,10 +20,10 @@ struct ProgramSummaryView: View {
     var body: some View {
         if summary.totalDays < 3 {
             VStack(spacing: 12) {
-                Text("Henüz yeterli veri yok")
+                Text(L.notEnoughData.localized)
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
-                Text("3 gün sonra program özeti görünür")
+                Text("program_summary_min_days".localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -64,15 +64,15 @@ struct ProgramSummaryView: View {
 
     private var programStartCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("📅 Program Başlangıcı")
+            Text("📅 \(L.programStartDate.localized)")
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
-            Text("Başlangıç: \(summary.startDate.formatted(.dateTime.day().month(.wide).year()))")
+            Text(String(format: "start_label_format".localized, summary.startDate.formatted(.dateTime.day().month(.wide).year())))
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
 
-            Text("⏱ \(summary.totalDays) gün / \(summary.totalDays + summary.daysRemaining) gün (%\(programCompletionPercent))")
+            Text(String(format: "day_progress_format".localized, summary.totalDays, summary.totalDays + summary.daysRemaining, programCompletionPercent))
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
 
@@ -97,21 +97,21 @@ struct ProgramSummaryView: View {
         let changeText = String(format: "%.2f", abs(summary.estimatedWeightChangeKg))
         let expectedText = String(format: "%.2f", summary.expectedChangeByNow)
         switch summary.goalDirection {
-        case .losing: return "Tahmini: -\(changeText) kg / Beklenen: -\(expectedText) kg"
-        case .gaining: return "Tahmini: +\(changeText) kg / Beklenen: +\(expectedText) kg"
-        case .maintenance: return "Değişim: \(changeText) kg (hedef: stabil)"
+        case .losing: return String(format: "estimated_change_losing".localized, changeText, expectedText)
+        case .gaining: return String(format: "estimated_change_gaining".localized, changeText, expectedText)
+        case .maintenance: return String(format: "change_maintenance".localized, changeText)
         }
     }
 
     private var onTrackText: String {
         switch summary.onTrackLevel {
-        case 2: return "✅ Hedefte gidiyorsun!"
-        case 1: return "👌 Hedefe yakın gidiyorsun"
+        case 2: return "✅ \("on_track".localized)"
+        case 1: return "👌 \("near_track".localized)"
         default:
             switch summary.goalDirection {
-            case .losing: return "⚠️ Biraz geride — açığı artır"
-            case .gaining: return "⚠️ Biraz geride — kaloriyi artır"
-            case .maintenance: return "⚠️ Hedeften sapma var"
+            case .losing: return "⚠️ \("behind_increase_deficit".localized)"
+            case .gaining: return "⚠️ \("behind_increase_calories".localized)"
+            case .maintenance: return "⚠️ \("off_target".localized)"
             }
         }
     }
@@ -130,14 +130,14 @@ struct ProgramSummaryView: View {
 
     private var weightGoalCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("⚖️ Kilo Hedefi")
+            Text("⚖️ \("weight_goal".localized)")
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
             // Weight labels
             HStack {
                 VStack(spacing: 2) {
-                    Text("Başlangıç")
+                    Text("start_weight".localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                     Text("\(String(format: "%.2f", summary.startWeight)) kg")
@@ -147,7 +147,7 @@ struct ProgramSummaryView: View {
                 .frame(maxWidth: .infinity)
 
                 VStack(spacing: 2) {
-                    Text("Tahmini")
+                    Text(L.estimated.localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                     let estimated = summary.startWeight - summary.estimatedWeightChangeKg
@@ -158,7 +158,7 @@ struct ProgramSummaryView: View {
                 .frame(maxWidth: .infinity)
 
                 VStack(spacing: 2) {
-                    Text("Hedef")
+                    Text(L.goal.localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                     Text("\(String(format: "%.2f", summary.goalWeight)) kg")
@@ -181,7 +181,7 @@ struct ProgramSummaryView: View {
             }
             .frame(height: 8)
 
-            Text("%\(summary.progressPercent) tamamlandı")
+            Text(String(format: "percent_completed".localized, summary.progressPercent))
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
 
@@ -202,9 +202,9 @@ struct ProgramSummaryView: View {
 
                 let realWeight = summary.currentWeight
                 let dateStr = realWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
-                let healthNote = dateStr.isEmpty ? "" : " (\(dateStr), Health'ten)"
+                let healthNote = dateStr.isEmpty ? "" : String(format: "health_source".localized, dateStr)
 
-                Text("⚖️ Gerçek Kilo: \(String(format: "%.2f", realWeight)) kg\(healthNote)")
+                Text(String(format: "real_weight_detail".localized, String(format: "%.2f", realWeight), healthNote))
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textPrimary)
 
@@ -212,15 +212,15 @@ struct ProgramSummaryView: View {
                 let diff = estimatedWeight - realWeight
 
                 if diff > 0.1 {
-                    Text("✅ Beklenenden \(String(format: "%.2f", diff)) kg fazla verdin!")
+                    Text("✅ \(String(format: "ahead_kg".localized, String(format: "%.2f", diff)))")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.green)
                 } else if diff < -0.1 {
-                    Text("⚠️ Tahminden \(String(format: "%.2f", abs(diff))) kg geride")
+                    Text("⚠️ \(String(format: "behind_kg".localized, String(format: "%.2f", abs(diff))))")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.orange)
                 } else {
-                    Text("👌 Tahminle örtüşüyor")
+                    Text("👌 \("matches_estimate".localized)")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -237,13 +237,13 @@ struct ProgramSummaryView: View {
         return LazyVGrid(columns: columns, spacing: 12) {
             statCell(
                 icon: "🔥",
-                title: summary.goalDirection == .gaining ? "Toplam Fazla" : "Toplam Açık",
+                title: summary.goalDirection == .gaining ? "total_surplus".localized : "total_deficit_label".localized,
                 value: "\(abs(summary.totalDeficitKcal))",
                 unit: "kcal"
             )
-            statCell(icon: "📊", title: "Ort. Günlük Kalori", value: "\(summary.avgDailyCalories)", unit: "kcal")
-            statCell(icon: "💪", title: "Antrenman Günleri", value: "\(summary.totalWorkoutDays) / \(summary.totalDays)", unit: "gün")
-            statCell(icon: "📅", title: "Takip Oranı", value: "%\(summary.adherencePercent)", unit: "")
+            statCell(icon: "📊", title: "avg_daily_calories".localized, value: "\(summary.avgDailyCalories)", unit: "kcal")
+            statCell(icon: "💪", title: "workout_days".localized, value: "\(summary.totalWorkoutDays) / \(summary.totalDays)", unit: "day_suffix".localized)
+            statCell(icon: "📅", title: "adherence_rate".localized, value: "%\(summary.adherencePercent)", unit: "")
         }
     }
 
@@ -274,9 +274,9 @@ struct ProgramSummaryView: View {
     private func bestDayLabel(date: Date, value: Int) -> String {
         let dateStr = date.formatted(.dateTime.day().month(.abbreviated))
         switch summary.goalDirection {
-        case .losing: return "🏆 En iyi gün: \(dateStr) — \(value) kcal açık"
-        case .gaining: return "🏆 En iyi gün: \(dateStr) — \(value) kcal fazla"
-        case .maintenance: return "🏆 En iyi gün: \(dateStr) — \(value) kcal sapma"
+        case .losing: return String(format: "best_day_deficit".localized, dateStr, value)
+        case .gaining: return String(format: "best_day_surplus".localized, dateStr, value)
+        case .maintenance: return String(format: "best_day_deviation".localized, dateStr, value)
         }
     }
 
@@ -285,14 +285,14 @@ struct ProgramSummaryView: View {
         switch summary.goalDirection {
         case .losing:
             return value >= 0
-                ? "😬 En zor gün: \(dateStr) — \(value) kcal açık"
-                : "😬 En zor gün: \(dateStr) — \(abs(value)) kcal fazla"
+                ? String(format: "worst_day_deficit".localized, dateStr, value)
+                : String(format: "worst_day_surplus".localized, dateStr, abs(value))
         case .gaining:
             return value >= 0
-                ? "😬 En zor gün: \(dateStr) — \(value) kcal fazla"
-                : "😬 En zor gün: \(dateStr) — \(abs(value)) kcal eksik"
+                ? String(format: "worst_day_surplus".localized, dateStr, value)
+                : String(format: "worst_day_short".localized, dateStr, abs(value))
         case .maintenance:
-            return "😬 En zor gün: \(dateStr) — \(value) kcal sapma"
+            return String(format: "worst_day_deviation".localized, dateStr, value)
         }
     }
 
@@ -319,10 +319,10 @@ struct ProgramSummaryView: View {
     private var streakCard: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("🔥 Mevcut seri: \(summary.currentStreak) gün")
+                Text(String(format: "current_streak_days".localized, summary.currentStreak))
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
-                Text("⭐ En iyi seri: \(summary.bestStreak) gün")
+                Text(String(format: "best_streak_days".localized, summary.bestStreak))
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -336,13 +336,13 @@ struct ProgramSummaryView: View {
 
     private var macroAveragesCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Makro Ortalaması")
+            Text("macro_averages".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
-            macroBar("Protein", avg: Int(summary.avgDailyProtein), target: targetProtein, color: Theme.blue)
-            macroBar("Karb", avg: Int(summary.avgDailyCarbs), target: targetCarbs, color: Theme.orange)
-            macroBar("Yağ", avg: Int(summary.avgDailyFat), target: targetFat, color: .yellow)
+            macroBar(L.protein.localized, avg: Int(summary.avgDailyProtein), target: targetProtein, color: Theme.blue)
+            macroBar(L.carbs.localized, avg: Int(summary.avgDailyCarbs), target: targetCarbs, color: Theme.orange)
+            macroBar(L.fat.localized, avg: Int(summary.avgDailyFat), target: targetFat, color: .yellow)
         }
         .padding()
         .themeCard()
@@ -378,7 +378,7 @@ struct ProgramSummaryView: View {
 
     private var programInsightCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("🧠 Program Koçu")
+            Text("program_coach".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
@@ -395,7 +395,7 @@ struct ProgramSummaryView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .lineSpacing(4)
             } else {
-                Text("Değerlendirme yükleniyor...")
+                Text("assessment_loading".localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -408,7 +408,7 @@ struct ProgramSummaryView: View {
         let calendar = Calendar.current
         let weekOfYear = calendar.component(.weekOfYear, from: .now)
         let year = calendar.component(.yearForWeekOfYear, from: .now)
-        let cacheKey = "programInsight_\(year)_\(weekOfYear)"
+        let cacheKey = "programInsight_\(year)_\(weekOfYear)_\(groqService.appLanguage)"
 
         if let cached = UserDefaults.standard.string(forKey: cacheKey) {
             insightText = cached
@@ -424,7 +424,7 @@ struct ProgramSummaryView: View {
             UserDefaults.standard.set(insight, forKey: cacheKey)
         } catch {
             // Program insight error
-            insightText = "Değerlendirme yüklenemedi."
+            insightText = "assessment_failed".localized
         }
         insightLoading = false
     }

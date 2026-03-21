@@ -26,12 +26,12 @@ struct Step3GoalView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Text("Hedefin")
+                Text("weight_goal_title".localized)
                     .font(Theme.titleFont)
 
                 // Goal weight
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Hedef Kilo: \(String(format: "%.2f", goalWeightKg)) kg")
+                    Text("\("goal_weight_label".localized): \(String(format: "%.2f", goalWeightKg)) kg")
                         .font(Theme.headlineFont)
                     HStack {
                         Slider(value: $goalWeightKg, in: 40...200, step: 0.05)
@@ -52,14 +52,14 @@ struct Step3GoalView: View {
 
                 // Duration
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Süre")
+                    Text(L.duration.localized)
                         .font(Theme.headlineFont)
                     HStack(spacing: 12) {
                         ForEach(presetDays, id: \.self) { days in
                             Button {
                                 goalDays = days
                             } label: {
-                                Text("\(days) gün")
+                                Text("\(days) \("day_suffix".localized)")
                                     .font(Theme.bodyFont)
                                     .fontWeight(.medium)
                                     .frame(maxWidth: .infinity)
@@ -76,7 +76,7 @@ struct Step3GoalView: View {
                     }
 
                     // Custom stepper
-                    Stepper("Özel: \(goalDays) gün", value: $goalDays, in: 14...365, step: 7)
+                    Stepper(String(format: "custom_duration".localized, goalDays), value: $goalDays, in: 14...365, step: 7)
                         .font(Theme.bodyFont)
                         .padding(.top, 4)
                 }
@@ -84,7 +84,7 @@ struct Step3GoalView: View {
                 // Summary
                 VStack(spacing: 12) {
                     if currentWeightKg > goalWeightKg {
-                        Text("Haftada yaklaşık \(String(format: "%.2f", weeklyLoss)) kg verirsin")
+                        Text(String(format: "weekly_loss".localized, String(format: "%.2f", weeklyLoss)))
                             .font(Theme.headlineFont)
                             .padding()
                             .frame(maxWidth: .infinity)
@@ -92,7 +92,7 @@ struct Step3GoalView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
 
                         if isAggressive {
-                            Label("Çok agresif, süreyi uzatmanı öneririz", systemImage: "exclamationmark.triangle.fill")
+                            Label("too_aggressive".localized, systemImage: "exclamationmark.triangle.fill")
                                 .font(Theme.bodyFont)
                                 .foregroundStyle(Theme.orange)
                                 .padding()
@@ -101,14 +101,14 @@ struct Step3GoalView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     } else if currentWeightKg < goalWeightKg {
-                        Text("Haftada yaklaşık \(String(format: "%.2f", abs(weeklyLoss))) kg alırsın")
+                        Text(String(format: "weekly_gain".localized, String(format: "%.2f", abs(weeklyLoss))))
                             .font(Theme.headlineFont)
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Theme.cardBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     } else {
-                        Text("Kilonu korumayı hedefliyorsun")
+                        Text("maintain_weight".localized)
                             .font(Theme.headlineFont)
                             .padding()
                             .frame(maxWidth: .infinity)

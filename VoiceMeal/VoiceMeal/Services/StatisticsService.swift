@@ -28,6 +28,14 @@ enum TrendDirection: String {
     case losing = "Kilo Veriyor"
     case gaining = "Kilo Al\u{0131}yor"
     case stable = "Stabil"
+
+    var localized: String {
+        switch self {
+        case .losing: return "losing".localized
+        case .gaining: return "gaining".localized
+        case .stable: return "stable".localized
+        }
+    }
 }
 
 enum GoalDirection {

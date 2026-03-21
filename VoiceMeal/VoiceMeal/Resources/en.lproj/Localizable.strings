@@ -1,0 +1,468 @@
+/* English — VoiceMeal */
+
+/* General */
+"save" = "Save";
+"cancel" = "Cancel";
+"close" = "Close";
+"edit" = "Edit";
+"delete" = "Delete";
+"retry" = "Try Again";
+"ready" = "Ready";
+"loading" = "Loading...";
+"error" = "Error";
+"yes" = "Yes";
+"no" = "No";
+
+/* HomeView */
+"daily_target" = "Daily Target";
+"today_activities" = "Today";
+"goal_calories" = "Goal";
+"eaten" = "Eaten";
+"remaining" = "Left";
+"calorie_deficit" = "Calorie Deficit";
+"real_deficit" = "Real deficit";
+"target_deficit" = "Target";
+"protein" = "Protein";
+"carbs" = "Carbs";
+"fat" = "Fat";
+"refresh" = "Refresh";
+"what_did_you_eat" = "What did you eat?";
+"voice_record" = "Voice";
+"photo_record" = "Photo";
+"barcode_record" = "Barcode";
+"today_foods" = "Today's Meals";
+"saved_confirmation" = "Saved ✓";
+"corrected_confirmation" = "Corrected ✓";
+"listening" = "Listening...";
+"delete_confirm" = "Are you sure you want to delete this entry?";
+"which_entry_correct" = "Which entry to correct?";
+"nutrition_check" = "Nutrition Check";
+
+/* Water */
+"water_tracking" = "Water Tracking";
+"water_goal" = "Water Goal";
+"water_goal_reached" = "💧 Daily goal reached! 🎉";
+
+/* Photo Analysis */
+"photo_analysis" = "Photo Analysis";
+"analyzing" = "Analyzing food...";
+"analyzing_subtitle" = "This may take 5-15 seconds";
+"detected" = "Detected";
+"not_detected" = "Could Not Identify Food";
+"portion_calculator" = "Calculate Portion";
+"retake_photo" = "Retake";
+"speak_to_answer" = "Voice Answer";
+
+/* Barcode */
+"barcode_scan" = "Scan Barcode";
+"barcode_hint" = "Place barcode in frame";
+"product_found" = "Product Found";
+"product_not_found" = "Product Not Found";
+"per_hundred" = "Per 100%@:";
+"product_searching" = "Searching product...";
+"barcode_label" = "Barcode";
+"brand" = "Brand";
+"package" = "Package";
+"how_much" = "How much did you consume?";
+"quantity_unknown" = "Package size unknown";
+"rescan" = "Scan Again";
+"barcode_not_in_db" = "This barcode is not in the database.";
+"voice_describe" = "Describe by Voice";
+"selected_amount" = "🎤 %d%@ selected";
+"not_understood" = "Not understood";
+"connection_error" = "Connection error";
+
+/* Plan */
+"plan" = "Plan";
+"today" = "Today";
+"ongoing" = "ongoing...";
+"previous_days" = "Previous days";
+"next_days" = "Upcoming days";
+"program_start" = "Program Start";
+"this_week" = "This Week";
+"weekly_deficit" = "kcal deficit";
+"day_detail" = "Day Detail";
+"eating_goal" = "Eating Goal";
+"goal_exceeded" = "Exceeded goal";
+"goal_remaining" = "calories left";
+"no_food_log" = "No food logged";
+"foods" = "Foods";
+"total" = "Total";
+"deficit" = "Deficit";
+"average" = "Avg";
+"day_suffix" = "days";
+"cal_suffix" = "kcal";
+"cal_short" = "Cal";
+"deficit_short" = "Deficit";
+"pro_short" = "Pro";
+"carb_short" = "Carb";
+"fat_short" = "Fat";
+"trend_losing" = "Losing weight";
+"trend_warning" = "Warning";
+"trend_stable" = "Stable";
+"days_with_data_format" = "%d/7 days with data";
+"kcal_deficit_format" = "%d kcal deficit";
+"target_kcal_format" = "Goal: %d kcal";
+"target_value_format" = "Goal: %d";
+"eaten_value_format" = "Eaten: %d";
+"deficit_approx_format" = "~%d deficit";
+"deficit_value_format" = "%d deficit";
+"in_progress" = "In progress";
+"planned" = "Planned";
+"plan_for_today" = "Plan for today";
+"status_goal_reached" = "You hit your calorie deficit goal";
+"status_calorie_surplus" = "Calorie surplus — no deficit";
+"status_behind_deficit" = "Behind your deficit goal";
+"status_no_log" = "No log for this day";
+"goal_note_old" = "* Goal calculated with current profile values";
+"burn_tdee" = "Burn (TDEE):";
+"actual_deficit_format" = "Actual deficit: %d kcal";
+"target_deficit_format" = "Target: %d kcal";
+"exceeded_by_format" = "Exceeded goal by %d kcal";
+"goal_exact" = "Goal reached exactly";
+"calories_left_format" = "%d kcal remaining";
+"no_deficit_surplus_format" = "No deficit — %d kcal surplus";
+"behind_deficit_pct_format" = "Behind target by %d kcal (%d%%)";
+"deficit_hit_pct_format" = "Deficit target hit (%d%%)";
+
+/* Statistics */
+"statistics" = "Statistics";
+"weekly" = "Weekly";
+"monthly" = "Monthly";
+"program" = "Program";
+"current_streak" = "Day Streak";
+"best_streak" = "Best";
+"streak_going" = "You're hitting your goal, keep going!";
+"streak_start" = "Start today by hitting your goal!";
+"weight_estimate" = "Estimated Weight Change";
+"this_week_estimate" = "This week";
+"this_month_estimate" = "This month";
+"real_deficit_days" = "days of real deficit";
+"trend" = "Trend";
+"losing" = "Losing Weight";
+"gaining" = "Gaining Weight";
+"stable" = "Stable";
+"avg_deficit_last_days" = "Avg %d kcal %@ over last %d days";
+"deficit_word" = "deficit";
+"surplus_word" = "surplus";
+"monthly_min_data" = "At least 2 weeks of data needed for monthly chart";
+"weekly_insight" = "Weekly Assessment";
+"not_enough_data" = "Not enough data yet";
+
+/* Program */
+"program_start_date" = "Program Start";
+"weight_goal" = "Weight Goal";
+"start_weight" = "Start";
+"estimated" = "Estimated";
+"goal" = "Goal";
+"real_weight" = "Real Weight";
+"on_track" = "On track!";
+"near_track" = "Nearly on track";
+"behind" = "Slightly behind";
+"ahead_of_schedule" = "Ahead of schedule!";
+"behind_increase_deficit" = "Slightly behind — increase deficit";
+"behind_increase_calories" = "Slightly behind — increase calories";
+"off_target" = "Off target";
+"matches_estimate" = "Matches estimate";
+"ahead_kg" = "Lost %@ kg more than expected!";
+"behind_kg" = "%@ kg behind estimate";
+
+/* Settings */
+"settings" = "Settings";
+"profile" = "Profile";
+"gender" = "Gender";
+"male" = "Male";
+"female" = "Female";
+"age" = "Age";
+"height" = "Height";
+"weight" = "Weight";
+"target_weight" = "Target Weight";
+"duration" = "Duration";
+"intensity" = "Intensity";
+"easy" = "Easy";
+"medium" = "Moderate";
+"aggressive" = "Aggressive";
+"weekly_schedule" = "Weekly Schedule";
+"notifications" = "Notifications";
+"afternoon_reminder" = "Afternoon Reminder";
+"evening_reminder" = "Evening Reminder";
+"reset_onboarding" = "Reset Setup";
+"goal_duration" = "Goal: %d days";
+"unhealthy_pace" = "Unhealthy pace! Consider extending the duration";
+"aggressive_goal" = "Aggressive goal — proceed carefully";
+"camera_permission" = "Camera Permission Required";
+"camera_permission_detail" = "We need camera access to photograph food. Enable it in Settings.";
+"open_settings" = "Open Settings";
+"manual_weight" = "Manual weight";
+"healthkit_weight" = "HealthKit";
+
+/* Days */
+"monday" = "Monday";
+"tuesday" = "Tuesday";
+"wednesday" = "Wednesday";
+"thursday" = "Thursday";
+"friday" = "Friday";
+"saturday" = "Saturday";
+"sunday" = "Sunday";
+
+/* Activities */
+"activity_weights" = "Weights";
+"activity_running" = "Running";
+"activity_cycling" = "Cycling";
+"activity_walking" = "Walking";
+"activity_rest" = "Rest";
+
+/* Onboarding */
+"welcome" = "Welcome!";
+"next" = "Next";
+"back" = "Back";
+"start" = "Start";
+"enter_name" = "Enter your name";
+"body_metrics" = "Body Metrics";
+"weight_goal_title" = "Your Goal";
+"intensity_title" = "Program Intensity";
+"schedule_title" = "Weekly Schedule";
+"summary" = "Summary";
+"weekly_loss" = "About %@ kg lost per week";
+"weekly_gain" = "About %@ kg gained per week";
+"maintain_weight" = "You're aiming to maintain your weight";
+"too_aggressive" = "Too aggressive, consider extending the duration";
+"current_weight_label" = "Weight";
+"goal_weight_label" = "Target Weight";
+"height_label" = "Height";
+"custom_duration" = "Custom: %d days";
+
+/* Insight */
+"daily_assessment" = "Daily Assessment";
+"refresh_insight" = "Refresh";
+"generated_at" = "generated at";
+
+/* Notifications */
+"afternoon_suggestion" = "Get Evening Suggestion";
+"evening_suggestion" = "Late Night Snack";
+
+/* Intensity */
+"intensity_question" = "How aggressively do you want to maintain a calorie deficit?";
+"intensity_easy_sub" = "Stress-free, sustainable";
+"intensity_easy_detail" = "~10% calorie deficit";
+"intensity_medium_sub" = "Balanced progress";
+"intensity_medium_detail" = "~20% calorie deficit";
+"intensity_aggressive_sub" = "Fast results, requires discipline";
+"intensity_aggressive_detail" = "~25-30% calorie deficit";
+
+/* Schedule templates */
+"template_beginner" = "Beginner";
+"template_advanced" = "Advanced";
+
+/* Day abbreviations */
+"day_mon_short" = "Mon";
+"day_tue_short" = "Tue";
+"day_wed_short" = "Wed";
+"day_thu_short" = "Thu";
+"day_fri_short" = "Fri";
+"day_sat_short" = "Sat";
+"day_sun_short" = "Sun";
+
+/* Onboarding extras */
+"voice_intro" = "Track your meals using your voice";
+
+/* Settings extras */
+"name_field" = "Name";
+"time" = "Time";
+"done" = "Done";
+"saved_toast" = "Saved";
+"app_section" = "App";
+"version" = "Version";
+"auto_calculate" = "Auto Calculate";
+"water_formula" = "Weight × 33 + active energy bonus (max 5L)";
+"preferred_proteins" = "Preferred Protein Sources";
+"schedule_change" = "Schedule Change";
+"schedule_change_message" = "You changed the weekly schedule. This will affect your daily calorie goals. Do you want to save?";
+"weight_conflict" = "Weight Conflict";
+"weight_conflict_message" = "HealthKit has a different weight (%@). Which one would you like to use?";
+"weight_conflict_message_alt" = "HealthKit has a different weight. Which one would you like to use?";
+"reset_confirm" = "Reset?";
+"reset_confirm_message" = "All profile data will be deleted and setup will restart.";
+"intensity_light" = "Light";
+"intensity_moderate" = "Moderate";
+"intensity_intense" = "Intense";
+"intensity_light_desc" = "Daily deficit ~10% — slow and sustainable";
+"intensity_moderate_desc" = "Daily deficit ~20% — balanced progress";
+"intensity_intense_desc" = "Daily deficit ~28% — fast but demanding";
+"intensity_footer" = "Higher intensity yields faster results but is harder to sustain.";
+"weight_gain_too_fast" = "Gaining too fast — consider extending the duration";
+"weight_gain_fast" = "Fast weight gain goal — proceed carefully";
+"deficit_capped" = "Goal too aggressive, will be capped to safe limit";
+"language" = "Language";
+"system_default" = "System";
+"language_restart" = "Restart the app for the language change to take effect.";
+"protein_chicken" = "Chicken";
+"protein_fish" = "Fish/Salmon";
+"protein_beef" = "Beef/Ground";
+"protein_egg" = "Egg";
+"protein_legume" = "Legumes";
+"protein_dairy" = "Dairy";
+
+/* DailyInsightCard */
+"analyzing_insight" = "Analyzing...";
+"updating" = "Updating...";
+"insight_fallback" = "Could not analyze today's data. Keep eating healthy!";
+"insufficient_data" = "Not enough data — will appear in a few days";
+"updated_at" = "updated at";
+"quality_prefix" = "Quality:";
+
+/* EditFoodEntryView */
+"food" = "Food";
+"name_placeholder" = "Name";
+"portion" = "Portion";
+"nutrition_values" = "Nutrition Values";
+"calorie" = "Calories";
+"protein_g" = "Protein (g)";
+"carbs_g" = "Carbs (g)";
+"fat_g" = "Fat (g)";
+"edit_entry" = "Edit Entry";
+
+/* WaterTrackingCard */
+"water_goal_reached_short" = "Goal reached!";
+"ml_remaining" = "ml left";
+"add" = "Add";
+
+/* MealSuggestionView */
+"evening_meal_suggestion" = "Evening Suggestion";
+"night_snack_suggestion" = "Late Night Snack";
+"suggestion_loading" = "Preparing suggestion...";
+"different_suggestion" = "Different Suggestion";
+"suggestion" = "Suggestion";
+"suggestion_error" = "Could not generate suggestion. Check your internet connection.";
+
+/* PhotoAnalysisView */
+"not_sure" = "Not sure";
+"voice" = "Voice";
+"type_text" = "Type";
+"amount_or_description" = "Amount or description...";
+"confirm_continue" = "Correct, continue";
+"analysis_error" = "Error during analysis:";
+"clarification_error" = "Could not process clarification:";
+
+/* BarcodeResultView */
+"quantity" = "Amount";
+
+/* HomeView errors */
+"camera_simulator_error" = "Camera not available in simulator";
+"mic_error" = "Microphone failed to start";
+
+/* Units */
+"kg" = "kg";
+"lbs" = "lbs";
+"cm" = "cm";
+"kcal" = "kcal";
+
+/* Tabs */
+"tab_record" = "Record";
+"tab_plan" = "Plan";
+"tab_statistics" = "Statistics";
+"tab_settings" = "Settings";
+
+/* HomeView cards */
+"eating_target" = "Eating Target";
+"goal_label" = "Goal";
+"eaten_label" = "Eaten";
+"remaining_label" = "Left";
+"calorie_deficit_label" = "Calorie Deficit";
+"actual_label" = "Actual";
+"eating_exceeded_format" = "Eating: %d%% exceeded";
+"eating_completed_format" = "Eating: %d%% completed";
+"deficit_progress_format" = "Deficit: %d / %d kcal (%d%%)";
+"protein_label" = "Protein";
+"carb_label" = "Carb";
+"fat_label" = "Fat";
+
+/* Goal Info Sheet */
+"goal_details" = "Goal Details";
+"extrapolation_active_format" = "Extrapolation active (%d%% of day passed)";
+"using_apple_health" = "Using Apple Health data";
+"early_morning_tdee" = "Early morning — using calculated TDEE";
+"healthkit_insufficient" = "HealthKit data insufficient, using calculated TDEE";
+"calculated_formula_format" = "Calculated formula: %d kcal";
+"min_healthy_calorie" = "Set to minimum healthy calorie target";
+"goal_too_aggressive" = "Goal too aggressive, set to safe limit";
+"tdee_label" = "TDEE";
+"confidence_label" = "confidence";
+"calculated_tdee" = "Calculated TDEE";
+"healthkit_burn" = "HealthKit Burn";
+"bmr_threshold" = "BMR Threshold";
+"raw_deficit" = "Raw Deficit";
+"applied_deficit" = "Applied Deficit";
+"daily_deficit" = "Daily Deficit";
+"daily_target_label" = "Daily Target";
+"estimated_weekly_loss" = "Estimated Weekly Loss";
+"estimated_weekly_gain" = "Estimated Weekly Gain";
+"vo2_max" = "VO2 Max";
+"fitness_label" = "Fitness";
+"no_data" = "No data";
+"weight_health" = "Weight (Health)";
+"bmr_label" = "BMR";
+"activity_multiplier" = "Activity Multiplier";
+"vo2_adjustment" = "VO2 Adjustment";
+"protein_target" = "Protein Target";
+"carb_target" = "Carb Target";
+"fat_target" = "Fat Target";
+
+/* Statistics extras */
+"best_streak_days_format" = "%d days";
+"this_week_weight_format" = "This week: %@%@ kg (%d days real deficit)";
+"this_month_weight_format" = "This month: %@%@ kg (%d days real deficit)";
+"trend_label_format" = "Trend: %@";
+"avg_deficit_format" = "Last %d days avg %d kcal %@";
+
+/* Nutrition check */
+"nutrition_check_prompt" = "Today I ate: %@.\n\nCan you calculate the total calories, protein, carbs and fat for these foods?";
+
+/* Chart views */
+"calorie_tracking" = "Calorie Tracking";
+"cumulative_deficit" = "Cumulative Deficit";
+"macro_averages_title" = "Macro Averages";
+"todays_distribution" = "Today's Distribution";
+"activity_distribution" = "Activity Distribution";
+"total_colon" = "Total:";
+"days_unit" = "days";
+"no_data_yet" = "Not enough data yet";
+
+/* HomeView extras */
+"today_colon" = "Today:";
+
+/* Quality labels */
+"quality_excellent" = "Quality: Excellent";
+"quality_good" = "Quality: Good";
+"quality_fair" = "Quality: Fair";
+"quality_poor" = "Quality: Poor";
+
+/* HRV labels */
+"hrv_excellent" = "Excellent";
+"hrv_normal" = "Normal";
+"hrv_tired" = "Tired";
+"hrv_very_tired" = "Very Tired";
+"hrv_no_data" = "No Data";
+
+/* Water extras */
+"water_goal_reached_emoji" = "Goal reached!";
+"water_remaining_format" = "%d%% — %d ml remaining";
+"water_add_custom" = "Add";
+
+/* DayDetail extras */
+"exceeded_by" = "Exceeded goal by %d kcal";
+"calories_left" = "%d kcal left";
+"deficit_behind_by" = "%d kcal behind deficit goal (%d%%)";
+"deficit_goal_reached" = "Deficit target hit (%d%%)";
+"no_deficit_surplus" = "No deficit — %d kcal surplus";
+"goal_reached_exact" = "Goal reached exactly";
+"eating_goal_card" = "Eating Target";
+"calorie_deficit_card" = "Calorie Deficit";
+"calorie_surplus_status" = "Calorie surplus — no deficit";
+"behind_deficit_status" = "Behind your deficit goal";
+"goal_reached_status" = "You hit your calorie deficit goal";
+"no_log_status" = "No log for this day";
+"in_progress_status" = "In progress";
+"planned_status" = "Planned";
+"plan_for_today_label" = "Plan for today";
+"goal_note_old_text" = "* Goal calculated with current profile values";

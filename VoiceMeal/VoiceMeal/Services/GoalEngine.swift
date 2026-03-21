@@ -249,11 +249,13 @@ class GoalEngine {
         return activities.isEmpty ? ["rest"] : activities
     }
 
-    static let activityDisplayNames: [String: String] = [
-        "weights": "A\u{011F}\u{0131}rl\u{0131}k",
-        "running": "Ko\u{015F}u",
-        "cycling": "Bisiklet",
-        "walking": "Y\u{00FC}r\u{00FC}y\u{00FC}\u{015F}",
-        "rest": "Dinlenme",
-    ]
+    static var activityDisplayNames: [String: String] {
+        [
+            "weights": "activity_weights".localized,
+            "running": "activity_running".localized,
+            "cycling": "activity_cycling".localized,
+            "walking": "activity_walking".localized,
+            "rest": "activity_rest".localized,
+        ]
+    }
 }

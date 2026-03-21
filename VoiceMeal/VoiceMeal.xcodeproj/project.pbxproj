@@ -34,16 +34,22 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B980216B2F620F300032CCEB /* VoiceMeal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = VoiceMeal;
 			sourceTree = "<group>";
 		};
 		B980217B2F620F310032CCEB /* VoiceMealTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = VoiceMealTests;
 			sourceTree = "<group>";
 		};
 		B98021852F620F310032CCEB /* VoiceMealUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = VoiceMealUITests;
 			sourceTree = "<group>";
 		};
@@ -115,8 +121,6 @@
 				B980216B2F620F300032CCEB /* VoiceMeal */,
 			);
 			name = VoiceMeal;
-			packageProductDependencies = (
-			);
 			productName = VoiceMeal;
 			productReference = B98021692F620F300032CCEB /* VoiceMeal.app */;
 			productType = "com.apple.product-type.application";
@@ -138,8 +142,6 @@
 				B980217B2F620F310032CCEB /* VoiceMealTests */,
 			);
 			name = VoiceMealTests;
-			packageProductDependencies = (
-			);
 			productName = VoiceMealTests;
 			productReference = B98021782F620F310032CCEB /* VoiceMealTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -161,8 +163,6 @@
 				B98021852F620F310032CCEB /* VoiceMealUITests */,
 			);
 			name = VoiceMealUITests;
-			packageProductDependencies = (
-			);
 			productName = VoiceMealUITests;
 			productReference = B98021822F620F310032CCEB /* VoiceMealUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -196,6 +196,7 @@
 			knownRegions = (
 				en,
 				Base,
+				tr,
 			);
 			mainGroup = B98021602F620F300032CCEB;
 			minimizedProjectReferenceProxies = 1;

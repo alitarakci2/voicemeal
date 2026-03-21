@@ -33,12 +33,12 @@ struct DeficitChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Birikimli A\u{00E7}\u{0131}k")
+            Text("cumulative_deficit".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
             if snapshotStats.isEmpty {
-                Text("Hen\u{00FC}z yeterli veri yok")
+                Text("no_data_yet".localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, minHeight: 150)
@@ -73,7 +73,7 @@ struct DeficitChartView: View {
                 .frame(height: 180)
 
                 if let last = snapshotStats.last {
-                    Text("Toplam: \(last.cumulativeDeficit) kcal")
+                    Text("\("total_colon".localized) \(last.cumulativeDeficit) kcal")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }

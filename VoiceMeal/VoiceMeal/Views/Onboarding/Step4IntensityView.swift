@@ -9,29 +9,31 @@ struct Step4IntensityView: View {
     @Binding var intensityLevel: Double
 
     private struct IntensityOption {
-        let label: String
+        let labelKey: String
         let emoji: String
         let value: Double
-        let subtitle: String
-        let detail: String
+        let subtitleKey: String
+        let detailKey: String
         let color: Color
     }
 
-    private let options: [IntensityOption] = [
-        IntensityOption(label: "Kolay", emoji: "🟢", value: 0.2,
-                        subtitle: "Stressiz, sürdürülebilir", detail: "~%10 kalori açığı", color: .green),
-        IntensityOption(label: "Orta", emoji: "🟡", value: 0.5,
-                        subtitle: "Dengeli ilerleme", detail: "~%20 kalori açığı", color: .yellow),
-        IntensityOption(label: "Agresif", emoji: "🔴", value: 0.8,
-                        subtitle: "Hızlı sonuç, disiplin gerektirir", detail: "~%25-30 kalori açığı", color: .red),
-    ]
+    private var options: [IntensityOption] {
+        [
+            IntensityOption(labelKey: L.easy.localized, emoji: "\u{1F7E2}", value: 0.2,
+                            subtitleKey: "intensity_easy_sub".localized, detailKey: "intensity_easy_detail".localized, color: .green),
+            IntensityOption(labelKey: L.medium.localized, emoji: "\u{1F7E1}", value: 0.5,
+                            subtitleKey: "intensity_medium_sub".localized, detailKey: "intensity_medium_detail".localized, color: .yellow),
+            IntensityOption(labelKey: L.aggressive.localized, emoji: "\u{1F534}", value: 0.8,
+                            subtitleKey: "intensity_aggressive_sub".localized, detailKey: "intensity_aggressive_detail".localized, color: .red),
+        ]
+    }
 
     var body: some View {
         VStack(spacing: 24) {
-            Text("Yoğunluk")
+            Text("intensity_title".localized)
                 .font(Theme.titleFont)
 
-            Text("Kalori açığını ne kadar agresif tutmak istiyorsun?")
+            Text("intensity_question".localized)
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
@@ -46,12 +48,12 @@ struct Step4IntensityView: View {
                                 .font(.system(size: 32))
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(option.label)
+                                Text(option.labelKey)
                                     .font(Theme.headlineFont)
-                                Text(option.subtitle)
+                                Text(option.subtitleKey)
                                     .font(Theme.bodyFont)
                                     .foregroundStyle(Theme.textSecondary)
-                                Text(option.detail)
+                                Text(option.detailKey)
                                     .font(Theme.captionFont)
                                     .foregroundStyle(Theme.textSecondary)
                             }

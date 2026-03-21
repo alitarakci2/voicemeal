@@ -126,7 +126,7 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
             // Hint label
             let hintLabel = UILabel()
-            hintLabel.text = "Barkodu \u{00E7}er\u{00E7}eve i\u{00E7}ine al\u{0131}n"
+            hintLabel.text = "barcode_hint".localized
             hintLabel.textColor = .white
             hintLabel.font = .systemFont(ofSize: 15, weight: .medium)
             hintLabel.textAlignment = .center

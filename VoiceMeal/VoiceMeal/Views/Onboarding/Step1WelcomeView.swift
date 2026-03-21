@@ -16,15 +16,15 @@ struct Step1WelcomeView: View {
                 .font(.system(size: 80))
                 .foregroundStyle(.tint)
 
-            Text("Hoş Geldin!")
+            Text(L.welcome.localized)
                 .font(Theme.largeTitleFont)
 
-            Text("Sesini kullanarak yemeklerini takip et")
+            Text("voice_intro".localized)
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
 
-            TextField("Adın", text: $name)
+            TextField(L.enterName.localized, text: $name)
                 .textFieldStyle(.roundedBorder)
                 .font(Theme.titleFont)
                 .padding(.horizontal, 40)

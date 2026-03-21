@@ -23,22 +23,22 @@ struct MacroChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Makro Ortalamalar\u{0131}")
+            Text("macro_averages_title".localized)
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
             // Weekly average bars
             VStack(spacing: 10) {
-                macroBar("Protein", avg: avgProtein, target: targetProtein, color: Theme.blue)
-                macroBar("Karb", avg: avgCarbs, target: targetCarbs, color: Theme.orange)
-                macroBar("Ya\u{011F}", avg: avgFat, target: targetFat, color: .yellow)
+                macroBar("protein_label".localized, avg: avgProtein, target: targetProtein, color: Theme.blue)
+                macroBar("carb_label".localized, avg: avgCarbs, target: targetCarbs, color: Theme.orange)
+                macroBar("fat_label".localized, avg: avgFat, target: targetFat, color: .yellow)
             }
 
             Divider()
                 .overlay(Theme.cardBorder)
 
             // Today's macro distribution
-            Text("Bug\u{00FC}n\u{00FC}n Da\u{011F}\u{0131}l\u{0131}m\u{0131}")
+            Text("todays_distribution".localized)
                 .font(Theme.bodyFont)
                 .fontWeight(.medium)
                 .foregroundStyle(Theme.textPrimary)
@@ -57,16 +57,16 @@ struct MacroChartView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 HStack {
-                    legendDot("Protein %\(proteinPct)", color: Theme.blue)
+                    legendDot("\("protein_label".localized) %\(proteinPct)", color: Theme.blue)
                     Spacer()
-                    legendDot("Karb %\(carbPct)", color: Theme.orange)
+                    legendDot("\("carb_label".localized) %\(carbPct)", color: Theme.orange)
                     Spacer()
-                    legendDot("Ya\u{011F} %\(fatPct)", color: .yellow)
+                    legendDot("\("fat_label".localized) %\(fatPct)", color: .yellow)
                 }
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
             } else {
-                Text("Hen\u{00FC}z veri yok")
+                Text("no_data_yet".localized)
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.textSecondary)
             }

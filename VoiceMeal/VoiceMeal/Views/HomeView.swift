@@ -147,7 +147,7 @@ struct HomeView: View {
                 }
 
                 // Input label
-                Text("Ne yedin?")
+                Text(L.whatDidYouEat.localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
 
@@ -182,7 +182,7 @@ struct HomeView: View {
                         .disabled(isAnalyzing)
                         .sensoryFeedback(.impact, trigger: speechService.isRecording)
 
-                        Text("Sesle Kaydet")
+                        Text("voice_record".localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -205,7 +205,7 @@ struct HomeView: View {
                         }
                         .disabled(isAnalyzing)
 
-                        Text("Foto\u{011F}rafla")
+                        Text("photo_record".localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -228,7 +228,7 @@ struct HomeView: View {
                         }
                         .disabled(isAnalyzing)
 
-                        Text("Barkod")
+                        Text("barcode_record".localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -236,17 +236,17 @@ struct HomeView: View {
 
                 // Status label
                 if isAnalyzing {
-                    ProgressView("Analiz ediliyor...")
+                    ProgressView(L.analyzing.localized)
                 } else if showCorrected {
-                    Text("D\u{00FC}zeltildi \u{2713}")
+                    Text("corrected_confirmation".localized)
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Theme.blue)
                 } else if showSavedConfirmation {
-                    Text("Kaydedildi \u{2713}")
+                    Text("saved_confirmation".localized)
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Theme.green)
                 } else {
-                    Text(speechService.isRecording ? "Dinliyorum..." : "Haz\u{0131}r")
+                    Text(speechService.isRecording ? "listening".localized : L.ready.localized)
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
                 }
@@ -274,7 +274,7 @@ struct HomeView: View {
                         }
                         Divider()
                         HStack {
-                            Text("Toplam")
+                            Text(L.total.localized)
                                 .fontWeight(.semibold)
                             Spacer()
                             Text("\(Int(parsedMeals.reduce(0) { $0 + $1.calories })) kcal")
@@ -307,7 +307,7 @@ struct HomeView: View {
                 if !todayEntries.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
-                            Text("Bug\u{00FC}nk\u{00FC} Yemekler")
+                            Text("today_foods".localized)
                                 .font(Theme.headlineFont)
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
@@ -362,7 +362,7 @@ struct HomeView: View {
                             .padding(.horizontal)
 
                         HStack {
-                            Text("Toplam")
+                            Text(L.total.localized)
                                 .font(Theme.bodyFont)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Theme.textPrimary)
@@ -388,7 +388,7 @@ struct HomeView: View {
                 // Correction picker
                 if let entries = correctionPickerEntries {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Hangi kayd\u{0131} d\u{00FC}zelteyim?")
+                        Text("which_entry_correct".localized)
                             .font(Theme.bodyFont)
                             .fontWeight(.medium)
                             .foregroundStyle(Theme.orange)
@@ -469,8 +469,8 @@ struct HomeView: View {
                 saveTodaySnapshot()
             }
         }
-        .alert("Bu kayd\u{0131} silmek istedi\u{011F}ine emin misin?", isPresented: $showDeleteAlert) {
-            Button("Sil", role: .destructive) {
+        .alert("delete_confirm".localized, isPresented: $showDeleteAlert) {
+            Button(L.delete.localized, role: .destructive) {
                 if let entry = entryToDelete {
                     modelContext.delete(entry)
                     try? modelContext.save()
@@ -478,7 +478,7 @@ struct HomeView: View {
                 }
                 entryToDelete = nil
             }
-            Button("\u{0130}ptal", role: .cancel) {
+            Button(L.cancel.localized, role: .cancel) {
                 entryToDelete = nil
             }
         }
@@ -566,7 +566,7 @@ struct HomeView: View {
             HStack {
                 let names = goalEngine.todayActivityNames
                     .compactMap { GoalEngine.activityDisplayNames[$0] }
-                Text("\u{1F4C5} Bug\u{00FC}n: \(names.joined(separator: ", "))")
+                Text("\u{1F4C5} \("today_colon".localized) \(names.joined(separator: ", "))")
                     .font(Theme.bodyFont)
                     .fontWeight(.medium)
 
@@ -595,16 +595,16 @@ struct HomeView: View {
                 }
             }
 
-            // Dual target: Yeme Hedefi + Kalori Açığı
+            // Dual target: Eating Target + Calorie Deficit
             HStack(spacing: 0) {
-                // Left: Yeme Hedefi
+                // Left: Eating Target
                 VStack(spacing: 6) {
-                    Text("Yeme Hedefi")
+                    Text("eating_target".localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                     HStack(spacing: 12) {
                         VStack(spacing: 2) {
-                            Text("Hedef")
+                            Text("goal_label".localized)
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(goalEngine.dailyCalorieTarget)")
@@ -615,7 +615,7 @@ struct HomeView: View {
                                 .allowsTightening(true)
                         }
                         VStack(spacing: 2) {
-                            Text("Yenen")
+                            Text("eaten_label".localized)
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(eatenCalories)")
@@ -626,7 +626,7 @@ struct HomeView: View {
                                 .allowsTightening(true)
                         }
                         VStack(spacing: 2) {
-                            Text("Kalan")
+                            Text("remaining_label".localized)
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(remaining)")
@@ -644,14 +644,14 @@ struct HomeView: View {
                     .frame(width: 1, height: 50)
                     .background(Theme.cardBorder)
 
-                // Right: Kalori Açığı
+                // Right: Calorie Deficit
                 VStack(spacing: 6) {
-                    Text("Kalori A\u{00E7}\u{0131}\u{011F}\u{0131}")
+                    Text("calorie_deficit_label".localized)
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                     HStack(spacing: 12) {
                         VStack(spacing: 2) {
-                            Text("Hedef")
+                            Text("goal_label".localized)
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(targetDeficit)")
@@ -662,7 +662,7 @@ struct HomeView: View {
                                 .allowsTightening(true)
                         }
                         VStack(spacing: 2) {
-                            Text("Ger\u{00E7}ek")
+                            Text("actual_label".localized)
                                 .font(Theme.microFont)
                                 .foregroundStyle(Theme.textTertiary)
                             Text("\(actualDeficit)")
@@ -679,26 +679,26 @@ struct HomeView: View {
 
             // Eating progress line
             if remaining < 0 {
-                Text("\u{26A0}\u{FE0F} Yeme: %\(eatingPercent) a\u{015F}t\u{0131}n")
+                Text("\u{26A0}\u{FE0F} \(String(format: "eating_exceeded_format".localized, eatingPercent))")
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.red)
             } else {
-                Text("\u{2705} Yeme: %\(eatingPercent) tamamland\u{0131}")
+                Text("\u{2705} \(String(format: "eating_completed_format".localized, eatingPercent))")
                     .font(Theme.captionFont)
                     .foregroundStyle(Theme.green)
             }
 
             // Deficit progress line
             HStack(spacing: 4) {
-                Text("\u{1F525} A\u{00E7}\u{0131}k: \(max(actualDeficit, 0)) / \(targetDeficit) kcal (%\(deficitPercent))")
+                Text("\u{1F525} \(String(format: "deficit_progress_format".localized, max(actualDeficit, 0), targetDeficit, deficitPercent))")
                     .font(Theme.captionFont)
                     .foregroundStyle(deficitColor)
             }
 
             // Macro progress bars with warning emoji
-            macroRow("Protein", eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: .blue, exceeded: Int(eatenProtein) > goalEngine.proteinTarget)
-            macroRow("Karb", eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: .orange, exceeded: Int(eatenCarbs) > goalEngine.carbTarget)
-            macroRow("Ya\u{011F}", eaten: Int(eatenFat), target: goalEngine.fatTarget, color: .yellow, exceeded: Int(eatenFat) > goalEngine.fatTarget)
+            macroRow("protein_label".localized, eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: .blue, exceeded: Int(eatenProtein) > goalEngine.proteinTarget)
+            macroRow("carb_label".localized, eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: .orange, exceeded: Int(eatenCarbs) > goalEngine.carbTarget)
+            macroRow("fat_label".localized, eaten: Int(eatenFat), target: goalEngine.fatTarget, color: .yellow, exceeded: Int(eatenFat) > goalEngine.fatTarget)
         }
         .padding()
         .themeCard()
@@ -760,7 +760,7 @@ struct HomeView: View {
             }
         }
         let foodList = lines.joined(separator: ", ")
-        return "Bug\u{00FC}n \u{015F}unlar\u{0131} yedim: \(foodList).\n\nBu yiyeceklerin toplam kalori, protein, karbonhidrat ve ya\u{011F} de\u{011F}erlerini hesaplar m\u{0131}s\u{0131}n?"
+        return String(format: "nutrition_check_prompt".localized, foodList)
     }
 
     private var nutritionCheckSheet: some View {
@@ -774,11 +774,11 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(Theme.background)
-            .navigationTitle("Besin Do\u{011F}rulama")
+            .navigationTitle("nutrition_check".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Kapat") {
+                    Button(L.close.localized) {
                         showNutritionCheck = false
                     }
                 }
@@ -802,41 +802,41 @@ struct HomeView: View {
                     // TDEE source indicator
                     if goalEngine.isUsingExtrapolatedTDEE {
                         let pct = Int(healthKitService.dayFraction * 100)
-                        Label("Extrapolasyon aktif (%\(pct) g\u{00FC}n ge\u{00E7}ti)", systemImage: "iphone")
+                        Label(String(format: "extrapolation_active_format".localized, pct), systemImage: "iphone")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.blue)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.usingHealthKit {
-                        Label("Apple Health verisi kullan\u{0131}l\u{0131}yor", systemImage: "iphone")
+                        Label("using_apple_health".localized, systemImage: "iphone")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.green)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
-                        Label("Sabah erken \u{2014} hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "function")
+                        Label("early_morning_tdee".localized, systemImage: "function")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     } else if goalEngine.healthKitBurn > 0 {
-                        Label("HealthKit verisi hen\u{00FC}z yetersiz, hesaplanan TDEE kullan\u{0131}l\u{0131}yor", systemImage: "hourglass")
+                        Label("healthkit_insufficient".localized, systemImage: "hourglass")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Label("Hesaplanan form\u{00FC}l: \(Int(goalEngine.tdee)) kcal", systemImage: "function")
+                        Label(String(format: "calculated_formula_format".localized, Int(goalEngine.tdee)), systemImage: "function")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if goalEngine.isCalorieClamped {
-                        Label("Minimum sa\u{011F}l\u{0131}kl\u{0131} kalori hedefine ayarland\u{0131}", systemImage: "exclamationmark.triangle.fill")
+                        Label("min_healthy_calorie".localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if goalEngine.isCapped, let reason = goalEngine.capReason {
-                        Label("Hedef \u{00E7}ok agresif, g\u{00FC}venli s\u{0131}n\u{0131}ra ayarland\u{0131}", systemImage: "exclamationmark.triangle.fill")
+                        Label("goal_too_aggressive".localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.orange)
                             .fixedSize(horizontal: false, vertical: true)
@@ -847,23 +847,23 @@ struct HomeView: View {
 
                     Divider()
 
-                    infoRow("TDEE", value: "\(Int(goalEngine.tdee)) kcal (g\u{00FC}ven: \(goalEngine.tdeeConfidence))")
+                    infoRow("tdee_label".localized, value: "\(Int(goalEngine.tdee)) kcal (\("confidence_label".localized): \(goalEngine.tdeeConfidence))")
                     if goalEngine.usingHealthKit || goalEngine.isUsingExtrapolatedTDEE {
-                        infoRow("Hesaplanan TDEE", value: "\(Int(goalEngine.calculatedTDEE)) kcal")
+                        infoRow("calculated_tdee".localized, value: "\(Int(goalEngine.calculatedTDEE)) kcal")
                     }
                     if goalEngine.healthKitBurn > 0 && !goalEngine.usingHealthKit && !goalEngine.isUsingExtrapolatedTDEE {
-                        infoRow("HealthKit Yak\u{0131}m", value: "\(Int(goalEngine.healthKitBurn)) kcal")
-                        infoRow("BMR E\u{015F}i\u{011F}i", value: "\(Int(goalEngine.bmr)) kcal")
+                        infoRow("healthkit_burn".localized, value: "\(Int(goalEngine.healthKitBurn)) kcal")
+                        infoRow("bmr_threshold".localized, value: "\(Int(goalEngine.bmr)) kcal")
                     }
                     if goalEngine.isCapped {
-                        infoRow("Ham A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.rawDailyDeficit)) kcal")
-                        infoRow("Uygulan A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.cappedDailyDeficit)) kcal")
+                        infoRow("raw_deficit".localized, value: "\(Int(goalEngine.rawDailyDeficit)) kcal")
+                        infoRow("applied_deficit".localized, value: "\(Int(goalEngine.cappedDailyDeficit)) kcal")
                     } else {
-                        infoRow("G\u{00FC}nl\u{00FC}k A\u{00E7}\u{0131}k", value: "\(Int(goalEngine.deficit)) kcal")
+                        infoRow("daily_deficit".localized, value: "\(Int(goalEngine.deficit)) kcal")
                     }
-                    infoRow("G\u{00FC}nl\u{00FC}k Hedef", value: "\(goalEngine.dailyCalorieTarget) kcal")
+                    infoRow("daily_target_label".localized, value: "\(goalEngine.dailyCalorieTarget) kcal")
                     infoRow(
-                        goalEngine.projectedWeeklyLossKg > 0 ? "Tahmini Haftal\u{0131}k Kay\u{0131}p" : "Tahmini Haftal\u{0131}k Art\u{0131}\u{015F}",
+                        goalEngine.projectedWeeklyLossKg > 0 ? "estimated_weekly_loss".localized : "estimated_weekly_gain".localized,
                         value: "\(goalEngine.projectedWeeklyLossKg > 0 ? "-" : "+")\(String(format: "%.2f", abs(goalEngine.projectedWeeklyLossKg))) kg"
                     )
 
@@ -871,36 +871,36 @@ struct HomeView: View {
 
                     // VO2Max
                     if let vo2 = goalEngine.vo2Max {
-                        infoRow("VO2 Max", value: "\(String(format: "%.1f", vo2)) ml/kg/min")
-                        infoRow("Fitness", value: goalEngine.vo2MaxLevel)
+                        infoRow("vo2_max".localized, value: "\(String(format: "%.1f", vo2)) ml/kg/min")
+                        infoRow("fitness_label".localized, value: goalEngine.vo2MaxLevel)
                     } else {
-                        infoRow("VO2 Max", value: "Veri yok")
+                        infoRow("vo2_max".localized, value: "no_data".localized)
                     }
 
                     // Weight from Health
                     if let w = goalEngine.latestWeightFromHealth {
                         let dateStr = goalEngine.latestWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
-                        infoRow("Kilo (Health)", value: "\(String(format: "%.1f", w)) kg \u{2014} \(dateStr)")
+                        infoRow("weight_health".localized, value: "\(String(format: "%.1f", w)) kg \u{2014} \(dateStr)")
                     }
 
                     Divider()
 
-                    infoRow("BMR", value: "\(Int(goalEngine.bmr)) kcal")
-                    infoRow("Aktivite \u{00C7}arpan\u{0131}", value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
+                    infoRow("bmr_label".localized, value: "\(Int(goalEngine.bmr)) kcal")
+                    infoRow("activity_multiplier".localized, value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
                     if goalEngine.vo2Max != nil {
-                        infoRow("VO2 Ayar\u{0131}", value: "\(String(format: "%+.2f", goalEngine.vo2MaxAdjustment))")
+                        infoRow("vo2_adjustment".localized, value: "\(String(format: "%+.2f", goalEngine.vo2MaxAdjustment))")
                     }
-                    infoRow("Protein Hedefi", value: "\(goalEngine.proteinTarget)g")
-                    infoRow("Karb Hedefi", value: "\(goalEngine.carbTarget)g")
-                    infoRow("Ya\u{011F} Hedefi", value: "\(goalEngine.fatTarget)g")
+                    infoRow("protein_target".localized, value: "\(goalEngine.proteinTarget)g")
+                    infoRow("carb_target".localized, value: "\(goalEngine.carbTarget)g")
+                    infoRow("fat_target".localized, value: "\(goalEngine.fatTarget)g")
                 }
                 .padding()
             }
-            .navigationTitle("Hedef Detaylar\u{0131}")
+            .navigationTitle("goal_details".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Kapat") { showGoalInfo = false }
+                    Button(L.close.localized) { showGoalInfo = false }
                 }
             }
         }
@@ -1000,7 +1000,7 @@ struct HomeView: View {
 
     private func handleCameraTap() {
         #if targetEnvironment(simulator)
-        errorMessage = "Kamera simülatörde kullanılamaz"
+        errorMessage = "camera_simulator_error".localized
         #else
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
@@ -1039,7 +1039,7 @@ struct HomeView: View {
             do {
                 try speechService.startListening()
             } catch {
-                errorMessage = "Mikrofon başlatılamadı"
+                errorMessage = "mic_error".localized
             }
         }
     }

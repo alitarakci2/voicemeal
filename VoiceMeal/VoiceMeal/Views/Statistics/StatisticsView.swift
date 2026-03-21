@@ -40,10 +40,10 @@ struct StatisticsView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     // Segmented control
-                    Picker("Aral\u{0131}k", selection: $selectedRange) {
-                        Text("Haftal\u{0131}k").tag(0)
-                        Text("Ayl\u{0131}k").tag(1)
-                        Text("Program").tag(2)
+                    Picker("range".localized, selection: $selectedRange) {
+                        Text(L.weekly.localized).tag(0)
+                        Text(L.monthly.localized).tag(1)
+                        Text(L.program.localized).tag(2)
                     }
                     .pickerStyle(.segmented)
 
@@ -64,7 +64,7 @@ struct StatisticsView: View {
                         }
                     } else {
                         if selectedRange == 1 && !monthlyHasEnoughData {
-                            Text("Ayl\u{0131}k grafik i\u{00E7}in en az 2 hafta veri gerekli")
+                            Text("monthly_min_data".localized)
                                 .font(Theme.bodyFont)
                                 .foregroundStyle(Theme.textSecondary)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -106,7 +106,7 @@ struct StatisticsView: View {
                 .padding()
             }
             .background(Theme.background)
-            .navigationTitle("\u{0130}statistik")
+            .navigationTitle(L.statistics.localized)
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 refreshStats()
@@ -149,14 +149,14 @@ struct StatisticsView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     let streak = statisticsService.currentStreak
-                    Text("\u{1F525} \(streak) G\u{00FC}nl\u{00FC}k Seri")
+                    Text("\u{1F525} \(streak) \("current_streak".localized)")
                         .font(Theme.headlineFont)
                     if streak > 0 {
-                        Text("Hedefe ula\u{015F}\u{0131}yorsun, devam et!")
+                        Text("streak_going".localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     } else {
-                        Text("Bug\u{00FC}n hedefe ula\u{015F}arak ba\u{015F}la!")
+                        Text("streak_start".localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -164,10 +164,10 @@ struct StatisticsView: View {
                 Spacer()
                 if statisticsService.bestStreak > 0 {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("En iyi")
+                        Text("best_streak".localized)
                             .font(Theme.microFont)
                             .foregroundStyle(Theme.textSecondary)
-                        Text("\(statisticsService.bestStreak) g\u{00FC}n")
+                        Text(String(format: "best_streak_days_format".localized, statisticsService.bestStreak))
                             .font(Theme.bodyFont)
                             .fontWeight(.medium)
                     }
@@ -179,15 +179,15 @@ struct StatisticsView: View {
             // Estimated weight card
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\u{2696}\u{FE0F} Tahmini Kilo De\u{011F}i\u{015F}imi")
+                    Text("\u{2696}\u{FE0F} \("weight_estimate".localized)")
                         .font(Theme.headlineFont)
                     let weekKg = statisticsService.estimatedWeightLostWeekKg
                     let weekDays = statisticsService.completedDaysThisWeek
-                    Text("Bu hafta: \(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg))) kg (\(weekDays) g\u{00FC}nde ger\u{00E7}ek a\u{00E7}\u{0131}k)")
+                    Text(String(format: "this_week_weight_format".localized, weekKg >= 0 ? "-" : "+", String(format: "%.2f", abs(weekKg)), weekDays))
                         .font(Theme.bodyFont)
                     let monthKg = statisticsService.estimatedWeightLostMonthKg
                     let monthDays = statisticsService.completedDaysThisMonth
-                    Text("Bu ay: \(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg))) kg (\(monthDays) g\u{00FC}nde ger\u{00E7}ek a\u{00E7}\u{0131}k)")
+                    Text(String(format: "this_month_weight_format".localized, monthKg >= 0 ? "-" : "+", String(format: "%.2f", abs(monthKg)), monthDays))
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -199,12 +199,12 @@ struct StatisticsView: View {
             // Trend card
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(trendEmoji) Trend: \(statisticsService.trend.rawValue)")
+                    Text("\(trendEmoji) \(String(format: "trend_label_format".localized, statisticsService.trend.localized))")
                         .font(Theme.headlineFont)
                     let avgDef = statisticsService.last3DaysAvgDeficit
                     let dayCount = statisticsService.last3ValidDayCount
                     if avgDef != 0 && dayCount > 0 {
-                        Text("Son \(dayCount) g\u{00FC}nde ortalama \(abs(avgDef)) kcal \(avgDef > 0 ? "a\u{00E7}\u{0131}k" : "fazla")")
+                        Text(String(format: "avg_deficit_format".localized, dayCount, abs(avgDef), avgDef > 0 ? "deficit_word".localized : "surplus_word".localized))
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -220,7 +220,7 @@ struct StatisticsView: View {
 
     private var weeklyInsightCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\u{1F9E0} Haftal\u{0131}k De\u{011F}erlendirme")
+            Text("\u{1F9E0} \("weekly_insight".localized)")
                 .font(Theme.headlineFont)
 
             if insightLoading {
@@ -241,7 +241,7 @@ struct StatisticsView: View {
                         .foregroundStyle(Theme.textSecondary)
                 }
             } else {
-                Text("Hen\u{00FC}z yeterli veri yok")
+                Text("not_enough_data".localized)
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -258,7 +258,7 @@ struct StatisticsView: View {
         let calendar = Calendar.current
         let weekOfYear = calendar.component(.weekOfYear, from: .now)
         let year = calendar.component(.yearForWeekOfYear, from: .now)
-        let cacheKey = "weeklyInsight_\(year)_\(weekOfYear)"
+        let cacheKey = "weeklyInsight_\(year)_\(weekOfYear)_\(groqService.appLanguage)"
 
         if let cached = UserDefaults.standard.string(forKey: cacheKey) {
             weeklyInsight = cached

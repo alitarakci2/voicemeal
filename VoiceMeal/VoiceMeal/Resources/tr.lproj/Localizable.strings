@@ -1,0 +1,495 @@
+/* Turkish — VoiceMeal */
+
+/* General */
+"save" = "Kaydet";
+"cancel" = "İptal";
+"close" = "Kapat";
+"edit" = "Düzenle";
+"delete" = "Sil";
+"retry" = "Tekrar Dene";
+"ready" = "Hazır";
+"loading" = "Yükleniyor...";
+"error" = "Hata";
+"yes" = "Evet";
+"no" = "Hayır";
+
+/* HomeView */
+"daily_target" = "Günlük Hedef";
+"today_activities" = "Bugün";
+"goal_calories" = "Hedef";
+"eaten" = "Yenen";
+"remaining" = "Kalan";
+"calorie_deficit" = "Kalori Açığı";
+"real_deficit" = "Gerçek açık";
+"target_deficit" = "Hedef";
+"protein" = "Protein";
+"carbs" = "Karb";
+"fat" = "Yağ";
+"refresh" = "Yenile";
+"what_did_you_eat" = "Ne yedin?";
+"voice_record" = "Sesle Kaydet";
+"photo_record" = "Fotoğrafla";
+"barcode_record" = "Barkod";
+"today_foods" = "Bugünkü Yemekler";
+"saved_confirmation" = "Kaydedildi ✓";
+"corrected_confirmation" = "Düzeltildi ✓";
+"listening" = "Dinliyorum...";
+"delete_confirm" = "Bu kaydı silmek istediğine emin misin?";
+"which_entry_correct" = "Hangi kaydı düzelteyim?";
+"nutrition_check" = "Besin Doğrulama";
+
+/* Water */
+"water_tracking" = "Su Takibi";
+"water_goal" = "Su Hedefi";
+"water_goal_reached" = "💧 Günlük hedefe ulaştın! 🎉";
+
+/* Photo Analysis */
+"photo_analysis" = "Fotoğraf Analizi";
+"analyzing" = "Yemek analiz ediliyor...";
+"analyzing_subtitle" = "Bu işlem 5-15 saniye sürebilir";
+"detected" = "Tespit Edildi";
+"not_detected" = "Yemek Tanınamadı";
+"portion_calculator" = "Porsiyon Hesapla";
+"retake_photo" = "Tekrar Çek";
+"speak_to_answer" = "Sesle Cevapla";
+
+/* Barcode */
+"barcode_scan" = "Barkod Tara";
+"barcode_hint" = "Barkodu çerçeve içine alın";
+"product_found" = "Ürün Bulundu";
+"product_not_found" = "Ürün Bulunamadı";
+"per_hundred" = "100%@ başına:";
+"product_searching" = "Ürün aranıyor...";
+"barcode_label" = "Barkod";
+"brand" = "Marka";
+"package" = "Paket";
+"how_much" = "Ne kadar yediniz?";
+"quantity_unknown" = "Paket miktarı bilinmiyor";
+"rescan" = "Tekrar Tara";
+"barcode_not_in_db" = "Bu barkod veritabanında yok.";
+"voice_describe" = "Sesle Anlat";
+"selected_amount" = "🎤 %d%@ seçildi";
+"not_understood" = "Anlaşılamadı";
+"connection_error" = "Bağlantı hatası";
+
+/* Plan */
+"plan" = "Plan";
+"today" = "Bugün";
+"ongoing" = "devam ediyor...";
+"previous_days" = "Önceki günler";
+"next_days" = "Sonraki günler";
+"program_start" = "Program Başlangıcı";
+"this_week" = "Bu Hafta";
+"weekly_deficit" = "kcal açık";
+"day_detail" = "Gün Detayı";
+"eating_goal" = "Yeme Hedefi";
+"goal_exceeded" = "Hedefi aştın";
+"goal_remaining" = "kalori kaldı";
+"no_food_log" = "Yemek kaydı yok";
+"foods" = "Yemekler";
+"total" = "Toplam";
+"deficit" = "Açık";
+"average" = "Ort";
+"day_suffix" = "gün";
+"cal_suffix" = "kcal";
+"cal_short" = "Kal";
+"deficit_short" = "Açık";
+"pro_short" = "Pro";
+"carb_short" = "Kar";
+"fat_short" = "Yağ";
+"trend_losing" = "Kilo veriyor";
+"trend_warning" = "Dikkat";
+"trend_stable" = "Sabit";
+"days_with_data_format" = "%d/7 günde veri";
+"kcal_deficit_format" = "%d kcal açık";
+"target_kcal_format" = "Hedef: %d kcal";
+"target_value_format" = "Hedef: %d";
+"eaten_value_format" = "Yenen: %d";
+"deficit_approx_format" = "~%d açık";
+"deficit_value_format" = "%d açık";
+"in_progress" = "Devam ediyor";
+"planned" = "Planlandı";
+"plan_for_today" = "Bu gün için plan";
+"status_goal_reached" = "Kalori açığı hedefine ulaştın";
+"status_calorie_surplus" = "Kalori fazlası — açık veremadin";
+"status_behind_deficit" = "Açık hedefinin gerisinde kaldın";
+"status_no_log" = "Bu gün için kayıt yok";
+"goal_note_old" = "* Hedef, mevcut profil değerleriyle hesaplanmıştır";
+"burn_tdee" = "Yakım (TDEE):";
+"actual_deficit_format" = "Gerçek açık: %d kcal";
+"target_deficit_format" = "Hedef: %d kcal";
+"exceeded_by_format" = "Hedefi %d kcal aştın";
+"goal_exact" = "Hedefe tam ulaştın";
+"calories_left_format" = "%d kcal kalori kaldı";
+"no_deficit_surplus_format" = "Açık yok — %d kcal fazla";
+"behind_deficit_pct_format" = "Hedef açığın %d kcal gerisinde (%%%d)";
+"deficit_hit_pct_format" = "Hedef açığı tutturuldu (%%%d)";
+
+/* Statistics */
+"statistics" = "İstatistik";
+"weekly" = "Haftalık";
+"monthly" = "Aylık";
+"program" = "Program";
+"current_streak" = "Günlük Seri";
+"best_streak" = "En iyi";
+"streak_going" = "Hedefe ulaşıyorsun, devam et!";
+"streak_start" = "Bugün hedefe ulaşarak başla!";
+"weight_estimate" = "Tahmini Kilo Değişimi";
+"this_week_estimate" = "Bu hafta";
+"this_month_estimate" = "Bu ay";
+"real_deficit_days" = "günde gerçek açık";
+"trend" = "Trend";
+"losing" = "Kilo Veriyor";
+"gaining" = "Kilo Alıyor";
+"stable" = "Sabit";
+"avg_deficit_last_days" = "Son %d günde ortalama %d kcal %@";
+"deficit_word" = "açık";
+"surplus_word" = "fazla";
+"monthly_min_data" = "Aylık grafik için en az 2 hafta veri gerekli";
+"weekly_insight" = "Haftalık Değerlendirme";
+"not_enough_data" = "Henüz yeterli veri yok";
+
+/* Program */
+"program_start_date" = "Program Başlangıcı";
+"weight_goal" = "Kilo Hedefi";
+"start_weight" = "Başlangıç";
+"estimated" = "Tahmini";
+"goal" = "Hedef";
+"real_weight" = "Gerçek Kilo";
+"on_track" = "Hedefte gidiyorsun!";
+"near_track" = "Hedefe yakın gidiyorsun";
+"behind" = "Biraz geride";
+"ahead_of_schedule" = "Beklenenden fazla verdin!";
+"behind_increase_deficit" = "Biraz geride — açığı artır";
+"behind_increase_calories" = "Biraz geride — kaloriyi artır";
+"off_target" = "Hedeften sapma var";
+"matches_estimate" = "Tahminle örtüşüyor";
+"ahead_kg" = "Beklenenden %@ kg fazla verdin!";
+"behind_kg" = "Tahminden %@ kg geride";
+"program_summary_min_days" = "3 gün sonra program özeti görünür";
+"start_label_format" = "Başlangıç: %@";
+"day_progress_format" = "⏱ %d gün / %d gün (%%%d)";
+"estimated_change_losing" = "Tahmini: -%@ kg / Beklenen: -%@ kg";
+"estimated_change_gaining" = "Tahmini: +%@ kg / Beklenen: +%@ kg";
+"change_maintenance" = "Değişim: %@ kg (hedef: stabil)";
+"percent_completed" = "%%%d tamamlandı";
+"total_surplus" = "Toplam Fazla";
+"total_deficit_label" = "Toplam Açık";
+"avg_daily_calories" = "Ort. Günlük Kalori";
+"workout_days" = "Antrenman Günleri";
+"adherence_rate" = "Takip Oranı";
+"best_day_deficit" = "🏆 En iyi gün: %@ — %d kcal açık";
+"best_day_surplus" = "🏆 En iyi gün: %@ — %d kcal fazla";
+"best_day_deviation" = "🏆 En iyi gün: %@ — %d kcal sapma";
+"worst_day_deficit" = "😬 En zor gün: %@ — %d kcal açık";
+"worst_day_surplus" = "😬 En zor gün: %@ — %d kcal fazla";
+"worst_day_short" = "😬 En zor gün: %@ — %d kcal eksik";
+"worst_day_deviation" = "😬 En zor gün: %@ — %d kcal sapma";
+"current_streak_days" = "🔥 Mevcut seri: %d gün";
+"best_streak_days" = "⭐ En iyi seri: %d gün";
+"macro_averages" = "Makro Ortalaması";
+"program_coach" = "🧠 Program Koçu";
+"assessment_loading" = "Değerlendirme yükleniyor...";
+"assessment_failed" = "Değerlendirme yüklenemedi.";
+"real_weight_detail" = "⚖️ Gerçek Kilo: %@ kg%@";
+"health_source" = " (%@, Health'ten)";
+
+/* Settings */
+"settings" = "Ayarlar";
+"profile" = "Profil";
+"gender" = "Cinsiyet";
+"male" = "Erkek";
+"female" = "Kadın";
+"age" = "Yaş";
+"height" = "Boy";
+"weight" = "Kilo";
+"target_weight" = "Hedef Kilo";
+"duration" = "Süre";
+"intensity" = "Yoğunluk";
+"easy" = "Kolay";
+"medium" = "Orta";
+"aggressive" = "Agresif";
+"weekly_schedule" = "Haftalık Takvim";
+"notifications" = "Bildirimler";
+"afternoon_reminder" = "Öğle/Akşam Hatırlatması";
+"evening_reminder" = "Gece Kapanış Hatırlatması";
+"reset_onboarding" = "Onboarding'i Sıfırla";
+"goal_duration" = "Hedef Süre: %d gün";
+"unhealthy_pace" = "Sağlıksız hız! Süreyi uzatmanı öneririz";
+"aggressive_goal" = "Agresif hedef — dikkatli ilerle";
+"camera_permission" = "Kamera İzni Gerekli";
+"camera_permission_detail" = "Yemek fotoğrafı çekmek için kamera iznine ihtiyacımız var. Ayarlar'dan kamera iznini açabilirsiniz.";
+"open_settings" = "Ayarları Aç";
+"manual_weight" = "Elle girilen kilom";
+"healthkit_weight" = "HealthKit";
+
+/* Days */
+"monday" = "Pazartesi";
+"tuesday" = "Salı";
+"wednesday" = "Çarşamba";
+"thursday" = "Perşembe";
+"friday" = "Cuma";
+"saturday" = "Cumartesi";
+"sunday" = "Pazar";
+
+/* Activities */
+"activity_weights" = "Ağırlık";
+"activity_running" = "Koşu";
+"activity_cycling" = "Bisiklet";
+"activity_walking" = "Yürüyüş";
+"activity_rest" = "Dinlenme";
+
+/* Onboarding */
+"welcome" = "Hoş Geldin!";
+"next" = "Devam";
+"back" = "Geri";
+"start" = "Başla";
+"enter_name" = "İsmini gir";
+"body_metrics" = "Vücut Bilgilerin";
+"weight_goal_title" = "Hedefin";
+"intensity_title" = "Program Yoğunluğu";
+"schedule_title" = "Haftalık Takvim";
+"summary" = "Özet";
+"weekly_loss" = "Haftada yaklaşık %@ kg verirsin";
+"weekly_gain" = "Haftada yaklaşık %@ kg alırsın";
+"maintain_weight" = "Kilonu korumayı hedefliyorsun";
+"too_aggressive" = "Çok agresif, süreyi uzatmanı öneririz";
+"current_weight_label" = "Kilo";
+"goal_weight_label" = "Hedef Kilo";
+"height_label" = "Boy";
+"custom_duration" = "Özel: %d gün";
+
+/* Insight */
+"daily_assessment" = "Günlük Değerlendirme";
+"refresh_insight" = "Yenile";
+"generated_at" = "de üretildi";
+
+/* Notifications */
+"afternoon_suggestion" = "Akşam Önerisi Al";
+"evening_suggestion" = "Gece Atıştırmalığı";
+
+/* Intensity */
+"intensity_question" = "Kalori açığını ne kadar agresif tutmak istiyorsun?";
+"intensity_easy_sub" = "Stressiz, sürdürülebilir";
+"intensity_easy_detail" = "~%10 kalori açığı";
+"intensity_medium_sub" = "Dengeli ilerleme";
+"intensity_medium_detail" = "~%20 kalori açığı";
+"intensity_aggressive_sub" = "Hızlı sonuç, disiplin gerektirir";
+"intensity_aggressive_detail" = "~%25-30 kalori açığı";
+
+/* Schedule templates */
+"template_beginner" = "Başlangıç";
+"template_advanced" = "İleri";
+
+/* Day abbreviations */
+"day_mon_short" = "Pzt";
+"day_tue_short" = "Sal";
+"day_wed_short" = "Çar";
+"day_thu_short" = "Per";
+"day_fri_short" = "Cum";
+"day_sat_short" = "Cmt";
+"day_sun_short" = "Paz";
+
+/* Onboarding extras */
+"voice_intro" = "Sesini kullanarak yemeklerini takip et";
+
+/* Settings extras */
+"name_field" = "Ad";
+"time" = "Saat";
+"done" = "Bitti";
+"saved_toast" = "Kaydedildi";
+"app_section" = "Uygulama";
+"version" = "Versiyon";
+"auto_calculate" = "Otomatik Hesapla";
+"water_formula" = "Kilo × 33 + aktif enerji bonusu (max 5L)";
+"preferred_proteins" = "Tercih Ettiğin Protein Kaynakları";
+"schedule_change" = "Program Değişikliği";
+"schedule_change_message" = "Haftalık programı değiştirdiniz. Bu, günlük kalori hedeflerinizi etkileyecek. Kaydetmek istiyor musunuz?";
+"weight_conflict" = "Kilo Çakışması";
+"weight_conflict_message" = "HealthKit'ten farklı bir kilo verisi var (%@). Hangisini kullanmak istersiniz?";
+"weight_conflict_message_alt" = "HealthKit'ten farklı bir kilo verisi var. Hangisini kullanmak istersiniz?";
+"reset_confirm" = "Sıfırla?";
+"reset_confirm_message" = "Tüm profil bilgilerin silinecek ve kurulum yeniden başlayacak.";
+"intensity_light" = "Hafif";
+"intensity_moderate" = "Orta";
+"intensity_intense" = "Yoğun";
+"intensity_light_desc" = "Günlük açık ~%10 — yavaş ve sürdürülebilir";
+"intensity_moderate_desc" = "Günlük açık ~%20 — dengeli ilerleme";
+"intensity_intense_desc" = "Günlük açık ~%28 — hızlı ama zorlayıcı";
+"intensity_footer" = "Yüksek yoğunluk daha hızlı sonuç verir ama sürdürülebilirliği düşer.";
+"weight_gain_too_fast" = "Çok hızlı kilo alma — süreyi uzatmanı öneririz";
+"weight_gain_fast" = "Hızlı kilo alma hedefi — dikkatli ilerle";
+"deficit_capped" = "Hedef çok agresif, güvenli sınıra ayarlanacak";
+"language" = "Dil";
+"system_default" = "Sistem";
+"language_restart" = "Dil değişikliğinin uygulanması için uygulamayı yeniden başlatın.";
+"protein_chicken" = "Tavuk";
+"protein_fish" = "Balık/Somon";
+"protein_beef" = "Dana/Kıyma";
+"protein_egg" = "Yumurta";
+"protein_legume" = "Baklagil";
+"protein_dairy" = "Süt Ürünleri";
+
+/* DailyInsightCard */
+"analyzing_insight" = "Analiz ediliyor...";
+"updating" = "Güncelleniyor...";
+"insight_fallback" = "Bugünkü veriler analiz edilemedi. Sağlıklı beslenmeye devam et!";
+"insufficient_data" = "Yeterli veri yok — birkaç gün sonra görünür";
+"updated_at" = "'de güncellendi";
+"quality_prefix" = "Kalite:";
+
+/* EditFoodEntryView */
+"food" = "Yemek";
+"name_placeholder" = "İsim";
+"portion" = "Porsiyon";
+"nutrition_values" = "Besin Değerleri";
+"calorie" = "Kalori";
+"protein_g" = "Protein (g)";
+"carbs_g" = "Karb (g)";
+"fat_g" = "Yağ (g)";
+"edit_entry" = "Kaydı Düzenle";
+
+/* WaterTrackingCard */
+"water_goal_reached_short" = "Hedefe ulaştın!";
+"ml_remaining" = "ml kaldı";
+"add" = "Ekle";
+
+/* MealSuggestionView */
+"evening_meal_suggestion" = "Akşam Önerisi";
+"night_snack_suggestion" = "Gece Atıştırmalığı";
+"suggestion_loading" = "Öneri hazırlanıyor...";
+"different_suggestion" = "Farklı Öneri";
+"suggestion" = "Öneri";
+"suggestion_error" = "Öneri oluşturulamadı. İnternet bağlantını kontrol et.";
+
+/* PhotoAnalysisView */
+"not_sure" = "Emin değilim";
+"voice" = "Sesle";
+"type_text" = "Yaz";
+"amount_or_description" = "Miktar veya açıklama...";
+"confirm_continue" = "Bu doğru, devam et";
+"analysis_error" = "Analiz sırasında hata oluştu:";
+"clarification_error" = "Açıklama işlenemedi:";
+
+/* BarcodeResultView */
+"quantity" = "Miktar";
+
+/* HomeView errors */
+"camera_simulator_error" = "Kamera simülatörde kullanılamaz";
+"mic_error" = "Mikrofon başlatılamadı";
+
+/* Units */
+"kg" = "kg";
+"lbs" = "lbs";
+"cm" = "cm";
+"kcal" = "kcal";
+
+/* Tabs */
+"tab_record" = "Kayıt";
+"tab_plan" = "Plan";
+"tab_statistics" = "İstatistik";
+"tab_settings" = "Ayarlar";
+
+/* HomeView cards */
+"eating_target" = "Yeme Hedefi";
+"goal_label" = "Hedef";
+"eaten_label" = "Yenen";
+"remaining_label" = "Kalan";
+"calorie_deficit_label" = "Kalori Açığı";
+"actual_label" = "Gerçek";
+"eating_exceeded_format" = "Yeme: %%%d aştın";
+"eating_completed_format" = "Yeme: %%%d tamamlandı";
+"deficit_progress_format" = "Açık: %d / %d kcal (%%%d)";
+"protein_label" = "Protein";
+"carb_label" = "Karb";
+"fat_label" = "Yağ";
+
+/* Goal Info Sheet */
+"goal_details" = "Hedef Detayları";
+"extrapolation_active_format" = "Extrapolasyon aktif (%%%d gün geçti)";
+"using_apple_health" = "Apple Health verisi kullanılıyor";
+"early_morning_tdee" = "Sabah erken — hesaplanan TDEE kullanılıyor";
+"healthkit_insufficient" = "HealthKit verisi henüz yetersiz, hesaplanan TDEE kullanılıyor";
+"calculated_formula_format" = "Hesaplanan formül: %d kcal";
+"min_healthy_calorie" = "Minimum sağlıklı kalori hedefine ayarlandı";
+"goal_too_aggressive" = "Hedef çok agresif, güvenli sınıra ayarlandı";
+"tdee_label" = "TDEE";
+"confidence_label" = "güven";
+"calculated_tdee" = "Hesaplanan TDEE";
+"healthkit_burn" = "HealthKit Yakım";
+"bmr_threshold" = "BMR Eşiği";
+"raw_deficit" = "Ham Açık";
+"applied_deficit" = "Uygulanan Açık";
+"daily_deficit" = "Günlük Açık";
+"daily_target_label" = "Günlük Hedef";
+"estimated_weekly_loss" = "Tahmini Haftalık Kayıp";
+"estimated_weekly_gain" = "Tahmini Haftalık Artış";
+"vo2_max" = "VO2 Max";
+"fitness_label" = "Fitness";
+"no_data" = "Veri yok";
+"weight_health" = "Kilo (Health)";
+"bmr_label" = "BMR";
+"activity_multiplier" = "Aktivite Çarpanı";
+"vo2_adjustment" = "VO2 Ayarı";
+"protein_target" = "Protein Hedefi";
+"carb_target" = "Karb Hedefi";
+"fat_target" = "Yağ Hedefi";
+
+/* Statistics extras */
+"best_streak_days_format" = "%d gün";
+"this_week_weight_format" = "Bu hafta: %@%@ kg (%d günde gerçek açık)";
+"this_month_weight_format" = "Bu ay: %@%@ kg (%d günde gerçek açık)";
+"trend_label_format" = "Trend: %@";
+"avg_deficit_format" = "Son %d günde ortalama %d kcal %@";
+
+/* Nutrition check */
+"nutrition_check_prompt" = "Bugün şunları yedim: %@.\n\nBu yiyeceklerin toplam kalori, protein, karbonhidrat ve yağ değerlerini hesaplar mısın?";
+
+/* Chart views */
+"calorie_tracking" = "Kalori Takibi";
+"cumulative_deficit" = "Birikimli Açık";
+"macro_averages_title" = "Makro Ortalamaları";
+"todays_distribution" = "Bugünün Dağılımı";
+"activity_distribution" = "Aktivite Dağılımı";
+"total_colon" = "Toplam:";
+"days_unit" = "gün";
+"no_data_yet" = "Henüz yeterli veri yok";
+
+/* HomeView extras */
+"today_colon" = "Bugün:";
+
+/* Quality labels */
+"quality_excellent" = "Kalite: Mükemmel";
+"quality_good" = "Kalite: İyi";
+"quality_fair" = "Kalite: Orta";
+"quality_poor" = "Kalite: Kötü";
+
+/* HRV labels */
+"hrv_excellent" = "Mükemmel";
+"hrv_normal" = "Normal";
+"hrv_tired" = "Yorgun";
+"hrv_very_tired" = "Çok Yorgun";
+"hrv_no_data" = "Veri Yok";
+
+/* Water extras */
+"water_goal_reached_emoji" = "Hedefe ulaştın!";
+"water_remaining_format" = "%%%d — %d ml kaldı";
+"water_add_custom" = "Ekle";
+
+/* DayDetail extras */
+"exceeded_by" = "Hedefi %d kcal aştın";
+"calories_left" = "%d kcal kaldı";
+"deficit_behind_by" = "Hedef açığın %d kcal gerisinde (%%%d)";
+"deficit_goal_reached" = "Hedef açığı tutturuldu (%%%d)";
+"no_deficit_surplus" = "Açık yok — %d kcal fazla";
+"goal_reached_exact" = "Hedefe tam ulaştın";
+"eating_goal_card" = "Yeme Hedefi";
+"calorie_deficit_card" = "Kalori Açığı";
+"calorie_surplus_status" = "Kalori fazlası — açık veremadin";
+"behind_deficit_status" = "Açık hedefinin gerisinde kaldın";
+"goal_reached_status" = "Kalori açığı hedefine ulaştın";
+"no_log_status" = "Bu gün için kayıt yok";
+"in_progress_status" = "Devam ediyor";
+"planned_status" = "Planlandı";
+"plan_for_today_label" = "Bu gün için plan";
+"goal_note_old_text" = "* Hedef, mevcut profil değerleriyle hesaplanmıştır";
