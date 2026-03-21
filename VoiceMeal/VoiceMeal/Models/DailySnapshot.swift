@@ -33,6 +33,7 @@ final class DailySnapshot {
     var actualDeficitAtClose: Int = 0
     var totalWaterMl: Int = 0
     var waterGoalMl: Int = 0
+    var morningTDEE: Double = 0
     var savedAt: Date
 
     init(

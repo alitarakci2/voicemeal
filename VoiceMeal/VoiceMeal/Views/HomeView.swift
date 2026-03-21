@@ -34,6 +34,8 @@ struct HomeView: View {
     @Environment(GoalEngine.self) private var goalEngine
     @State private var healthKitService = HealthKitService()
     @State private var waterGoalService = WaterGoalService()
+    @State private var tdeeWarningDismissed = false
+    @State private var showGoalUpdatedToast = false
 
     // Camera state
     @State private var showCamera = false
@@ -95,6 +97,36 @@ struct HomeView: View {
                 // Daily goal card
                 if goalEngine.profile != nil {
                     dailyGoalCard
+
+                    // TDEE drop warning banner
+                    if goalEngine.tdeeDropWarning && !tdeeWarningDismissed && !isTdeeWarningDismissedToday {
+                        TDEEWarningBanner(
+                            morningTDEE: Int(goalEngine.todayMorningTDEE ?? 0),
+                            currentTDEE: Int(goalEngine.tdee),
+                            dropPercent: goalEngine.tdeeDropPercent,
+                            currentGoal: goalEngine.dailyCalorieTarget,
+                            updatedGoal: goalEngine.updatedEatingGoalIfAccepted,
+                            onAccept: {
+                                applyTDEEUpdate()
+                            },
+                            onDismiss: {
+                                dismissTdeeWarning()
+                            }
+                        )
+                    }
+
+                    if showGoalUpdatedToast {
+                        HStack {
+                            Text("✅ \("goal_updated_toast".localized)")
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(Theme.green)
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Theme.green.opacity(0.15))
+                        .themeCard()
+                        .transition(.opacity)
+                    }
 
                     DailyInsightCard(
                         hrvStatus: healthKitService.hrvStatus,
@@ -423,6 +455,7 @@ struct HomeView: View {
                 await refreshHealthKit()
             }
             saveTodaySnapshot()
+            loadMorningTDEE()
         }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
             if oldValue && !newValue && !speechService.transcript.isEmpty {
@@ -436,6 +469,7 @@ struct HomeView: View {
                     if SnapshotService.snapshotNeedsUpdate(for: .now, modelContext: modelContext) {
                         saveTodaySnapshot()
                     }
+                    loadMorningTDEE()
                 }
             }
         }
@@ -994,6 +1028,46 @@ struct HomeView: View {
             consumedFat: fat,
             modelContext: modelContext
         )
+    }
+
+    // MARK: - TDEE Warning
+
+    private var todayKey: String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd"
+        return fmt.string(from: Date())
+    }
+
+    private var isTdeeWarningDismissedToday: Bool {
+        UserDefaults.standard.bool(forKey: "tdeeWarningDismissed_\(todayKey)")
+    }
+
+    private func dismissTdeeWarning() {
+        UserDefaults.standard.set(true, forKey: "tdeeWarningDismissed_\(todayKey)")
+        tdeeWarningDismissed = true
+    }
+
+    private func loadMorningTDEE() {
+        if let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext),
+           snapshot.morningTDEE > 0 {
+            goalEngine.todayMorningTDEE = snapshot.morningTDEE
+        }
+    }
+
+    private func applyTDEEUpdate() {
+        // Update today's snapshot with new target
+        if let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext) {
+            snapshot.dailyCalorieTarget = goalEngine.updatedEatingGoalIfAccepted
+        }
+        dismissTdeeWarning()
+        withAnimation {
+            showGoalUpdatedToast = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation {
+                showGoalUpdatedToast = false
+            }
+        }
     }
 
     // MARK: - Actions

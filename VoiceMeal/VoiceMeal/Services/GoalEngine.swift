@@ -9,6 +9,7 @@ import Foundation
 class GoalEngine {
     private(set) var profile: UserProfile?
     var healthKitBurn: Double = 0
+    var todayMorningTDEE: Double?
     var vo2Max: Double?
     var latestWeightFromHealth: Double?
     var latestWeightDate: Date?
@@ -178,6 +179,23 @@ class GoalEngine {
 
     var projectedWeeklyLossKg: Double {
         (cappedDailyDeficit * 7) / 7700
+    }
+
+    var tdeeDropWarning: Bool {
+        guard let morningTDEE = todayMorningTDEE,
+              morningTDEE > 0 else { return false }
+        let drop = (morningTDEE - tdee) / morningTDEE
+        let hour = Calendar.current.component(.hour, from: Date())
+        return drop > 0.15 && hour < 20
+    }
+
+    var tdeeDropPercent: Int {
+        guard let morning = todayMorningTDEE, morning > 0 else { return 0 }
+        return Int(((morning - tdee) / morning) * 100)
+    }
+
+    var updatedEatingGoalIfAccepted: Int {
+        return Int(max(tdee - cappedDailyDeficit, bmr * 0.85))
     }
 
     func update(with profile: UserProfile?) {

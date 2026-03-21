@@ -493,3 +493,13 @@
 "planned_status" = "Planlandı";
 "plan_for_today_label" = "Bu gün için plan";
 "goal_note_old_text" = "* Hedef, mevcut profil değerleriyle hesaplanmıştır";
+
+// TDEE Warning Banner
+"tdee_drop_warning" = "Bugün daha az kalori yakıyorsun";
+"morning_estimate" = "Sabah tahmini";
+"current_estimate" = "Şu anki tahmin";
+"drop_percent" = "%%%d düşüş";
+"goal_would_change" = "Yeme hedefin: %d → %d olur";
+"update_goal" = "Hedefi Güncelle";
+"keep_goal" = "Kalsın";
+"goal_updated_toast" = "Hedef güncellendi";

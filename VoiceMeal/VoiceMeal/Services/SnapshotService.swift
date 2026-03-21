@@ -50,6 +50,7 @@ struct SnapshotService {
                 targetDeficit: Int(goalEngine.cappedDailyDeficit),
                 actualDeficitAtClose: Int(goalEngine.tdee) - consumedCalories
             )
+            snapshot.morningTDEE = goalEngine.tdee
             snapshot.totalWaterMl = totalWaterMl
             snapshot.waterGoalMl = waterGoalMl
             modelContext.insert(snapshot)

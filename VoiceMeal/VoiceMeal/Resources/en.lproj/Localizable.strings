@@ -466,3 +466,13 @@
 "planned_status" = "Planned";
 "plan_for_today_label" = "Plan for today";
 "goal_note_old_text" = "* Goal calculated with current profile values";
+
+// TDEE Warning Banner
+"tdee_drop_warning" = "You're burning fewer calories today";
+"morning_estimate" = "Morning estimate";
+"current_estimate" = "Current estimate";
+"drop_percent" = "-%d%% drop";
+"goal_would_change" = "Eating goal: %d → %d";
+"update_goal" = "Update Goal";
+"keep_goal" = "Keep Original";
+"goal_updated_toast" = "Goal updated";

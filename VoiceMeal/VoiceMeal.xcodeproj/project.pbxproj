@@ -34,22 +34,16 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B980216B2F620F300032CCEB /* VoiceMeal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = VoiceMeal;
 			sourceTree = "<group>";
 		};
 		B980217B2F620F310032CCEB /* VoiceMealTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = VoiceMealTests;
 			sourceTree = "<group>";
 		};
 		B98021852F620F310032CCEB /* VoiceMealUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = VoiceMealUITests;
 			sourceTree = "<group>";
 		};
