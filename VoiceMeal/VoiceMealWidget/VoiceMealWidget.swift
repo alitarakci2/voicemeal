@@ -284,6 +284,51 @@ struct LargeWidgetView: View {
     }
 }
 
+// MARK: - Lock Screen Widget View
+
+struct LockScreenWidgetView: View {
+    let entry: SimpleEntry
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(spacing: 1) {
+                Text("🎯")
+                    .font(.caption2)
+                Text("\(entry.data.remainingCaloriesClamped)")
+                    .font(.system(size: 13, weight: .bold))
+                Text("kcal")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
+
+            Divider()
+
+            VStack(spacing: 1) {
+                Text("🔥")
+                    .font(.caption2)
+                Text("\(entry.data.actualDeficit)")
+                    .font(.system(size: 13, weight: .bold))
+                Text(widgetLanguage == "en" ? "deficit" : "acik")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
+
+            Divider()
+
+            VStack(spacing: 1) {
+                Text("💧")
+                    .font(.caption2)
+                Text("\(Int(entry.data.waterPercent * 100))%")
+                    .font(.system(size: 13, weight: .bold))
+                Text(widgetLanguage == "en" ? "water" : "su")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - Widget Definitions
 
 struct VoiceMealWidgetMedium: Widget {
@@ -314,6 +359,20 @@ struct VoiceMealWidgetLarge: Widget {
     }
 }
 
+struct VoiceMealWidgetLockScreen: Widget {
+    let kind = "VoiceMealLockScreen"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            LockScreenWidgetView(entry: entry)
+                .containerBackground(.clear, for: .widget)
+        }
+        .configurationDisplayName("VoiceMeal")
+        .description(widgetLanguage == "en" ? "Calorie and water at a glance" : "Kalori ve su takibi")
+        .supportedFamilies([.accessoryRectangular])
+    }
+}
+
 // MARK: - Entry Point
 
 @main
@@ -321,5 +380,6 @@ struct VoiceMealWidgetBundle: WidgetBundle {
     var body: some Widget {
         VoiceMealWidgetMedium()
         VoiceMealWidgetLarge()
+        VoiceMealWidgetLockScreen()
     }
 }
