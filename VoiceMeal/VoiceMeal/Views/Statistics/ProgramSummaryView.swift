@@ -140,7 +140,7 @@ struct ProgramSummaryView: View {
                     Text("Başlangıç")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
-                    Text("\(String(format: "%.1f", summary.startWeight)) kg")
+                    Text("\(String(format: "%.2f", summary.startWeight)) kg")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Theme.textPrimary)
                 }
@@ -151,7 +151,7 @@ struct ProgramSummaryView: View {
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                     let estimated = summary.startWeight - summary.estimatedWeightChangeKg
-                    Text("\(String(format: "%.1f", estimated)) kg")
+                    Text("\(String(format: "%.2f", estimated)) kg")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Theme.accent)
                 }
@@ -161,7 +161,7 @@ struct ProgramSummaryView: View {
                     Text("Hedef")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
-                    Text("\(String(format: "%.1f", summary.goalWeight)) kg")
+                    Text("\(String(format: "%.2f", summary.goalWeight)) kg")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Theme.textPrimary)
                 }
@@ -204,7 +204,7 @@ struct ProgramSummaryView: View {
                 let dateStr = realWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
                 let healthNote = dateStr.isEmpty ? "" : " (\(dateStr), Health'ten)"
 
-                Text("⚖️ Gerçek Kilo: \(String(format: "%.1f", realWeight)) kg\(healthNote)")
+                Text("⚖️ Gerçek Kilo: \(String(format: "%.2f", realWeight)) kg\(healthNote)")
                     .font(Theme.bodyFont)
                     .foregroundStyle(Theme.textPrimary)
 
@@ -212,11 +212,11 @@ struct ProgramSummaryView: View {
                 let diff = estimatedWeight - realWeight
 
                 if diff > 0.1 {
-                    Text("✅ Beklenenden \(String(format: "%.1f", diff)) kg fazla verdin!")
+                    Text("✅ Beklenenden \(String(format: "%.2f", diff)) kg fazla verdin!")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.green)
                 } else if diff < -0.1 {
-                    Text("⚠️ Tahminden \(String(format: "%.1f", abs(diff))) kg geride")
+                    Text("⚠️ Tahminden \(String(format: "%.2f", abs(diff))) kg geride")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.orange)
                 } else {
