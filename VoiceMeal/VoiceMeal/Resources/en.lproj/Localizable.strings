@@ -467,12 +467,13 @@
 "plan_for_today_label" = "Plan for today";
 "goal_note_old_text" = "* Goal calculated with current profile values";
 
-// TDEE Warning Banner
-"tdee_drop_warning" = "You're burning fewer calories today";
-"morning_estimate" = "Morning estimate";
-"current_estimate" = "Current estimate";
-"drop_percent" = "-%d%% drop";
-"goal_would_change" = "Eating goal: %d → %d";
+// TDEE Evening Banner
+"banner_workout_title" = "You have a workout tonight";
+"banner_workout_body" = "To stay on track, keep your eating goal at ~%d kcal.";
+"banner_workout_note" = "TDEE will update after your workout";
+"banner_ok" = "OK";
+"banner_no_workout_title" = "No workout scheduled today";
+"banner_no_workout_body" = "Based on current estimates, switch to %d kcal eating goal to hit your daily deficit?";
 "update_goal" = "Update Goal";
 "keep_goal" = "Keep Original";
 "goal_updated_toast" = "Goal updated";

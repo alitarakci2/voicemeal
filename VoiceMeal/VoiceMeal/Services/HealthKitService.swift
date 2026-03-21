@@ -55,6 +55,7 @@ class HealthKitService {
     var latestWeight: Double?
     var latestWeightDate: Date?
     var lastNightSleep: SleepData?
+    var todayActiveEnergy: Double = 0
     var todayHRV: Double?
     var hrvBaseline: Double?
     var dayFraction: Double = 0
@@ -133,7 +134,9 @@ class HealthKitService {
         guard let store else { return 0 }
         let startOfDay = Calendar.current.startOfDay(for: .now)
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: .now, options: .strictStartDate)
-        return await fetchSum(store: store, type: HKQuantityType(.activeEnergyBurned), predicate: predicate)
+        let value = await fetchSum(store: store, type: HKQuantityType(.activeEnergyBurned), predicate: predicate)
+        todayActiveEnergy = value
+        return value
     }
 
     func fetchTodayBurnExtrapolated(bmr: Double, calculatedTDEE: Double) async -> Double {

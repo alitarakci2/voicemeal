@@ -494,12 +494,13 @@
 "plan_for_today_label" = "Bu gün için plan";
 "goal_note_old_text" = "* Hedef, mevcut profil değerleriyle hesaplanmıştır";
 
-// TDEE Warning Banner
-"tdee_drop_warning" = "Bugün daha az kalori yakıyorsun";
-"morning_estimate" = "Sabah tahmini";
-"current_estimate" = "Şu anki tahmin";
-"drop_percent" = "%%%d düşüş";
-"goal_would_change" = "Yeme hedefin: %d → %d olur";
+// TDEE Evening Banner
+"banner_workout_title" = "Akşam antrenmanın var";
+"banner_workout_body" = "Hedefe ulaşmak için ~%d kcal yeme hedefinde kalman yeterli.";
+"banner_workout_note" = "Antrenman sonrası TDEE güncellenecek";
+"banner_ok" = "Tamam";
+"banner_no_workout_title" = "Bugün spor görünmüyor";
+"banner_no_workout_body" = "Mevcut tahmine göre günlük açık hedefini tutturmak için %d kcal yeme hedefine geçmek ister misin?";
 "update_goal" = "Hedefi Güncelle";
 "keep_goal" = "Kalsın";
 "goal_updated_toast" = "Hedef güncellendi";

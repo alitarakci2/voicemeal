@@ -6,9 +6,7 @@
 import SwiftUI
 
 struct TDEEWarningBanner: View {
-    let morningTDEE: Int
-    let currentTDEE: Int
-    let dropPercent: Int
+    let hasWorkout: Bool
     let currentGoal: Int
     let updatedGoal: Int
     let onAccept: () -> Void
@@ -16,35 +14,53 @@ struct TDEEWarningBanner: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("⚠️ \("tdee_drop_warning".localized)")
+            if hasWorkout {
+                workoutScenario
+            } else {
+                noWorkoutScenario
+            }
+        }
+        .padding()
+        .themeCard()
+    }
+
+    // MARK: - Scenario A: Workout scheduled
+
+    private var workoutScenario: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("💪 \("banner_workout_title".localized)")
+                .font(Theme.headlineFont)
+                .foregroundStyle(Theme.green)
+
+            Text(String(format: "banner_workout_body".localized, currentGoal))
+                .font(Theme.captionFont)
+                .foregroundStyle(Theme.textSecondary)
+
+            Text("banner_workout_note".localized)
+                .font(Theme.microFont)
+                .foregroundStyle(Theme.textTertiary)
+
+            Button {
+                onDismiss()
+            } label: {
+                Text("banner_ok".localized)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.green)
+            .font(Theme.captionFont)
+        }
+    }
+
+    // MARK: - Scenario B: No workout, TDEE dropped
+
+    private var noWorkoutScenario: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("🌙 \("banner_no_workout_title".localized)")
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.orange)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("morning_estimate".localized)
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Text("\(morningTDEE) kcal")
-                        .foregroundStyle(Theme.textPrimary)
-                }
-                HStack {
-                    Text("current_estimate".localized)
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    Text("\(currentTDEE) kcal")
-                        .foregroundStyle(Theme.orange)
-                }
-                Text(String(format: "drop_percent".localized, dropPercent))
-                    .font(Theme.captionFont)
-                    .foregroundStyle(Theme.red)
-            }
-            .font(Theme.captionFont)
-
-            Divider()
-                .overlay(Theme.cardBorder)
-
-            Text(String(format: "goal_would_change".localized, currentGoal, updatedGoal))
+            Text(String(format: "banner_no_workout_body".localized, updatedGoal))
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
 
@@ -69,7 +85,5 @@ struct TDEEWarningBanner: View {
             }
             .font(Theme.captionFont)
         }
-        .padding()
-        .themeCard()
     }
 }

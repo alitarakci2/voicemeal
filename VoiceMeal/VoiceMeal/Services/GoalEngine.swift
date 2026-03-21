@@ -181,12 +181,21 @@ class GoalEngine {
         (cappedDailyDeficit * 7) / 7700
     }
 
+    var isInBannerWindow: Bool {
+        let hour = Calendar.current.component(.hour, from: Date())
+        return hour >= 17 && hour < 20
+    }
+
+    var hasWorkoutToday: Bool {
+        let workoutTypes: Set<String> = ["weights", "running", "cycling"]
+        return !workoutTypes.isDisjoint(with: todayActivityNames)
+    }
+
     var tdeeDropWarning: Bool {
         guard let morningTDEE = todayMorningTDEE,
               morningTDEE > 0 else { return false }
         let drop = (morningTDEE - tdee) / morningTDEE
-        let hour = Calendar.current.component(.hour, from: Date())
-        return drop > 0.15 && hour < 20
+        return drop > 0.15 && isInBannerWindow
     }
 
     var tdeeDropPercent: Int {

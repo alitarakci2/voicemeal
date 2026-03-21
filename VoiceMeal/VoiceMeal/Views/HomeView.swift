@@ -98,12 +98,10 @@ struct HomeView: View {
                 if goalEngine.profile != nil {
                     dailyGoalCard
 
-                    // TDEE drop warning banner
-                    if goalEngine.tdeeDropWarning && !tdeeWarningDismissed && !isTdeeWarningDismissedToday {
+                    // TDEE evening banner
+                    if shouldShowTdeeBanner {
                         TDEEWarningBanner(
-                            morningTDEE: Int(goalEngine.todayMorningTDEE ?? 0),
-                            currentTDEE: Int(goalEngine.tdee),
-                            dropPercent: goalEngine.tdeeDropPercent,
+                            hasWorkout: goalEngine.hasWorkoutToday,
                             currentGoal: goalEngine.dailyCalorieTarget,
                             updatedGoal: goalEngine.updatedEatingGoalIfAccepted,
                             onAccept: {
@@ -1040,6 +1038,18 @@ struct HomeView: View {
 
     private var isTdeeWarningDismissedToday: Bool {
         UserDefaults.standard.bool(forKey: "tdeeWarningDismissed_\(todayKey)")
+    }
+
+    private var shouldShowTdeeBanner: Bool {
+        guard goalEngine.isInBannerWindow,
+              !tdeeWarningDismissed,
+              !isTdeeWarningDismissedToday,
+              healthKitService.todayActiveEnergy <= 300 else { return false }
+
+        if goalEngine.hasWorkoutToday {
+            return true
+        }
+        return goalEngine.tdeeDropWarning
     }
 
     private func dismissTdeeWarning() {
