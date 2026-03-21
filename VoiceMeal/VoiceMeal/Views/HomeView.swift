@@ -454,6 +454,9 @@ struct HomeView: View {
             }
             saveTodaySnapshot()
             loadMorningTDEE()
+            if let p = profiles.first {
+                await NotificationService.shared.checkAndRescheduleWeightReminder(profile: p)
+            }
         }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
             if oldValue && !newValue && !speechService.transcript.isEmpty {
@@ -987,6 +990,11 @@ struct HomeView: View {
         )
         if goalEngine.weightUpdatedBanner != nil {
             showWeightBanner = true
+        }
+        if let p = profiles.first {
+            Task {
+                await NotificationService.shared.checkAndRescheduleWeightReminder(profile: p)
+            }
         }
     }
 

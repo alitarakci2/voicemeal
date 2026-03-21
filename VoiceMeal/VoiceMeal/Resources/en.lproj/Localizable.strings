@@ -477,3 +477,8 @@
 "update_goal" = "Update Goal";
 "keep_goal" = "Keep Original";
 "goal_updated_toast" = "Goal updated";
+
+// Weight Reminder
+"weight_reminder_enabled" = "Weight Reminder";
+"weight_reminder_days" = "Every %d days";
+"weight_reminder_explanation" = "You'll be reminded after %d days without weighing in";

@@ -29,6 +29,9 @@ final class UserProfile {
     var waterGoalOverrideMl: Int?
     var useMetric: Bool = true
     var preferredLanguage: String = ""
+    var weightReminderEnabled: Bool = true
+    var weightReminderDays: Int = 1
+    var weightReminderHour: Int = 9
     var createdAt: Date
     var updatedAt: Date
 

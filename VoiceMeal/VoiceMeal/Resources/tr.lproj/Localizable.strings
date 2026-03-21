@@ -504,3 +504,8 @@
 "update_goal" = "Hedefi Güncelle";
 "keep_goal" = "Kalsın";
 "goal_updated_toast" = "Hedef güncellendi";
+
+// Weight Reminder
+"weight_reminder_enabled" = "Tartı Hatırlatması";
+"weight_reminder_days" = "Her %d günde bir";
+"weight_reminder_explanation" = "Son tartıdan %d gün geçmişse bildirim gönderilir";

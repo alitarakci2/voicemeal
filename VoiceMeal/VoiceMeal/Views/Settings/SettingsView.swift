@@ -37,6 +37,9 @@ struct SettingsView: View {
     @State private var notification1Time = Calendar.current.date(from: DateComponents(hour: 16, minute: 0)) ?? .now
     @State private var notification2Enabled = true
     @State private var notification2Time = Calendar.current.date(from: DateComponents(hour: 21, minute: 30)) ?? .now
+    @State private var weightReminderEnabled = true
+    @State private var weightReminderDays: Int = 1
+    @State private var weightReminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? .now
     @State private var preferredProteins: Set<String> = ["tavuk", "bal\u{0131}k", "dana", "yumurta", "baklagil", "s\u{00FC}t \u{00FC}r\u{00FC}nleri"]
 
     // Schedule
@@ -215,6 +218,19 @@ struct SettingsView: View {
                     Toggle(L.eveningReminder.localized, isOn: $notification2Enabled)
                     if notification2Enabled {
                         DatePicker(L.time.localized, selection: $notification2Time, displayedComponents: .hourAndMinute)
+                    }
+
+                    Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
+                    if weightReminderEnabled {
+                        Stepper(
+                            String(format: "weight_reminder_days".localized, weightReminderDays),
+                            value: $weightReminderDays,
+                            in: 1...7
+                        )
+                        DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
+                        Text(String(format: "weight_reminder_explanation".localized, weightReminderDays))
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -493,6 +509,9 @@ struct SettingsView: View {
         notification2Enabled = p.notification2Enabled
         notification1Time = Calendar.current.date(from: DateComponents(hour: p.notification1Hour, minute: p.notification1Minute)) ?? .now
         notification2Time = Calendar.current.date(from: DateComponents(hour: p.notification2Hour, minute: p.notification2Minute)) ?? .now
+        weightReminderEnabled = p.weightReminderEnabled
+        weightReminderDays = p.weightReminderDays
+        weightReminderTime = Calendar.current.date(from: DateComponents(hour: p.weightReminderHour, minute: 0)) ?? .now
         preferredProteins = Set(p.preferredProteins)
     }
 
@@ -537,6 +556,9 @@ struct SettingsView: View {
         p.notification2Enabled = notification2Enabled
         p.notification2Hour = Calendar.current.component(.hour, from: notification2Time)
         p.notification2Minute = Calendar.current.component(.minute, from: notification2Time)
+        p.weightReminderEnabled = weightReminderEnabled
+        p.weightReminderDays = weightReminderDays
+        p.weightReminderHour = Calendar.current.component(.hour, from: weightReminderTime)
         p.preferredProteins = Array(preferredProteins)
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
         p.preferredLanguage = selectedLanguage
