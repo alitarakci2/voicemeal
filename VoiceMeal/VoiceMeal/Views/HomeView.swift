@@ -42,6 +42,7 @@ struct HomeView: View {
     @State private var showPhotoAnalysis = false
     @State private var showCameraPermissionDenied = false
     @State private var showNutritionCheck = false
+    @State private var showBarcodeScanner = false
 
     @Environment(GroqService.self) private var groqService
 
@@ -205,6 +206,29 @@ struct HomeView: View {
                         .disabled(isAnalyzing)
 
                         Text("Foto\u{011F}rafla")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+
+                    // Barcode button
+                    VStack(spacing: 8) {
+                        Button {
+                            showBarcodeScanner = true
+                        } label: {
+                            Image(systemName: "barcode.viewfinder")
+                                .font(.system(size: 36))
+                                .foregroundStyle(.white)
+                                .frame(width: 80, height: 80)
+                                .background(Theme.cardBackground)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Theme.cardBorder, lineWidth: 2)
+                                )
+                        }
+                        .disabled(isAnalyzing)
+
+                        Text("Barkod")
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -518,6 +542,9 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showNutritionCheck) {
             nutritionCheckSheet
+        }
+        .sheet(isPresented: $showBarcodeScanner) {
+            BarcodeResultView()
         }
     }
 
