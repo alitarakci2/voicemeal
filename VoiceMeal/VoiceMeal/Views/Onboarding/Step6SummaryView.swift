@@ -46,8 +46,8 @@ struct Step6SummaryView: View {
                     summaryRow("Cinsiyet", value: gender == "male" ? "Erkek" : "Kadın")
                     summaryRow("Yaş", value: "\(age)")
                     summaryRow("Boy", value: "\(Int(heightCm)) cm")
-                    summaryRow("Mevcut Kilo", value: "\(String(format: "%.1f", currentWeightKg)) kg")
-                    summaryRow("Hedef Kilo", value: "\(String(format: "%.1f", goalWeightKg)) kg")
+                    summaryRow("Mevcut Kilo", value: "\(String(format: "%.2f", currentWeightKg)) kg")
+                    summaryRow("Hedef Kilo", value: "\(String(format: "%.2f", goalWeightKg)) kg")
                     summaryRow("Süre", value: "\(goalDays) gün")
                     summaryRow("Yoğunluk", value: intensityLabel)
 

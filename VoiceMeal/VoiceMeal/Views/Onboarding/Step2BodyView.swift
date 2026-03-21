@@ -59,12 +59,12 @@ struct Step2BodyView: View {
 
                 // Weight
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Kilo: \(String(format: "%.1f", currentWeightKg)) kg")
+                    Text("Kilo: \(String(format: "%.2f", currentWeightKg)) kg")
                         .font(Theme.headlineFont)
                     HStack {
-                        Slider(value: $currentWeightKg, in: 40...200, step: 0.5)
+                        Slider(value: $currentWeightKg, in: 40...200, step: 0.05)
                             .tint(Theme.accent)
-                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(1)))
+                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(2)))
                             .keyboardType(.decimalPad)
                             .frame(width: 64)
                             .padding(8)
@@ -73,7 +73,7 @@ struct Step2BodyView: View {
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .onChange(of: currentWeightKg) { _, newVal in
-                                currentWeightKg = min(200, max(40, (newVal * 2).rounded() / 2))
+                                currentWeightKg = min(200, max(40, (newVal * 100).rounded() / 100))
                             }
                     }
                 }

@@ -31,12 +31,12 @@ struct Step3GoalView: View {
 
                 // Goal weight
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Hedef Kilo: \(String(format: "%.1f", goalWeightKg)) kg")
+                    Text("Hedef Kilo: \(String(format: "%.2f", goalWeightKg)) kg")
                         .font(Theme.headlineFont)
                     HStack {
-                        Slider(value: $goalWeightKg, in: 40...200, step: 0.5)
+                        Slider(value: $goalWeightKg, in: 40...200, step: 0.05)
                             .tint(Theme.accent)
-                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(1)))
+                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(2)))
                             .keyboardType(.decimalPad)
                             .frame(width: 64)
                             .padding(8)
@@ -45,7 +45,7 @@ struct Step3GoalView: View {
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .onChange(of: goalWeightKg) { _, newVal in
-                                goalWeightKg = min(200, max(40, (newVal * 2).rounded() / 2))
+                                goalWeightKg = min(200, max(40, (newVal * 100).rounded() / 100))
                             }
                     }
                 }

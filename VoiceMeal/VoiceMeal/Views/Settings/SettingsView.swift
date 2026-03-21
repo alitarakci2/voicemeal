@@ -85,13 +85,13 @@ struct SettingsView: View {
                     HStack {
                         Text("Kilo")
                         Spacer()
-                        Text("\(String(format: "%.1f", currentWeightKg)) kg")
+                        Text("\(String(format: "%.2f", currentWeightKg)) kg")
                             .foregroundStyle(Theme.textSecondary)
                     }
                     HStack {
-                        Slider(value: $currentWeightKg, in: 40...200, step: 0.1)
+                        Slider(value: $currentWeightKg, in: 40...200, step: 0.05)
                             .tint(Theme.accent)
-                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(1)))
+                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(2)))
                             .keyboardType(.decimalPad)
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
@@ -103,13 +103,13 @@ struct SettingsView: View {
                     HStack {
                         Text("Hedef Kilo")
                         Spacer()
-                        Text("\(String(format: "%.1f", goalWeightKg)) kg")
+                        Text("\(String(format: "%.2f", goalWeightKg)) kg")
                             .foregroundStyle(Theme.textSecondary)
                     }
                     HStack {
-                        Slider(value: $goalWeightKg, in: 30...200, step: 0.1)
+                        Slider(value: $goalWeightKg, in: 30...200, step: 0.05)
                             .tint(Theme.accent)
-                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(1)))
+                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(2)))
                             .keyboardType(.decimalPad)
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
@@ -305,10 +305,10 @@ struct SettingsView: View {
                 Text("Haftalık programı değiştirdiniz. Bu, günlük kalori hedeflerinizi etkileyecek. Kaydetmek istiyor musunuz?")
             }
             .alert("Kilo Çakışması", isPresented: $showWeightConflictAlert) {
-                Button("Elle girilen kilom (\(String(format: "%.1f", currentWeightKg)) kg)") {
+                Button("Elle girilen kilom (\(String(format: "%.2f", currentWeightKg)) kg)") {
                     performSave()
                 }
-                Button("HealthKit (\(String(format: "%.1f", healthKitWeight ?? 0)) kg)") {
+                Button("HealthKit (\(String(format: "%.2f", healthKitWeight ?? 0)) kg)") {
                     currentWeightKg = healthKitWeight ?? currentWeightKg
                     performSave()
                 }
