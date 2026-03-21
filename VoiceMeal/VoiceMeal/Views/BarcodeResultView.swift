@@ -16,6 +16,10 @@ struct BarcodeResultView: View {
     @State private var selectedAmount: Double = 100
     @State private var errorMessage: String?
     @State private var showSavedToast = false
+    @State private var voiceConfirmation: String?
+    @State private var customAmountText = ""
+
+    @StateObject private var speechService = SpeechService()
 
     private let barcodeService = BarcodeService()
 
@@ -23,28 +27,60 @@ struct BarcodeResultView: View {
         case scanning, loading, found, notFound
     }
 
-    // MARK: - Portion parsing
+    // MARK: - Quantity parsing
 
-    private var quantityValue: Double {
-        guard let q = product?.quantity else { return 100 }
-        return parseNumericValue(from: q)
+    private var detectedQuantity: (amount: Double, unit: String, isDefault: Bool) {
+        guard let product else { return (100, "g", true) }
+
+        // 1. Try quantity field
+        if let q = product.quantity, !q.isEmpty {
+            let parsed = parseQuantity(q)
+            return (parsed.amount, parsed.unit, false)
+        }
+
+        // 2. Try serving_size field
+        if let s = product.servingSize, !s.isEmpty {
+            let parsed = parseQuantity(s)
+            return (parsed.amount, parsed.unit, false)
+        }
+
+        // 3. Detect from product name / brands keywords
+        let combined = (product.name + " " + (product.brands ?? "")).lowercased()
+        let liquidKeywords = [
+            "s\u{00FC}t", "milk", "juice", "meyve suyu", "su ",
+            "ayran", "kefir", "i\u{00E7}ecek", "drink", "soda",
+            "limonata", "protein s\u{00FC}t", "\u{015F}i\u{015F}e",
+        ]
+        for keyword in liquidKeywords {
+            if combined.contains(keyword) {
+                return (500, "ml", true)
+            }
+        }
+
+        // 4. Default: solid food
+        return (100, "g", true)
     }
 
-    private var quantityUnit: String {
-        guard let q = product?.quantity else { return "g" }
-        let lower = q.lowercased()
-        if lower.contains("ml") || lower.contains("litre") || lower.contains("l") { return "ml" }
-        return "g"
+    private var maxAmount: Double {
+        max(detectedQuantity.amount, 50)
+    }
+
+    private var unit: String {
+        detectedQuantity.unit
+    }
+
+    private var quantityIsDefault: Bool {
+        detectedQuantity.isDefault
+    }
+
+    private var sliderStep: Double {
+        unit == "ml" ? 10 : 5
     }
 
     private var servingSizeValue: Double? {
         guard let s = product?.servingSize else { return nil }
-        let val = parseNumericValue(from: s)
+        let val = parseQuantity(s).amount
         return val > 0 ? val : nil
-    }
-
-    private var sliderMax: Double {
-        max(quantityValue, 50)
     }
 
     private var calculatedCalories: Int {
@@ -110,7 +146,10 @@ struct BarcodeResultView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("\u{0130}ptal") { dismiss() }
+                    Button("\u{0130}ptal") {
+                        if speechService.isRecording { speechService.stopListening() }
+                        dismiss()
+                    }
                 }
             }
         }
@@ -170,10 +209,10 @@ struct BarcodeResultView: View {
                 .padding()
                 .themeCard()
 
-                // Nutrition per 100g
+                // Nutrition per 100g/100ml
                 if product.caloriesPer100g != nil {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("100\(quantityUnit) ba\u{015F}\u{0131}na:")
+                        Text("100\(unit) ba\u{015F}\u{0131}na:")
                             .font(Theme.headlineFont)
                             .foregroundStyle(Theme.textPrimary)
 
@@ -199,17 +238,58 @@ struct BarcodeResultView: View {
                         .foregroundStyle(Theme.textSecondary)
 
                     HStack {
-                        Slider(value: $selectedAmount, in: 10...sliderMax, step: 5)
+                        Slider(value: $selectedAmount, in: 10...maxAmount, step: sliderStep)
                             .tint(Theme.accent)
-                        Text("\(Int(selectedAmount))\(quantityUnit)")
+
+                        Button {
+                            handleVoiceTap()
+                        } label: {
+                            Image(systemName: speechService.isRecording ? "waveform" : "mic.fill")
+                                .font(.system(size: 22))
+                                .foregroundStyle(speechService.isRecording ? Theme.red : .white)
+                                .frame(width: 52, height: 52)
+                                .background(speechService.isRecording ? Theme.red.opacity(0.2) : Theme.accent)
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+
+                        Text("\(Int(selectedAmount))\(unit)")
                             .font(Theme.bodyFont)
                             .fontWeight(.semibold)
                             .foregroundStyle(Theme.textPrimary)
                             .frame(width: 70, alignment: .trailing)
                     }
 
+                    if quantityIsDefault {
+                        HStack(spacing: 8) {
+                            Text("\u{26A0}\u{FE0F} Paket miktar\u{0131} bilinmiyor")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.orange)
+                            Spacer()
+                            TextField("Miktar", text: $customAmountText)
+                                .keyboardType(.decimalPad)
+                                .font(Theme.bodyFont)
+                                .frame(width: 70)
+                                .textFieldStyle(.roundedBorder)
+                                .onChange(of: customAmountText) {
+                                    if let val = Double(customAmountText), val > 0 {
+                                        selectedAmount = min(val, 5000)
+                                    }
+                                }
+                            Text(unit)
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+
+                    if let confirmation = voiceConfirmation {
+                        Text(confirmation)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.green)
+                    }
+
                     HStack(spacing: 12) {
-                        Text("\(Int(selectedAmount))\(quantityUnit)")
+                        Text("\(Int(selectedAmount))\(unit)")
                             .fontWeight(.bold)
                         Text("\u{2192}")
                         Text("\(calculatedCalories) kcal")
@@ -314,8 +394,15 @@ struct BarcodeResultView: View {
         do {
             if let found = try await barcodeService.fetchProduct(barcode: barcode) {
                 product = found
+                print("\u{1F4E6} Raw quantity: '\(found.quantity ?? "nil")'")
+                print("\u{1F4E6} servingSize: '\(found.servingSize ?? "nil")'")
+                print("\u{1F4E6} product name: '\(found.name)'")
+                let detected = detectedQuantity
+                print("\u{1F4E6} Parsed unit: '\(detected.unit)'")
+                print("\u{1F4E6} Parsed maxAmount: \(detected.amount)")
+                print("\u{1F4E6} isDefault: \(detected.isDefault)")
                 selectedAmount = servingSizeValue
-                    ?? (quantityValue > 0 ? quantityValue / 2 : 100)
+                    ?? (detected.amount > 0 ? detected.amount / 2 : 100)
                 phase = .found
             } else {
                 phase = .notFound
@@ -327,6 +414,8 @@ struct BarcodeResultView: View {
     }
 
     private func saveEntry(_ product: FoodProduct) {
+        if speechService.isRecording { speechService.stopListening() }
+
         var name = product.name
         if let brands = product.brands, !brands.isEmpty {
             name = "\(product.name) (\(brands))"
@@ -334,7 +423,7 @@ struct BarcodeResultView: View {
 
         let entry = FoodEntry(
             name: name,
-            amount: "\(Int(selectedAmount))\(quantityUnit)",
+            amount: "\(Int(selectedAmount))\(unit)",
             calories: calculatedCalories,
             protein: calculatedProtein,
             carbs: calculatedCarbs,
@@ -352,16 +441,107 @@ struct BarcodeResultView: View {
     }
 
     private func resetScanner() {
+        if speechService.isRecording { speechService.stopListening() }
         phase = .scanning
         scannedCode = ""
         product = nil
         errorMessage = nil
         selectedAmount = 100
+        voiceConfirmation = nil
+        customAmountText = ""
     }
 
-    private func parseNumericValue(from text: String) -> Double {
-        let digits = text.components(separatedBy: CharacterSet(charactersIn: "0123456789.,").inverted).joined()
-        let normalized = digits.replacingOccurrences(of: ",", with: ".")
-        return Double(normalized) ?? 100
+    // MARK: - Quantity Parsing
+
+    private func parseQuantity(_ quantity: String?) -> (amount: Double, unit: String) {
+        guard let q = quantity else { return (250, "g") }
+        let lower = q.lowercased()
+
+        let number = q.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        let amount = Double(number) ?? 100
+
+        if lower.contains("ml") {
+            return (amount, "ml")
+        }
+        if (lower.contains("l ") || lower.hasSuffix("l") || lower.contains("litre"))
+            && !lower.contains("ml") {
+            return (amount * 1000, "ml")
+        }
+        return (amount, "g")
+    }
+
+    // MARK: - Voice Input
+
+    private func handleVoiceTap() {
+        if speechService.isRecording {
+            speechService.stopListening()
+            let text = speechService.transcript
+            print("\u{1F3A4} Voice text received: '\(text)'")
+            print("\u{1F3A4} productUnit at parse time: '\(unit)'")
+            let parsed = parseVoiceAmount(text, unit: unit, maxAmount: maxAmount)
+            print("\u{1F3A4} Parsed amount: \(parsed ?? -1)")
+            if let parsed {
+                let clamped = min(max(parsed, 10), maxAmount)
+                selectedAmount = clamped
+                voiceConfirmation = "\u{1F3A4} \(Int(clamped))\(unit) se\u{00E7}ildi"
+            } else if !text.isEmpty {
+                voiceConfirmation = "Anla\u{015F}\u{0131}lamad\u{0131}: \"\(text)\""
+            }
+        } else {
+            voiceConfirmation = nil
+            Task {
+                let granted = await speechService.requestPermissions()
+                if granted {
+                    try? speechService.startListening()
+                }
+            }
+        }
+    }
+
+    private func parseVoiceAmount(_ text: String, unit: String, maxAmount: Double) -> Double? {
+        let lower = text.lowercased()
+        print("\u{1F3A4} parseVoiceAmount called: text='\(text)' unit='\(unit)' max=\(maxAmount)")
+
+        // Keyword amounts — check multi-word first
+        if lower.contains("tamam\u{0131}") || lower.contains("hepsi")
+            || lower.contains("bir \u{015F}i\u{015F}e") || lower.contains("bir kutu")
+            || lower.contains("bir paket") {
+            return maxAmount
+        }
+        if lower.contains("yar\u{0131}m") || lower.contains("yar\u{0131}s\u{0131}") {
+            return maxAmount / 2
+        }
+        if lower.contains("\u{00E7}eyrek") {
+            return maxAmount / 4
+        }
+
+        // Turkish compound numbers (check longer phrases first)
+        let turkishNumbers: [(String, Double)] = [
+            ("be\u{015F} y\u{00FC}z", 500), ("d\u{00F6}rt y\u{00FC}z", 400),
+            ("\u{00FC}\u{00E7} y\u{00FC}z", 300), ("iki y\u{00FC}z elli", 250),
+            ("iki y\u{00FC}z", 200), ("y\u{00FC}z elli", 150), ("y\u{00FC}z", 100),
+            ("elli", 50), ("otuz", 30), ("yirmi", 20), ("on", 10),
+            ("be\u{015F}", 5), ("d\u{00F6}rt", 4), ("\u{00FC}\u{00E7}", 3),
+            ("iki", 2), ("bir", 1),
+        ]
+        for (word, value) in turkishNumbers {
+            if lower.contains(word) {
+                let result = value
+                print("\u{1F3A4} Parsed amount (turkish word): \(result)")
+                return result
+            }
+        }
+
+        // Extract numeric digits: "250 mililitre" → 250, "300" → 300
+        let words = lower.components(separatedBy: " ")
+        for word in words {
+            if let number = Double(word), number > 0 {
+                print("\u{1F3A4} Parsed amount (digit): \(number)")
+                return number
+            }
+        }
+
+        print("\u{1F3A4} Parsed amount: nil")
+        return nil
     }
 }
