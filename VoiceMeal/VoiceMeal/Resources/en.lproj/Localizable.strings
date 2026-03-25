@@ -478,6 +478,9 @@
 "keep_goal" = "Keep Original";
 "goal_updated_toast" = "Goal updated";
 
+// Coach Style
+"coach_style" = "Coach Style";
+
 // Weight Reminder
 "weight_reminder_enabled" = "Weight Reminder";
 "weight_reminder_days" = "Every %d days";

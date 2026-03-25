@@ -75,6 +75,13 @@ class GroqService {
         return "\n\nIMPORTANT: Respond in Turkish (Türkçe). The user's app language is Turkish."
     }
 
+    func coachPersonalityPrompt(for coachStyle: CoachStyle) -> String {
+        let lang = appLanguage
+        return lang == "en"
+            ? coachStyle.personalityPromptEn
+            : coachStyle.personalityPromptTr
+    }
+
     private let model = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     private var systemPrompt: String {
@@ -308,7 +315,8 @@ class GroqService {
         tdee: Int,
         intensityLevel: Double,
         waterMl: Int = 0,
-        waterGoalMl: Int = 0
+        waterGoalMl: Int = 0,
+        coachStyle: CoachStyle = .supportive
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -407,7 +415,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": insightSystemPrompt + languageInstruction],
+                ["role": "system", "content": insightSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -489,7 +497,8 @@ class GroqService {
         todayMeals: [String],
         preferredProteins: [String],
         todayActivities: [String],
-        hrvStatus: HRVStatus
+        hrvStatus: HRVStatus,
+        coachStyle: CoachStyle = .supportive
     ) async throws -> MealSuggestion {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -563,7 +572,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": suggestionSystemPrompt + languageInstruction],
+                ["role": "system", "content": suggestionSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -632,7 +641,8 @@ class GroqService {
         avgProtein: Double,
         totalDeficit: Int,
         currentWeight: Double,
-        goalWeight: Double
+        goalWeight: Double,
+        coachStyle: CoachStyle = .supportive
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -686,7 +696,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": weeklyInsightSystemPrompt + languageInstruction],
+                ["role": "system", "content": weeklyInsightSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -739,7 +749,7 @@ class GroqService {
         }
     }
 
-    func generateProgramInsight(summary: ProgramSummary) async throws -> String {
+    func generateProgramInsight(summary: ProgramSummary, coachStyle: CoachStyle = .supportive) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
 
@@ -811,7 +821,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": programInsightSystemPrompt + languageInstruction],
+                ["role": "system", "content": programInsightSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,

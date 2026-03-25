@@ -32,8 +32,14 @@ final class UserProfile {
     var weightReminderEnabled: Bool = true
     var weightReminderDays: Int = 1
     var weightReminderHour: Int = 9
+    var coachStyleRaw: String = CoachStyle.supportive.rawValue
     var createdAt: Date
     var updatedAt: Date
+
+    var coachStyle: CoachStyle {
+        get { CoachStyle(rawValue: coachStyleRaw) ?? .supportive }
+        set { coachStyleRaw = newValue.rawValue }
+    }
 
     var preferredProteins: [String] {
         get {

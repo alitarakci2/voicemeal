@@ -59,7 +59,8 @@ struct StatisticsView: View {
                                 targetProtein: goalEngine.proteinTarget,
                                 targetCarbs: goalEngine.carbTarget,
                                 targetFat: goalEngine.fatTarget,
-                                realWeightDate: goalEngine.latestWeightDate
+                                realWeightDate: goalEngine.latestWeightDate,
+                                coachStyle: profile.coachStyle
                             )
                         }
                     } else {
@@ -278,7 +279,8 @@ struct StatisticsView: View {
                 avgProtein: statisticsService.averageProteinThisWeek,
                 totalDeficit: statisticsService.totalDeficitThisWeek,
                 currentWeight: profiles.first?.currentWeightKg ?? 0,
-                goalWeight: profiles.first?.goalWeightKg ?? 0
+                goalWeight: profiles.first?.goalWeightKg ?? 0,
+                coachStyle: profiles.first?.coachStyle ?? .supportive
             )
             weeklyInsight = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)

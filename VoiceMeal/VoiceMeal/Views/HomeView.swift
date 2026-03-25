@@ -144,7 +144,8 @@ struct HomeView: View {
                         tdee: Int(goalEngine.tdee),
                         intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
                         waterMl: todayWaterMl,
-                        waterGoalMl: waterGoalService.dailyGoalMl
+                        waterGoalMl: waterGoalService.dailyGoalMl,
+                        coachStyle: profiles.first?.coachStyle ?? .supportive
                     )
 
                     WaterTrackingCard(
@@ -531,7 +532,8 @@ struct HomeView: View {
                     todayMeals: todayEntries.map(\.name),
                     preferredProteins: profiles.first?.preferredProteins ?? [],
                     todayActivities: goalEngine.todayActivityNames,
-                    hrvStatus: healthKitService.hrvStatus
+                    hrvStatus: healthKitService.hrvStatus,
+                    coachStyle: profiles.first?.coachStyle ?? .supportive
                 )
             }
         }

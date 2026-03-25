@@ -16,6 +16,7 @@ struct MealSuggestionView: View {
     let preferredProteins: [String]
     let todayActivities: [String]
     let hrvStatus: HRVStatus
+    var coachStyle: CoachStyle = .supportive
 
     @Environment(\.dismiss) private var dismiss
     @State private var suggestion: MealSuggestion?
@@ -174,7 +175,8 @@ struct MealSuggestionView: View {
                 todayMeals: todayMeals,
                 preferredProteins: preferredProteins,
                 todayActivities: todayActivities,
-                hrvStatus: hrvStatus
+                hrvStatus: hrvStatus,
+                coachStyle: coachStyle
             )
             suggestion = result
             cachedAt = .now

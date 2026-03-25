@@ -505,6 +505,9 @@
 "keep_goal" = "Kalsın";
 "goal_updated_toast" = "Hedef güncellendi";
 
+// Coach Style
+"coach_style" = "Koç Tarzı";
+
 // Weight Reminder
 "weight_reminder_enabled" = "Tartı Hatırlatması";
 "weight_reminder_days" = "Her %d günde bir";

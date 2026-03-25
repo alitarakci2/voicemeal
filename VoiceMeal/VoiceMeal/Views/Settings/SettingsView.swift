@@ -46,6 +46,9 @@ struct SettingsView: View {
     @State private var weeklySchedule: [[String]] = Array(repeating: ["rest"], count: 7)
     @State private var originalSchedule: [[String]] = Array(repeating: ["rest"], count: 7)
 
+    // Coach Style
+    @State private var selectedCoachStyle: CoachStyle = .supportive
+
     // Language
     @State private var selectedLanguage = ""
     @State private var showLanguageRestart = false
@@ -238,6 +241,50 @@ struct SettingsView: View {
                             .font(Theme.bodyFont)
                         proteinChips
                     }
+                }
+
+                // Section: Coach Style
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(CoachStyle.allCases, id: \.self) { style in
+                            Button {
+                                selectedCoachStyle = style
+                            } label: {
+                                HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(selectedLanguage == "en"
+                                            ? style.displayNameEn
+                                            : style.displayName)
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundColor(.primary)
+                                        Text(selectedLanguage == "en"
+                                            ? style.descriptionEn
+                                            : style.description)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    if selectedCoachStyle == style {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(Color(hex: "6C63FF"))
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(12)
+                                .background(
+                                    selectedCoachStyle == style
+                                        ? Color(hex: "6C63FF").opacity(0.1)
+                                        : Color(hex: "1C1C24")
+                                )
+                                .cornerRadius(10)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                } header: {
+                    Text("coach_style".localized)
                 }
 
                 // Save button at bottom
@@ -513,6 +560,7 @@ struct SettingsView: View {
         weightReminderDays = p.weightReminderDays
         weightReminderTime = Calendar.current.date(from: DateComponents(hour: p.weightReminderHour, minute: 0)) ?? .now
         preferredProteins = Set(p.preferredProteins)
+        selectedCoachStyle = p.coachStyle
     }
 
     private func handleSave() {
@@ -561,6 +609,7 @@ struct SettingsView: View {
         p.weightReminderHour = Calendar.current.component(.hour, from: weightReminderTime)
         p.preferredProteins = Array(preferredProteins)
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
+        p.coachStyle = selectedCoachStyle
         p.preferredLanguage = selectedLanguage
         p.updatedAt = .now
 
