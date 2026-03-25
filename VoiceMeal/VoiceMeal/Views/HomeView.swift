@@ -42,6 +42,7 @@ struct HomeView: View {
     @State private var capturedImage: UIImage?
     @State private var capturedImageData: Data?
     @State private var showPhotoAnalysis = false
+    @State private var pendingPhotoAnalysis = false
     @State private var showCameraPermissionDenied = false
     @State private var showNutritionCheck = false
     @State private var showBarcodeScanner = false
@@ -534,7 +535,15 @@ struct HomeView: View {
                 )
             }
         }
-        .fullScreenCover(isPresented: $showCamera) {
+        .fullScreenCover(isPresented: $showCamera, onDismiss: {
+            if capturedImageData != nil {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    showPhotoAnalysis = true
+                }
+            } else {
+                pendingPhotoAnalysis = true
+            }
+        }) {
             CameraPicker { image in
                 capturedImage = image
                 Task.detached(priority: .userInitiated) {
@@ -542,7 +551,12 @@ struct HomeView: View {
                     await MainActor.run {
                         if let data {
                             capturedImageData = data
-                            showPhotoAnalysis = true
+                            if pendingPhotoAnalysis {
+                                pendingPhotoAnalysis = false
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    showPhotoAnalysis = true
+                                }
+                            }
                         } else {
                             print("📷 [ERROR] Compression returned nil")
                         }
