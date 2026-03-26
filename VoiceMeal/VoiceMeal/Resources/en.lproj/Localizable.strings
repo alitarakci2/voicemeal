@@ -184,8 +184,6 @@
 "aggressive" = "Aggressive";
 "weekly_schedule" = "Weekly Schedule";
 "notifications" = "Notifications";
-"afternoon_reminder" = "Afternoon Reminder";
-"evening_reminder" = "Evening Reminder";
 "reset_onboarding" = "Reset Setup";
 "goal_duration" = "Goal: %d days";
 "unhealthy_pace" = "Unhealthy pace! Consider extending the duration";
@@ -236,10 +234,6 @@
 "daily_assessment" = "Daily Assessment";
 "refresh_insight" = "Refresh";
 "generated_at" = "generated at";
-
-/* Notifications */
-"afternoon_suggestion" = "Get Evening Suggestion";
-"evening_suggestion" = "Late Night Snack";
 
 /* Intensity */
 "intensity_question" = "How aggressively do you want to maintain a calorie deficit?";
@@ -326,14 +320,6 @@
 "water_goal_reached_short" = "Goal reached!";
 "ml_remaining" = "ml left";
 "add" = "Add";
-
-/* MealSuggestionView */
-"evening_meal_suggestion" = "Evening Suggestion";
-"night_snack_suggestion" = "Late Night Snack";
-"suggestion_loading" = "Preparing suggestion...";
-"different_suggestion" = "Different Suggestion";
-"suggestion" = "Suggestion";
-"suggestion_error" = "Could not generate suggestion. Check your internet connection.";
 
 /* PhotoAnalysisView */
 "not_sure" = "Not sure";

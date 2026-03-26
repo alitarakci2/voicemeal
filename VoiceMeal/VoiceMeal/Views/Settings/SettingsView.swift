@@ -33,10 +33,6 @@ struct SettingsView: View {
     @State private var waterGoalManualMl: Double = 2500
 
     // Notifications
-    @State private var notification1Enabled = true
-    @State private var notification1Time = Calendar.current.date(from: DateComponents(hour: 16, minute: 0)) ?? .now
-    @State private var notification2Enabled = true
-    @State private var notification2Time = Calendar.current.date(from: DateComponents(hour: 21, minute: 30)) ?? .now
     @State private var weightReminderEnabled = true
     @State private var weightReminderDays: Int = 1
     @State private var weightReminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? .now
@@ -213,16 +209,6 @@ struct SettingsView: View {
 
                 // Section 6: Notifications
                 Section(L.notifications.localized) {
-                    Toggle(L.afternoonReminder.localized, isOn: $notification1Enabled)
-                    if notification1Enabled {
-                        DatePicker(L.time.localized, selection: $notification1Time, displayedComponents: .hourAndMinute)
-                    }
-
-                    Toggle(L.eveningReminder.localized, isOn: $notification2Enabled)
-                    if notification2Enabled {
-                        DatePicker(L.time.localized, selection: $notification2Time, displayedComponents: .hourAndMinute)
-                    }
-
                     Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
                     if weightReminderEnabled {
                         Stepper(
@@ -552,10 +538,6 @@ struct SettingsView: View {
         } else {
             waterGoalAuto = true
         }
-        notification1Enabled = p.notification1Enabled
-        notification2Enabled = p.notification2Enabled
-        notification1Time = Calendar.current.date(from: DateComponents(hour: p.notification1Hour, minute: p.notification1Minute)) ?? .now
-        notification2Time = Calendar.current.date(from: DateComponents(hour: p.notification2Hour, minute: p.notification2Minute)) ?? .now
         weightReminderEnabled = p.weightReminderEnabled
         weightReminderDays = p.weightReminderDays
         weightReminderTime = Calendar.current.date(from: DateComponents(hour: p.weightReminderHour, minute: 0)) ?? .now
@@ -598,12 +580,8 @@ struct SettingsView: View {
         p.goalDays = goalDays
         p.intensityLevel = intensityLevel
         p.weeklySchedule = weeklySchedule
-        p.notification1Enabled = notification1Enabled
-        p.notification1Hour = Calendar.current.component(.hour, from: notification1Time)
-        p.notification1Minute = Calendar.current.component(.minute, from: notification1Time)
-        p.notification2Enabled = notification2Enabled
-        p.notification2Hour = Calendar.current.component(.hour, from: notification2Time)
-        p.notification2Minute = Calendar.current.component(.minute, from: notification2Time)
+        p.notification1Enabled = false
+        p.notification2Enabled = false
         p.weightReminderEnabled = weightReminderEnabled
         p.weightReminderDays = weightReminderDays
         p.weightReminderHour = Calendar.current.component(.hour, from: weightReminderTime)

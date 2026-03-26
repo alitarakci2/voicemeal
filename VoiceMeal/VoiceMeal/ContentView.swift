@@ -58,9 +58,6 @@ struct ContentView: View {
                     goalEngine.updateProfile(profile)
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .openMealSuggestion)) { _ in
-                selectedTab = 0
-            }
         } else {
             OnboardingContainerView(onboardingComplete: $onboardingComplete)
         }

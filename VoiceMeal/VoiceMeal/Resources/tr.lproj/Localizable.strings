@@ -211,8 +211,6 @@
 "aggressive" = "Agresif";
 "weekly_schedule" = "Haftalık Takvim";
 "notifications" = "Bildirimler";
-"afternoon_reminder" = "Öğle/Akşam Hatırlatması";
-"evening_reminder" = "Gece Kapanış Hatırlatması";
 "reset_onboarding" = "Onboarding'i Sıfırla";
 "goal_duration" = "Hedef Süre: %d gün";
 "unhealthy_pace" = "Sağlıksız hız! Süreyi uzatmanı öneririz";
@@ -263,10 +261,6 @@
 "daily_assessment" = "Günlük Değerlendirme";
 "refresh_insight" = "Yenile";
 "generated_at" = "de üretildi";
-
-/* Notifications */
-"afternoon_suggestion" = "Akşam Önerisi Al";
-"evening_suggestion" = "Gece Atıştırmalığı";
 
 /* Intensity */
 "intensity_question" = "Kalori açığını ne kadar agresif tutmak istiyorsun?";
@@ -353,14 +347,6 @@
 "water_goal_reached_short" = "Hedefe ulaştın!";
 "ml_remaining" = "ml kaldı";
 "add" = "Ekle";
-
-/* MealSuggestionView */
-"evening_meal_suggestion" = "Akşam Önerisi";
-"night_snack_suggestion" = "Gece Atıştırmalığı";
-"suggestion_loading" = "Öneri hazırlanıyor...";
-"different_suggestion" = "Farklı Öneri";
-"suggestion" = "Öneri";
-"suggestion_error" = "Öneri oluşturulamadı. İnternet bağlantını kontrol et.";
 
 /* PhotoAnalysisView */
 "not_sure" = "Emin değilim";

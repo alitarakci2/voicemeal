@@ -24,8 +24,6 @@ struct HomeView: View {
     @State private var showGoalInfo = false
     @State private var showWeightBanner = false
     @State private var showSettings = false
-    @State private var showMealSuggestion = false
-    @State private var notificationSuggestionType: MealNotificationType?
     @State private var entryToEdit: FoodEntry?
     @State private var entryToDelete: FoodEntry?
     @State private var showDeleteAlert = false
@@ -52,13 +50,6 @@ struct HomeView: View {
     private var todayEntries: [FoodEntry] {
         let startOfDay = Calendar.current.startOfDay(for: .now)
         return allEntries.filter { $0.date >= startOfDay }
-    }
-
-    private var currentSuggestionType: MealNotificationType? {
-        let hour = Calendar.current.component(.hour, from: .now)
-        if hour >= 20 { return .evening }
-        if hour >= 15 { return .afternoon }
-        return nil
     }
 
     private var todayWaterEntries: [WaterEntry] {
@@ -162,20 +153,6 @@ struct HomeView: View {
                         }
                     )
 
-                    // Meal suggestion button
-                    if let suggestionType = currentSuggestionType {
-                        Button {
-                            showMealSuggestion = true
-                        } label: {
-                            Label(
-                                suggestionType == .afternoon ? "Ak\u{015F}am \u{00D6}nerisi Al" : "Gece At\u{0131}\u{015F}t\u{0131}rmal\u{0131}\u{011F}\u{0131}",
-                                systemImage: "lightbulb.fill"
-                            )
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.orange)
-                    }
                 }
 
                 // Input label
@@ -486,15 +463,6 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
             saveTodaySnapshot()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .openMealSuggestion)) { notification in
-            if let typeRaw = notification.userInfo?["type"] as? String,
-               let type = MealNotificationType(rawValue: typeRaw) {
-                notificationSuggestionType = type
-            } else {
-                notificationSuggestionType = currentSuggestionType
-            }
-            showMealSuggestion = true
-        }
         .sheet(isPresented: $showGoalInfo) {
             goalInfoSheet
         }
@@ -517,24 +485,6 @@ struct HomeView: View {
             }
             Button(L.cancel.localized, role: .cancel) {
                 entryToDelete = nil
-            }
-        }
-        .sheet(isPresented: $showMealSuggestion, onDismiss: {
-            notificationSuggestionType = nil
-        }) {
-            if let type = notificationSuggestionType ?? currentSuggestionType {
-                MealSuggestionView(
-                    notificationType: type,
-                    remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
-                    remainingProtein: goalEngine.proteinTarget - Int(eatenProtein),
-                    remainingCarbs: goalEngine.carbTarget - Int(eatenCarbs),
-                    remainingFat: goalEngine.fatTarget - Int(eatenFat),
-                    todayMeals: todayEntries.map(\.name),
-                    preferredProteins: profiles.first?.preferredProteins ?? [],
-                    todayActivities: goalEngine.todayActivityNames,
-                    hrvStatus: healthKitService.hrvStatus,
-                    coachStyle: profiles.first?.coachStyle ?? .supportive
-                )
             }
         }
         .fullScreenCover(isPresented: $showCamera, onDismiss: {

@@ -149,8 +149,6 @@ enum L {
     static let aggressive = "aggressive"
     static let weeklySchedule = "weekly_schedule"
     static let notifications = "notifications"
-    static let afternoonReminder = "afternoon_reminder"
-    static let eveningReminder = "evening_reminder"
     static let resetOnboarding = "reset_onboarding"
     static let nameField = "name_field"
     static let time = "time"
@@ -221,10 +219,6 @@ enum L {
     static let refreshInsight = "refresh_insight"
     static let generatedAt = "generated_at"
 
-    // Notifications
-    static let afternoonSuggestion = "afternoon_suggestion"
-    static let eveningSuggestion = "evening_suggestion"
-
     // DailyInsightCard
     static let analyzingInsight = "analyzing_insight"
     static let updating = "updating"
@@ -248,14 +242,6 @@ enum L {
     static let waterGoalReachedShort = "water_goal_reached_short"
     static let mlRemaining = "ml_remaining"
     static let add = "add"
-
-    // MealSuggestionView
-    static let eveningMealSuggestion = "evening_meal_suggestion"
-    static let nightSnackSuggestion = "night_snack_suggestion"
-    static let suggestionLoading = "suggestion_loading"
-    static let differentSuggestion = "different_suggestion"
-    static let suggestion = "suggestion"
-    static let suggestionError = "suggestion_error"
 
     // PhotoAnalysisView
     static let notSure = "not_sure"
