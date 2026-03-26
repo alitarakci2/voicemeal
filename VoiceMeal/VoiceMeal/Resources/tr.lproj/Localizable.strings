@@ -65,6 +65,7 @@
 "package" = "Paket";
 "how_much" = "Ne kadar yediniz?";
 "quantity_unknown" = "Paket miktarı bilinmiyor";
+"confirm_quantity" = "Ürün miktarını teyit ediniz";
 "rescan" = "Tekrar Tara";
 "barcode_not_in_db" = "Bu barkod veritabanında yok.";
 "voice_describe" = "Sesle Anlat";

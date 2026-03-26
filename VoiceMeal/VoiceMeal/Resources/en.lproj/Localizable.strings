@@ -65,6 +65,7 @@
 "package" = "Package";
 "how_much" = "How much did you consume?";
 "quantity_unknown" = "Package size unknown";
+"confirm_quantity" = "Please confirm the quantity";
 "rescan" = "Scan Again";
 "barcode_not_in_db" = "This barcode is not in the database.";
 "voice_describe" = "Describe by Voice";

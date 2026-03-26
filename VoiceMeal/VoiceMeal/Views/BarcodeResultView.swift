@@ -62,7 +62,11 @@ struct BarcodeResultView: View {
     }
 
     private var maxAmount: Double {
-        max(detectedQuantity.amount, 50)
+        let detected = detectedQuantity
+        if !detected.isDefault {
+            return max(detected.amount, 50)
+        }
+        return detected.unit == "ml" ? 500 : 300
     }
 
     private var unit: String {
@@ -260,26 +264,24 @@ struct BarcodeResultView: View {
                             .frame(width: 70, alignment: .trailing)
                     }
 
-                    if quantityIsDefault {
-                        HStack(spacing: 8) {
-                            Text("\u{26A0}\u{FE0F} \("quantity_unknown".localized)")
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.orange)
-                            Spacer()
-                            TextField("Miktar", text: $customAmountText)
-                                .keyboardType(.decimalPad)
-                                .font(Theme.bodyFont)
-                                .frame(width: 70)
-                                .textFieldStyle(.roundedBorder)
-                                .onChange(of: customAmountText) {
-                                    if let val = Double(customAmountText), val > 0 {
-                                        selectedAmount = min(val, 5000)
-                                    }
+                    HStack(spacing: 8) {
+                        Text("\u{26A0}\u{FE0F} \("confirm_quantity".localized)")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
+                        Spacer()
+                        TextField("Miktar", text: $customAmountText)
+                            .keyboardType(.decimalPad)
+                            .font(Theme.bodyFont)
+                            .frame(width: 70)
+                            .textFieldStyle(.roundedBorder)
+                            .onChange(of: customAmountText) {
+                                if let val = Double(customAmountText), val > 0 {
+                                    selectedAmount = min(val, 5000)
                                 }
-                            Text(unit)
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
+                            }
+                        Text(unit)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
                     }
 
                     if let confirmation = voiceConfirmation {

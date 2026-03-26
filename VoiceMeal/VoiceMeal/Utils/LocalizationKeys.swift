@@ -254,6 +254,7 @@ enum L {
 
     // BarcodeResultView
     static let quantity = "quantity"
+    static let confirmQuantity = "confirm_quantity"
 }
 // swiftlint:enable type_name
 
