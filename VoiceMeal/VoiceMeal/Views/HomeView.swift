@@ -139,19 +139,22 @@ struct HomeView: View {
                         coachStyle: profiles.first?.coachStyle ?? .supportive
                     )
 
-                    WaterTrackingCard(
-                        todayWaterMl: todayWaterMl,
-                        goalMl: waterGoalService.dailyGoalMl,
-                        todayEntries: todayWaterEntries,
-                        onAdd: { ml, source in
-                            addWater(ml: ml, source: source)
-                        },
-                        onDelete: { entry in
-                            modelContext.delete(entry)
-                            try? modelContext.save()
-                            saveTodaySnapshot()
-                        }
-                    )
+                    if false {
+                        // Hidden for now - planned as premium feature
+                        WaterTrackingCard(
+                            todayWaterMl: todayWaterMl,
+                            goalMl: waterGoalService.dailyGoalMl,
+                            todayEntries: todayWaterEntries,
+                            onAdd: { ml, source in
+                                addWater(ml: ml, source: source)
+                            },
+                            onDelete: { entry in
+                                modelContext.delete(entry)
+                                try? modelContext.save()
+                                saveTodaySnapshot()
+                            }
+                        )
+                    }
 
                 }
 
