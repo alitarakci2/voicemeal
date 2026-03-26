@@ -118,44 +118,6 @@ struct HomeView: View {
                         .transition(.opacity)
                     }
 
-                    DailyInsightCard(
-                        hrvStatus: healthKitService.hrvStatus,
-                        todayHRV: healthKitService.todayHRV,
-                        hrvBaseline: healthKitService.hrvBaseline,
-                        sleep: healthKitService.lastNightSleep,
-                        todayActivities: goalEngine.todayActivityNames,
-                        consumed: eatenCalories,
-                        dailyCalorieTarget: goalEngine.dailyCalorieTarget,
-                        remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
-                        targetDeficit: Int(goalEngine.cappedDailyDeficit),
-                        actualDeficit: Int(goalEngine.tdee) - eatenCalories,
-                        deficitGap: Int(goalEngine.cappedDailyDeficit) - (Int(goalEngine.tdee) - eatenCalories),
-                        proteinConsumed: eatenProtein,
-                        proteinTarget: goalEngine.proteinTarget,
-                        tdee: Int(goalEngine.tdee),
-                        intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
-                        waterMl: todayWaterMl,
-                        waterGoalMl: waterGoalService.dailyGoalMl,
-                        coachStyle: profiles.first?.coachStyle ?? .supportive
-                    )
-
-                    if false {
-                        // Hidden for now - planned as premium feature
-                        WaterTrackingCard(
-                            todayWaterMl: todayWaterMl,
-                            goalMl: waterGoalService.dailyGoalMl,
-                            todayEntries: todayWaterEntries,
-                            onAdd: { ml, source in
-                                addWater(ml: ml, source: source)
-                            },
-                            onDelete: { entry in
-                                modelContext.delete(entry)
-                                try? modelContext.save()
-                                saveTodaySnapshot()
-                            }
-                        )
-                    }
-
                 }
 
                 // Input label
@@ -421,6 +383,47 @@ struct HomeView: View {
                     .padding()
                     .background(Theme.orange.opacity(0.1))
                     .themeCard()
+                }
+
+                // Daily insight card
+                if goalEngine.profile != nil {
+                    DailyInsightCard(
+                        hrvStatus: healthKitService.hrvStatus,
+                        todayHRV: healthKitService.todayHRV,
+                        hrvBaseline: healthKitService.hrvBaseline,
+                        sleep: healthKitService.lastNightSleep,
+                        todayActivities: goalEngine.todayActivityNames,
+                        consumed: eatenCalories,
+                        dailyCalorieTarget: goalEngine.dailyCalorieTarget,
+                        remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
+                        targetDeficit: Int(goalEngine.cappedDailyDeficit),
+                        actualDeficit: Int(goalEngine.tdee) - eatenCalories,
+                        deficitGap: Int(goalEngine.cappedDailyDeficit) - (Int(goalEngine.tdee) - eatenCalories),
+                        proteinConsumed: eatenProtein,
+                        proteinTarget: goalEngine.proteinTarget,
+                        tdee: Int(goalEngine.tdee),
+                        intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
+                        waterMl: todayWaterMl,
+                        waterGoalMl: waterGoalService.dailyGoalMl,
+                        coachStyle: profiles.first?.coachStyle ?? .supportive
+                    )
+
+                    if false {
+                        // Hidden for now - planned as premium feature
+                        WaterTrackingCard(
+                            todayWaterMl: todayWaterMl,
+                            goalMl: waterGoalService.dailyGoalMl,
+                            todayEntries: todayWaterEntries,
+                            onAdd: { ml, source in
+                                addWater(ml: ml, source: source)
+                            },
+                            onDelete: { entry in
+                                modelContext.delete(entry)
+                                try? modelContext.save()
+                                saveTodaySnapshot()
+                            }
+                        )
+                    }
                 }
 
                 Spacer(minLength: 20)
