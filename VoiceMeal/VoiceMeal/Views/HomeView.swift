@@ -440,6 +440,7 @@ struct HomeView: View {
             saveTodaySnapshot()
             loadMorningTDEE()
             if let p = profiles.first {
+                NotificationService.shared.reschedule(profile: p)
                 await NotificationService.shared.checkAndRescheduleWeightReminder(profile: p)
             }
         }
