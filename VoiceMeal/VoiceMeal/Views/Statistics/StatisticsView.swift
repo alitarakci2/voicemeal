@@ -106,7 +106,6 @@ struct StatisticsView: View {
                 }
                 .padding()
             }
-            .background(Theme.background)
             .navigationTitle(L.statistics.localized)
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
@@ -119,6 +118,7 @@ struct StatisticsView: View {
                 await loadWeeklyInsight()
             }
         }
+        .background(Theme.background)
     }
 
     private var trendEmoji: String {

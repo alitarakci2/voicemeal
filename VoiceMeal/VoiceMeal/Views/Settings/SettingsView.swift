@@ -272,7 +272,6 @@ struct SettingsView: View {
                 .padding(.bottom, 40)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Theme.background)
             .navigationTitle(L.settings.localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -344,6 +343,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .background(Theme.background)
     }
 
     // MARK: - Card Helpers

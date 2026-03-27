@@ -293,7 +293,6 @@ struct PlanView: View {
                         }
                     }
                 }
-                .background(Theme.background)
             }
             .navigationTitle("Plan")
             .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
@@ -319,6 +318,7 @@ struct PlanView: View {
             }
             .animation(.easeInOut, value: showSavedToast)
         }
+        .background(Theme.background)
     }
 
     // MARK: - Plan Settings Card
