@@ -36,10 +36,14 @@ struct StatisticsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Segmented control
+        ScrollView {
+            VStack(spacing: 16) {
+                // Title
+                Text(L.statistics.localized)
+                    .font(Theme.titleFont)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                // Segmented control
                     Picker("range".localized, selection: $selectedRange) {
                         Text(L.weekly.localized).tag(0)
                         Text(L.monthly.localized).tag(1)
@@ -106,20 +110,15 @@ struct StatisticsView: View {
                 }
                 .padding()
             }
-            .navigationTitle(L.statistics.localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                refreshStats()
-            }
-            .onChange(of: snapshots.count) {
-                refreshStats()
-            }
-            .task {
-                await loadWeeklyInsight()
-            }
+        .background(Theme.background)
+        .onAppear {
+            refreshStats()
         }
-        .background {
-            Theme.background.ignoresSafeArea()
+        .onChange(of: snapshots.count) {
+            refreshStats()
+        }
+        .task {
+            await loadWeeklyInsight()
         }
     }
 

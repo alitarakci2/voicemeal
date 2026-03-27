@@ -217,10 +217,15 @@ struct PlanView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 8) {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 8) {
+                        // Title
+                        Text("Plan")
+                            .font(Theme.titleFont)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.top, 4)
+
                         // Plan settings (collapsible)
                         planSettingsCard
 
@@ -293,34 +298,30 @@ struct PlanView: View {
                         }
                     }
                 }
+                .background(Theme.background)
             }
-            .navigationTitle("Plan")
-            .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
-                planService.regeneratePlans()
-                loadPlanSettings()
-            }
-            .sheet(item: $selectedPlan) { plan in
-                DayDetailSheetView(plan: plan)
-            }
-            .overlay(alignment: .bottom) {
-                if showSavedToast {
-                    Text(L.savedToast.localized)
-                        .font(Theme.bodyFont)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Theme.green)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .padding(.bottom, 20)
-                }
-            }
-            .animation(.easeInOut, value: showSavedToast)
+        .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
+            planService.regeneratePlans()
+            loadPlanSettings()
         }
-        .background {
-            Theme.background.ignoresSafeArea()
+        .sheet(item: $selectedPlan) { plan in
+            DayDetailSheetView(plan: plan)
         }
+        .overlay(alignment: .bottom) {
+            if showSavedToast {
+                Text(L.savedToast.localized)
+                    .font(Theme.bodyFont)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Theme.green)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 20)
+            }
+        }
+        .animation(.easeInOut, value: showSavedToast)
     }
 
     // MARK: - Plan Settings Card

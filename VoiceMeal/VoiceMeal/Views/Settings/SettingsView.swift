@@ -49,10 +49,14 @@ struct SettingsView: View {
     @State private var healthKitService = HealthKitService()
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Section: Profile
+        ScrollView {
+            VStack(spacing: 16) {
+                // Title
+                Text(L.settings.localized)
+                    .font(Theme.titleFont)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                // Section: Profile
                     settingsCard {
                         VStack(alignment: .leading, spacing: 16) {
                             sectionHeader(L.profile.localized)
@@ -271,80 +275,62 @@ struct SettingsView: View {
                 .padding()
                 .padding(.bottom, 40)
             }
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(L.settings.localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button(L.done.localized) {
-                        UIApplication.shared.sendAction(
-                            #selector(UIResponder.resignFirstResponder),
-                            to: nil, from: nil, for: nil
-                        )
-                    }
-                    .foregroundColor(Theme.accent)
-                    .fontWeight(.semibold)
-                }
-            }
-            .overlay(alignment: .bottom) {
-                if showSavedToast {
-                    Text(L.savedToast.localized)
-                        .font(Theme.bodyFont)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Theme.green)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        .padding(.bottom, 20)
-                }
-            }
-            .animation(.easeInOut, value: showSavedToast)
-            .alert(L.weightConflict.localized, isPresented: $showWeightConflictAlert) {
-                Button("\("manual_weight".localized) (\(String(format: "%.2f", currentWeightKg)) kg)") {
-                    performSave()
-                }
-                Button("HealthKit (\(String(format: "%.2f", healthKitWeight ?? 0)) kg)") {
-                    currentWeightKg = healthKitWeight ?? currentWeightKg
-                    performSave()
-                }
-                Button(L.cancel.localized, role: .cancel) {}
-            } message: {
-                if let hkDate = healthKitWeightDate {
-                    Text(String(format: L.weightConflictMessage.localized, hkDate.formatted(.dateTime.day().month(.abbreviated))))
-                } else {
-                    Text(L.weightConflictMessageAlt.localized)
-                }
-            }
-            .alert(L.resetConfirm.localized, isPresented: $showResetAlert) {
-                Button(L.resetConfirm.localized, role: .destructive) {
-                    resetOnboarding()
-                }
-                Button(L.cancel.localized, role: .cancel) {}
-            } message: {
-                Text(L.resetConfirmMessage.localized)
-            }
-            .alert(L.language.localized, isPresented: $showLanguageRestart) {
-                Button("OK") {}
-            } message: {
-                Text(L.languageRestart.localized)
-            }
-            .onAppear {
-                loadProfile()
-            }
-            .task {
-                if healthKitService.isAvailable {
-                    await healthKitService.requestPermission()
-                    _ = await healthKitService.fetchLatestWeight()
-                    healthKitWeight = healthKitService.latestWeight
-                    healthKitWeightDate = healthKitService.latestWeightDate
-                }
+        .scrollDismissesKeyboard(.interactively)
+        .background(Theme.background)
+        .overlay(alignment: .bottom) {
+            if showSavedToast {
+                Text(L.savedToast.localized)
+                    .font(Theme.bodyFont)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Theme.green)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 20)
             }
         }
-        .background {
-            Theme.background.ignoresSafeArea()
+        .animation(.easeInOut, value: showSavedToast)
+        .alert(L.weightConflict.localized, isPresented: $showWeightConflictAlert) {
+            Button("\("manual_weight".localized) (\(String(format: "%.2f", currentWeightKg)) kg)") {
+                performSave()
+            }
+            Button("HealthKit (\(String(format: "%.2f", healthKitWeight ?? 0)) kg)") {
+                currentWeightKg = healthKitWeight ?? currentWeightKg
+                performSave()
+            }
+            Button(L.cancel.localized, role: .cancel) {}
+        } message: {
+            if let hkDate = healthKitWeightDate {
+                Text(String(format: L.weightConflictMessage.localized, hkDate.formatted(.dateTime.day().month(.abbreviated))))
+            } else {
+                Text(L.weightConflictMessageAlt.localized)
+            }
+        }
+        .alert(L.resetConfirm.localized, isPresented: $showResetAlert) {
+            Button(L.resetConfirm.localized, role: .destructive) {
+                resetOnboarding()
+            }
+            Button(L.cancel.localized, role: .cancel) {}
+        } message: {
+            Text(L.resetConfirmMessage.localized)
+        }
+        .alert(L.language.localized, isPresented: $showLanguageRestart) {
+            Button("OK") {}
+        } message: {
+            Text(L.languageRestart.localized)
+        }
+        .onAppear {
+            loadProfile()
+        }
+        .task {
+            if healthKitService.isAvailable {
+                await healthKitService.requestPermission()
+                _ = await healthKitService.fetchLatestWeight()
+                healthKitWeight = healthKitService.latestWeight
+                healthKitWeightDate = healthKitService.latestWeightDate
+            }
         }
     }
 
