@@ -45,6 +45,41 @@ struct ContentView: View {
                     .tag(3)
             }
             .tint(Theme.accent)
+            .onAppear {
+                // Tab bar styling - pure black background
+                let tabBarAppearance = UITabBarAppearance()
+                tabBarAppearance.configureWithOpaqueBackground()
+                tabBarAppearance.backgroundColor = UIColor.black
+                tabBarAppearance.shadowColor = UIColor(white: 0.15, alpha: 1)
+
+                // Normal state
+                tabBarAppearance.stackedLayoutAppearance.normal.iconColor = UIColor(white: 0.45, alpha: 1)
+                tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+                    .foregroundColor: UIColor(white: 0.45, alpha: 1)
+                ]
+
+                // Selected state
+                let accentColor = UIColor(Color(hex: "6C63FF"))
+                tabBarAppearance.stackedLayoutAppearance.selected.iconColor = accentColor
+                tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+                    .foregroundColor: accentColor
+                ]
+
+                UITabBar.appearance().standardAppearance = tabBarAppearance
+                UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+
+                // Navigation bar styling
+                let navAppearance = UINavigationBarAppearance()
+                navAppearance.configureWithOpaqueBackground()
+                navAppearance.backgroundColor = UIColor.black
+                navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+                navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+                navAppearance.shadowColor = .clear
+
+                UINavigationBar.appearance().standardAppearance = navAppearance
+                UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
+                UINavigationBar.appearance().compactAppearance = navAppearance
+            }
             .environment(goalEngine)
             .environment(groqService)
             .onAppear {

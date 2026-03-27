@@ -440,11 +440,7 @@ struct PlanView: View {
         .tint(Theme.textSecondary)
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.cardBorder, lineWidth: 1)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
     // MARK: - Plan Settings Load / Save
@@ -618,11 +614,7 @@ struct PlanView: View {
         .tint(Theme.textSecondary)
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.cardBorder, lineWidth: 1)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
 
@@ -725,10 +717,11 @@ struct DayRowView: View {
         .padding()
         .frame(minHeight: 72)
         .background(plan.status == .today ? Theme.accent.opacity(0.1) : Theme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(plan.status == .today ? Theme.accent.opacity(0.4) : Theme.cardBorder, lineWidth: plan.status == .today ? 2 : 1)
+            plan.status == .today
+                ? RoundedRectangle(cornerRadius: 20).stroke(Theme.accent.opacity(0.4), lineWidth: 2)
+                : nil
         )
     }
 

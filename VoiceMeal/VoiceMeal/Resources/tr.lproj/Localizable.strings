@@ -8,6 +8,8 @@
 "delete" = "Sil";
 "retry" = "Tekrar Dene";
 "ready" = "Hazır";
+"avg_label" = "ortalama";
+"days_label" = "gun";
 "loading" = "Yükleniyor...";
 "error" = "Hata";
 "yes" = "Evet";

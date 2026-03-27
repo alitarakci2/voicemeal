@@ -8,6 +8,8 @@
 "delete" = "Delete";
 "retry" = "Try Again";
 "ready" = "Ready";
+"avg_label" = "avg";
+"days_label" = "days";
 "loading" = "Loading...";
 "error" = "Error";
 "yes" = "Yes";

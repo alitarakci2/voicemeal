@@ -146,109 +146,140 @@ struct StatisticsView: View {
 
     private var summaryCards: some View {
         VStack(spacing: 12) {
-            // Streak card
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    let streak = statisticsService.currentStreak
-                    Text("\u{1F525} \(streak) \("current_streak".localized)")
-                        .font(Theme.headlineFont)
-                    if streak > 0 {
-                        Text("streak_going".localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    } else {
-                        Text("streak_start".localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-                Spacer()
-                if statisticsService.bestStreak > 0 {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("best_streak".localized)
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textSecondary)
+            // Top row: Streak + Trend side by side
+            HStack(spacing: 12) {
+                // Streak
+                VStack(spacing: 8) {
+                    Text("\u{1F525}")
+                        .font(.system(size: 28))
+                    Text("\(statisticsService.currentStreak)")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("current_streak".localized)
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textSecondary)
+                    if statisticsService.bestStreak > 0 {
                         Text(String(format: "best_streak_days_format".localized, statisticsService.bestStreak))
-                            .font(Theme.bodyFont)
-                            .fontWeight(.medium)
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textTertiary)
                     }
                 }
-            }
-            .padding()
-            .themeCard()
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Theme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
 
-            // Estimated weight card
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                // Trend
+                VStack(spacing: 8) {
+                    Text(trendEmoji)
+                        .font(.system(size: 28))
+                    Text(statisticsService.trend.localized)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    let avgDef = statisticsService.last3DaysAvgDeficit
+                    if avgDef != 0 {
+                        Text("\(abs(avgDef)) kcal")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(avgDef > 0 ? Theme.green : Theme.red)
+                    }
+                    Text("avg_label".localized)
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Theme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            }
+
+            // Weight estimate card
+            VStack(spacing: 12) {
+                HStack {
                     Text("\u{2696}\u{FE0F} \("weight_estimate".localized)")
                         .font(Theme.headlineFont)
+                        .foregroundStyle(.white)
+                    Spacer()
+                }
+
+                HStack(spacing: 0) {
                     let weekKg = statisticsService.estimatedWeightLostWeekKg
                     let weekDays = statisticsService.completedDaysThisWeek
-                    Text(String(format: "this_week_weight_format".localized, weekKg >= 0 ? "-" : "+", String(format: "%.2f", abs(weekKg)), weekDays))
-                        .font(Theme.bodyFont)
+                    VStack(spacing: 4) {
+                        Text("weekly".localized)
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textTertiary)
+                        Text("\(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg))) kg")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(weekKg >= 0 ? Theme.green : Theme.orange)
+                        Text(String(format: "%d " + "days_label".localized, weekDays))
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Rectangle()
+                        .fill(Theme.cardBorder)
+                        .frame(width: 1, height: 40)
+
                     let monthKg = statisticsService.estimatedWeightLostMonthKg
                     let monthDays = statisticsService.completedDaysThisMonth
-                    Text(String(format: "this_month_weight_format".localized, monthKg >= 0 ? "-" : "+", String(format: "%.2f", abs(monthKg)), monthDays))
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                Spacer()
-            }
-            .padding()
-            .themeCard()
-
-            // Trend card
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(trendEmoji) \(String(format: "trend_label_format".localized, statisticsService.trend.localized))")
-                        .font(Theme.headlineFont)
-                    let avgDef = statisticsService.last3DaysAvgDeficit
-                    let dayCount = statisticsService.last3ValidDayCount
-                    if avgDef != 0 && dayCount > 0 {
-                        Text(String(format: "avg_deficit_format".localized, dayCount, abs(avgDef), avgDef > 0 ? "deficit_word".localized : "surplus_word".localized))
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
+                    VStack(spacing: 4) {
+                        Text("monthly".localized)
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textTertiary)
+                        Text("\(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg))) kg")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(monthKg >= 0 ? Theme.green : Theme.orange)
+                        Text(String(format: "%d " + "days_label".localized, monthDays))
+                            .font(Theme.microFont)
+                            .foregroundStyle(Theme.textTertiary)
                     }
+                    .frame(maxWidth: .infinity)
                 }
-                Spacer()
             }
-            .padding()
-            .themeCard()
+            .padding(20)
+            .background(Theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
 
     // MARK: - Weekly Insight
 
     private var weeklyInsightCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("\u{1F9E0} \("weekly_insight".localized)")
                 .font(Theme.headlineFont)
+                .foregroundStyle(.white)
 
             if insightLoading {
                 HStack {
                     Spacer()
                     ProgressView()
+                        .tint(Theme.accent)
                     Spacer()
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 16)
             } else if let insight = weeklyInsight {
                 Text(insight)
-                    .font(Theme.bodyFont)
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let cached = cachedInsightDate {
                     Text(cached.formatted(.dateTime.weekday(.wide).hour().minute()))
                         .font(Theme.microFont)
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             } else {
                 Text("not_enough_data".localized)
                     .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.textTertiary)
             }
         }
-        .padding()
-        .themeCard()
+        .padding(20)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
     private var cachedInsightDate: Date? {

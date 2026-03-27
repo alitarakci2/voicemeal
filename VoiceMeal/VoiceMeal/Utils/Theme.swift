@@ -67,16 +67,12 @@ enum Theme {
 // MARK: - Card Modifier
 
 struct ThemeCard: ViewModifier {
-    var hasBorder: Bool = true
+    var hasBorder: Bool = false
 
     func body(content: Content) -> some View {
         content
             .background(Theme.cardBackground)
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(hasBorder ? Theme.cardBorder : .clear, lineWidth: 1)
-            )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
 
