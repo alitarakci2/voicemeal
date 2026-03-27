@@ -287,16 +287,16 @@ struct HomeView: View {
                         .padding(.bottom, 8)
 
                         ForEach(todayEntries, id: \.id) { entry in
-                            HStack(alignment: .top) {
+                            HStack(alignment: .center, spacing: 4) {
                                 FoodEntryRowView(entry: entry)
 
                                 Button {
                                     entryToEdit = entry
                                 } label: {
                                     Image(systemName: "pencil")
-                                        .font(Theme.captionFont)
+                                        .font(.system(size: 12))
                                         .foregroundStyle(Theme.accent)
-                                        .frame(width: 36, height: 36)
+                                        .frame(width: 28, height: 28)
                                 }
                                 .buttonStyle(.plain)
                                 Button {
@@ -304,9 +304,9 @@ struct HomeView: View {
                                     showDeleteAlert = true
                                 } label: {
                                     Image(systemName: "trash")
-                                        .font(Theme.captionFont)
+                                        .font(.system(size: 12))
                                         .foregroundStyle(Theme.red)
-                                        .frame(width: 36, height: 36)
+                                        .frame(width: 28, height: 28)
                                 }
                                 .buttonStyle(.plain)
                             }
