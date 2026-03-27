@@ -37,8 +37,10 @@ struct StatisticsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: 16) {
                     // Segmented control
                     Picker("range".localized, selection: $selectedRange) {
                         Text(L.weekly.localized).tag(0)
@@ -106,7 +108,7 @@ struct StatisticsView: View {
                 }
                 .padding()
             }
-            .background(Theme.background.ignoresSafeArea())
+            }
             .toolbarBackground(Color.black, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
             .navigationTitle(L.statistics.localized)

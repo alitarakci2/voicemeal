@@ -218,8 +218,10 @@ struct PlanView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                ScrollViewReader { proxy in
+                    ScrollView {
                     LazyVStack(spacing: 8) {
                         // Plan settings (collapsible)
                         planSettingsCard
@@ -285,9 +287,6 @@ struct PlanView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                 }
-                .background(Theme.background.ignoresSafeArea())
-                .toolbarBackground(Color.black, for: .tabBar)
-                .toolbarBackground(.visible, for: .tabBar)
                 .onAppear {
                     loadPlanSettings()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -296,7 +295,10 @@ struct PlanView: View {
                         }
                     }
                 }
+                }
             }
+            .toolbarBackground(Color.black, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
             .navigationTitle("Plan")
             .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
                 planService.regeneratePlans()

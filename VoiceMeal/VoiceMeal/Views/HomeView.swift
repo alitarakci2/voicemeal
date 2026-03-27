@@ -68,7 +68,9 @@ struct HomeView: View {
     private var eatenFat: Double { todayEntries.reduce(0.0) { $0 + $1.fat } }
 
     var body: some View {
-        ScrollView {
+        ZStack {
+            Theme.background.ignoresSafeArea()
+            ScrollView {
             VStack(spacing: 24) {
                 // Weight update banner
                 if showWeightBanner, let banner = goalEngine.weightUpdatedBanner {
@@ -419,7 +421,7 @@ struct HomeView: View {
             }
             .padding()
         }
-        .background(Theme.background.ignoresSafeArea())
+        }
         .toolbarBackground(Color.black, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .task {
