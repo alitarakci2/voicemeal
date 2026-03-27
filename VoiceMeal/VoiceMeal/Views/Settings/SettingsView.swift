@@ -21,38 +21,26 @@ struct SettingsView: View {
     @State private var heightCm: Double = 170
     @State private var currentWeightKg: Double = 70
 
-    // Goal fields
-    @State private var goalWeightKg: Double = 65
-    @State private var goalDays = 90
-
-    // Intensity
-    @State private var intensityLevel: Double = 0.5
-
-    // Water
-    @State private var isWaterTrackingEnabled = false
-    @State private var waterGoalAuto = true
-    @State private var waterGoalManualMl: Double = 2500
+    // Coach Style
+    @State private var selectedCoachStyle: CoachStyle = .supportive
 
     // Notifications
     @State private var weightReminderEnabled = true
     @State private var weightReminderDays: Int = 1
     @State private var weightReminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? .now
-    @State private var preferredProteins: Set<String> = ["tavuk", "bal\u{0131}k", "dana", "yumurta", "baklagil", "s\u{00FC}t \u{00FC}r\u{00FC}nleri"]
 
-    // Schedule
-    @State private var weeklySchedule: [[String]] = Array(repeating: ["rest"], count: 7)
-    @State private var originalSchedule: [[String]] = Array(repeating: ["rest"], count: 7)
-
-    // Coach Style
-    @State private var selectedCoachStyle: CoachStyle = .supportive
+    // Premium
+    @State private var isWaterTrackingEnabled = false
+    @State private var waterGoalAuto = true
+    @State private var waterGoalManualMl: Double = 2500
 
     // Language
     @State private var selectedLanguage = ""
+    @State private var previousLanguage = ""
     @State private var showLanguageRestart = false
 
     // UI state
     @State private var showSavedToast = false
-    @State private var showScheduleAlert = false
     @State private var showWeightConflictAlert = false
     @State private var showResetAlert = false
     @State private var healthKitWeight: Double?
@@ -63,7 +51,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Section 1: Profile
+                // Section: Profile
                 Section(L.profile.localized) {
                     TextField(L.nameField.localized, text: $name)
 
@@ -102,135 +90,6 @@ struct SettingsView: View {
                             .keyboardType(.decimalPad)
                             .frame(width: 60)
                             .textFieldStyle(.roundedBorder)
-                    }
-                }
-
-                // Section 2: Goals
-                Section(L.goal.localized) {
-                    HStack {
-                        Text("target_weight".localized)
-                        Spacer()
-                        Text("\(String(format: "%.2f", goalWeightKg)) kg")
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    HStack {
-                        Slider(value: $goalWeightKg, in: 30...200, step: 0.05)
-                            .tint(Theme.accent)
-                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(2)))
-                            .keyboardType(.decimalPad)
-                            .frame(width: 60)
-                            .textFieldStyle(.roundedBorder)
-                    }
-
-                    Stepper(String(format: "goal_duration".localized, goalDays), value: $goalDays, in: 14...365, step: 7)
-
-                    // Weight loss warnings
-                    if weeklyChange > 1.0 {
-                        Label("unhealthy_pace".localized, systemImage: "light.beacon.max.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.red)
-                    } else if weeklyChange > 0.75 {
-                        Label("aggressive_goal".localized, systemImage: "exclamationmark.triangle.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                    }
-                    // Weight gain warnings
-                    if weeklyChange < -1.0 {
-                        Label(L.weightGainTooFast.localized, systemImage: "light.beacon.max.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.red)
-                    } else if weeklyChange < -0.5 {
-                        Label(L.weightGainFast.localized, systemImage: "exclamationmark.triangle.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                    }
-
-                    // Safety cap info
-                    if isDeficitCapped {
-                        Label(L.deficitCapped.localized, systemImage: "exclamationmark.triangle.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                    }
-                }
-
-                // Section 3: Intensity
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(L.intensity.localized)
-                            Spacer()
-                            Text(intensityLabel)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        Slider(value: $intensityLevel, in: 0...1, step: 0.1)
-
-                        Text(intensityDescription)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                } header: {
-                    Text(L.intensity.localized)
-                } footer: {
-                    Text(L.intensityFooter.localized)
-                }
-
-                // Section: Water Goal
-                Section {
-                    Toggle(selectedLanguage == "en" ? "Water Tracking" : "Su Takibi", isOn: $isWaterTrackingEnabled)
-
-                    if isWaterTrackingEnabled {
-                        Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
-                    }
-
-                    if isWaterTrackingEnabled && !waterGoalAuto {
-                        HStack {
-                            Text(L.waterGoal.localized)
-                            Spacer()
-                            Text("\(Int(waterGoalManualMl)) ml")
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        HStack {
-                            Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
-                                .tint(Theme.blue)
-                            TextField("", value: $waterGoalManualMl, format: .number.precision(.fractionLength(0)))
-                                .keyboardType(.numberPad)
-                                .frame(width: 60)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    } else if isWaterTrackingEnabled && waterGoalAuto {
-                        Text(L.waterFormula.localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                } header: {
-                    Text("💧 \(L.waterGoal.localized)")
-                }
-
-                // Section 4: Weekly Schedule
-                Section(L.weeklySchedule.localized) {
-                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
-                        .listRowInsets(EdgeInsets())
-                }
-
-                // Section 6: Notifications
-                Section(L.notifications.localized) {
-                    Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
-                    if weightReminderEnabled {
-                        Stepper(
-                            String(format: "weight_reminder_days".localized, weightReminderDays),
-                            value: $weightReminderDays,
-                            in: 1...7
-                        )
-                        DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
-                        Text(String(format: "weight_reminder_explanation".localized, weightReminderDays))
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(L.preferredProteins.localized)
-                            .font(Theme.bodyFont)
-                        proteinChips
                     }
                 }
 
@@ -278,7 +137,55 @@ struct SettingsView: View {
                     Text("coach_style".localized)
                 }
 
-                // Save button at bottom
+                // Section: Notifications
+                Section(L.notifications.localized) {
+                    Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
+                    if weightReminderEnabled {
+                        Stepper(
+                            String(format: "weight_reminder_days".localized, weightReminderDays),
+                            value: $weightReminderDays,
+                            in: 1...7
+                        )
+                        DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
+                        Text(String(format: "weight_reminder_explanation".localized, weightReminderDays))
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+
+                // Section: Premium
+                Section {
+                    Toggle(selectedLanguage == "en" ? "Water Tracking" : "Su Takibi", isOn: $isWaterTrackingEnabled)
+
+                    if isWaterTrackingEnabled {
+                        Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
+                    }
+
+                    if isWaterTrackingEnabled && !waterGoalAuto {
+                        HStack {
+                            Text(L.waterGoal.localized)
+                            Spacer()
+                            Text("\(Int(waterGoalManualMl)) ml")
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        HStack {
+                            Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
+                                .tint(Theme.blue)
+                            TextField("", value: $waterGoalManualMl, format: .number.precision(.fractionLength(0)))
+                                .keyboardType(.numberPad)
+                                .frame(width: 60)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    } else if isWaterTrackingEnabled && waterGoalAuto {
+                        Text(L.waterFormula.localized)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                } header: {
+                    Text(selectedLanguage == "en" ? "Premium" : "Premium")
+                }
+
+                // Save button
                 Section {
                     Button {
                         handleSave()
@@ -292,7 +199,6 @@ struct SettingsView: View {
                             .cornerRadius(14)
                     }
                     .buttonStyle(.plain)
-                    .disabled(isSaveDisabled)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     .listRowBackground(Color.clear)
                 }
@@ -301,16 +207,19 @@ struct SettingsView: View {
                 Section(L.language.localized) {
                     Picker(L.language.localized, selection: $selectedLanguage) {
                         Text(L.systemDefault.localized).tag("")
-                        Text("Türkçe").tag("tr")
+                        Text("Turkce").tag("tr")
                         Text("English").tag("en")
                     }
                     .pickerStyle(.segmented)
                     .onChange(of: selectedLanguage) { _, newValue in
-                        applyLanguage(newValue)
+                        if newValue != previousLanguage {
+                            applyLanguage(newValue)
+                            previousLanguage = newValue
+                        }
                     }
                 }
 
-                // Section 5: App
+                // Section: App
                 Section(L.appSection.localized) {
                     HStack {
                         Text(L.version.localized)
@@ -336,7 +245,6 @@ struct SettingsView: View {
                         handleSave()
                     }
                     .fontWeight(.semibold)
-                    .disabled(isSaveDisabled)
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -365,16 +273,6 @@ struct SettingsView: View {
                 }
             }
             .animation(.easeInOut, value: showSavedToast)
-            .alert(L.scheduleChange.localized, isPresented: $showScheduleAlert) {
-                Button(L.save.localized, role: .destructive) {
-                    performSave()
-                }
-                Button(L.cancel.localized, role: .cancel) {
-                    weeklySchedule = originalSchedule
-                }
-            } message: {
-                Text(L.scheduleChangeMessage.localized)
-            }
             .alert(L.weightConflict.localized, isPresented: $showWeightConflictAlert) {
                 Button("\("manual_weight".localized) (\(String(format: "%.2f", currentWeightKg)) kg)") {
                     performSave()
@@ -424,94 +322,6 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Weight change validation
-
-    /// Positive = weight loss, negative = weight gain
-    private var weeklyChange: Double {
-        guard goalDays > 0 else { return 0 }
-        return (currentWeightKg - goalWeightKg) / (Double(goalDays) / 7.0)
-    }
-
-    private var isSaveDisabled: Bool {
-        weeklyChange > 1.5 || weeklyChange < -1.5
-    }
-
-    /// Preview whether the deficit will be safety-capped with current form values
-    private var isDeficitCapped: Bool {
-        guard goalDays > 0 else { return false }
-        let weightDiff = currentWeightKg - goalWeightKg
-        let rawDeficit = (weightDiff * 7700) / Double(goalDays)
-        // Estimate TDEE with simple BMR * 1.5 for preview purposes
-        let estimatedBMR: Double
-        if gender == "male" {
-            estimatedBMR = 10 * currentWeightKg + 6.25 * heightCm - 5 * Double(age) + 5
-        } else {
-            estimatedBMR = 10 * currentWeightKg + 6.25 * heightCm - 5 * Double(age) - 161
-        }
-        let estimatedTDEE = estimatedBMR * 1.5
-        let maxDeficit = estimatedTDEE * 0.35
-        let maxSurplus = estimatedTDEE * 0.20
-        return rawDeficit > maxDeficit || rawDeficit < -maxSurplus
-    }
-
-    // MARK: - Protein chips
-
-    private static let allProteinKeys: [(key: String, labelKey: String)] = [
-        ("tavuk", "protein_chicken"),
-        ("balık", "protein_fish"),
-        ("dana", "protein_beef"),
-        ("yumurta", "protein_egg"),
-        ("baklagil", "protein_legume"),
-        ("süt ürünleri", "protein_dairy"),
-    ]
-
-    private var proteinChips: some View {
-        let columns = [GridItem(.adaptive(minimum: 100))]
-        return LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(Self.allProteinKeys, id: \.key) { protein in
-                let isSelected = preferredProteins.contains(protein.key)
-                Button {
-                    if isSelected {
-                        preferredProteins.remove(protein.key)
-                    } else {
-                        preferredProteins.insert(protein.key)
-                    }
-                } label: {
-                    Text(protein.labelKey.localized)
-                        .font(Theme.captionFont)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .frame(maxWidth: .infinity)
-                        .background(isSelected ? Theme.accent.opacity(0.2) : Theme.cardBackground)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isSelected ? Theme.accent : Color.clear, lineWidth: 1.5)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    // MARK: - Intensity helpers
-
-    private var intensityLabel: String {
-        switch intensityLevel {
-        case ...0.3: return L.intensityLight.localized
-        case 0.3...0.7: return L.intensityModerate.localized
-        default: return L.intensityIntense.localized
-        }
-    }
-
-    private var intensityDescription: String {
-        switch intensityLevel {
-        case ...0.3: return L.intensityLightDesc.localized
-        case 0.3...0.7: return L.intensityModerateDesc.localized
-        default: return L.intensityIntenseDesc.localized
-        }
-    }
-
     // MARK: - Load / Save
 
     private func applyLanguage(_ lang: String) {
@@ -531,12 +341,8 @@ struct SettingsView: View {
         age = p.age
         heightCm = p.heightCm
         currentWeightKg = p.currentWeightKg
-        goalWeightKg = p.goalWeightKg
-        goalDays = p.goalDays
-        intensityLevel = p.intensityLevel
-        weeklySchedule = p.weeklySchedule
-        originalSchedule = p.weeklySchedule
         selectedLanguage = p.preferredLanguage
+        previousLanguage = p.preferredLanguage
         isWaterTrackingEnabled = p.isWaterTrackingEnabled
         if let override = p.waterGoalOverrideMl {
             waterGoalAuto = false
@@ -547,17 +353,10 @@ struct SettingsView: View {
         weightReminderEnabled = p.weightReminderEnabled
         weightReminderDays = p.weightReminderDays
         weightReminderTime = Calendar.current.date(from: DateComponents(hour: p.weightReminderHour, minute: 0)) ?? .now
-        preferredProteins = Set(p.preferredProteins)
         selectedCoachStyle = p.coachStyle
     }
 
     private func handleSave() {
-        // Check schedule change
-        if weeklySchedule != originalSchedule {
-            showScheduleAlert = true
-            return
-        }
-
         // Check HealthKit weight conflict
         if let hkWeight = healthKitWeight,
            abs(hkWeight - currentWeightKg) > 0.5 {
@@ -582,23 +381,16 @@ struct SettingsView: View {
         p.age = age
         p.heightCm = heightCm
         p.currentWeightKg = currentWeightKg
-        p.goalWeightKg = goalWeightKg
-        p.goalDays = goalDays
-        p.intensityLevel = intensityLevel
-        p.weeklySchedule = weeklySchedule
         p.notification1Enabled = false
         p.notification2Enabled = false
         p.weightReminderEnabled = weightReminderEnabled
         p.weightReminderDays = weightReminderDays
         p.weightReminderHour = Calendar.current.component(.hour, from: weightReminderTime)
-        p.preferredProteins = Array(preferredProteins)
         p.isWaterTrackingEnabled = isWaterTrackingEnabled
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
         p.coachStyle = selectedCoachStyle
         p.preferredLanguage = selectedLanguage
         p.updatedAt = .now
-
-        originalSchedule = weeklySchedule
 
         try? modelContext.save()
         NotificationService.shared.reschedule(profile: p)

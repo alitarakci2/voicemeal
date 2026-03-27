@@ -7,6 +7,7 @@ import SwiftData
 import SwiftUI
 
 struct PlanView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
     @Query private var allSnapshots: [DailySnapshot]
@@ -16,6 +17,16 @@ struct PlanView: View {
     @State private var showPastDays = false
     @State private var showFutureDays = false
     @State private var weeklyCardExpanded = false
+
+    // Plan settings
+    @State private var showPlanSettings = false
+    @State private var weeklySchedule: [[String]] = Array(repeating: ["rest"], count: 7)
+    @State private var originalSchedule: [[String]] = Array(repeating: ["rest"], count: 7)
+    @State private var goalWeightKg: Double = 65
+    @State private var goalDays = 90
+    @State private var intensityLevel: Double = 0.5
+    @State private var showSavedToast = false
+    @State private var settingsLoaded = false
 
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
@@ -162,11 +173,57 @@ struct PlanView: View {
         }
     }
 
+    // MARK: - Goal validation
+
+    private var weeklyChange: Double {
+        guard let p = profiles.first, goalDays > 0 else { return 0 }
+        return (p.currentWeightKg - goalWeightKg) / (Double(goalDays) / 7.0)
+    }
+
+    private var isSaveDisabled: Bool {
+        weeklyChange > 1.5 || weeklyChange < -1.5
+    }
+
+    private var isDeficitCapped: Bool {
+        guard let p = profiles.first, goalDays > 0 else { return false }
+        let weightDiff = p.currentWeightKg - goalWeightKg
+        let rawDeficit = (weightDiff * 7700) / Double(goalDays)
+        let estimatedBMR: Double
+        if p.gender == "male" {
+            estimatedBMR = 10 * p.currentWeightKg + 6.25 * p.heightCm - 5 * Double(p.age) + 5
+        } else {
+            estimatedBMR = 10 * p.currentWeightKg + 6.25 * p.heightCm - 5 * Double(p.age) - 161
+        }
+        let estimatedTDEE = estimatedBMR * 1.5
+        let maxDeficit = estimatedTDEE * 0.35
+        let maxSurplus = estimatedTDEE * 0.20
+        return rawDeficit > maxDeficit || rawDeficit < -maxSurplus
+    }
+
+    private var intensityLabel: String {
+        switch intensityLevel {
+        case ...0.3: return L.intensityLight.localized
+        case 0.3...0.7: return L.intensityModerate.localized
+        default: return L.intensityIntense.localized
+        }
+    }
+
+    private var intensityDescription: String {
+        switch intensityLevel {
+        case ...0.3: return L.intensityLightDesc.localized
+        case 0.3...0.7: return L.intensityModerateDesc.localized
+        default: return L.intensityIntenseDesc.localized
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
+                        // Plan settings (collapsible)
+                        planSettingsCard
+
                         // Weekly summary
                         weeklySummaryCard
                             .id("weeklyCard")
@@ -230,6 +287,7 @@ struct PlanView: View {
                 }
                 .background(Theme.background)
                 .onAppear {
+                    loadPlanSettings()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         withAnimation {
                             proxy.scrollTo("weeklyCard", anchor: .top)
@@ -240,10 +298,185 @@ struct PlanView: View {
             .navigationTitle("Plan")
             .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
                 planService.regeneratePlans()
+                loadPlanSettings()
             }
             .sheet(item: $selectedPlan) { plan in
                 DayDetailSheetView(plan: plan)
             }
+            .overlay(alignment: .bottom) {
+                if showSavedToast {
+                    Text(L.savedToast.localized)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Theme.green)
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 20)
+                }
+            }
+            .animation(.easeInOut, value: showSavedToast)
+        }
+    }
+
+    // MARK: - Plan Settings Card
+
+    private var planSettingsCard: some View {
+        DisclosureGroup(isExpanded: $showPlanSettings) {
+            VStack(spacing: 16) {
+                Divider()
+                    .overlay(Theme.cardBorder)
+
+                // Goal Weight
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("target_weight".localized)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text("\(String(format: "%.1f", goalWeightKg)) kg")
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    Slider(value: $goalWeightKg, in: 30...200, step: 0.5)
+                        .tint(Theme.accent)
+
+                    Stepper(String(format: "goal_duration".localized, goalDays), value: $goalDays, in: 14...365, step: 7)
+                        .font(Theme.captionFont)
+
+                    // Warnings
+                    if weeklyChange > 1.0 {
+                        Label("unhealthy_pace".localized, systemImage: "light.beacon.max.fill")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.red)
+                    } else if weeklyChange > 0.75 {
+                        Label("aggressive_goal".localized, systemImage: "exclamationmark.triangle.fill")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
+                    }
+                    if weeklyChange < -1.0 {
+                        Label(L.weightGainTooFast.localized, systemImage: "light.beacon.max.fill")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.red)
+                    } else if weeklyChange < -0.5 {
+                        Label(L.weightGainFast.localized, systemImage: "exclamationmark.triangle.fill")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
+                    }
+                    if isDeficitCapped {
+                        Label(L.deficitCapped.localized, systemImage: "exclamationmark.triangle.fill")
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.orange)
+                    }
+                }
+
+                Divider()
+                    .overlay(Theme.cardBorder)
+
+                // Intensity
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(L.intensity.localized)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text(intensityLabel)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    Slider(value: $intensityLevel, in: 0...1, step: 0.1)
+                        .tint(Theme.accent)
+                    Text(intensityDescription)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                Divider()
+                    .overlay(Theme.cardBorder)
+
+                // Weekly Schedule
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(L.weeklySchedule.localized)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.textPrimary)
+
+                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
+                }
+
+                // Save button
+                Button {
+                    savePlanSettings()
+                } label: {
+                    Text(L.save.localized)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Theme.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+                .disabled(isSaveDisabled)
+            }
+            .padding(.top, 8)
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\u{2699}\u{FE0F} \(L.goal.localized)")
+                        .font(Theme.headlineFont)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(String(format: "goal_duration".localized, goalDays) + " \u{00B7} \(intensityLabel)")
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                Spacer()
+            }
+            .padding(.vertical, 4)
+        }
+        .tint(Theme.textSecondary)
+        .padding()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.cardBorder, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Plan Settings Load / Save
+
+    private func loadPlanSettings() {
+        guard let p = profiles.first else { return }
+        goalWeightKg = p.goalWeightKg
+        goalDays = p.goalDays
+        intensityLevel = p.intensityLevel
+        weeklySchedule = p.weeklySchedule
+        originalSchedule = p.weeklySchedule
+        settingsLoaded = true
+    }
+
+    private func savePlanSettings() {
+        guard let p = profiles.first else { return }
+        p.goalWeightKg = goalWeightKg
+        p.goalDays = goalDays
+        p.intensityLevel = intensityLevel
+        p.weeklySchedule = weeklySchedule
+        p.updatedAt = .now
+
+        originalSchedule = weeklySchedule
+
+        try? modelContext.save()
+        NotificationCenter.default.post(name: .profileUpdated, object: nil)
+        planService.regeneratePlans()
+
+        showSavedToast = true
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            showSavedToast = false
         }
     }
 
@@ -683,7 +916,7 @@ struct DayDetailSheetView: View {
 
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("🎯 \("eating_goal_card".localized)")
+                Text("\u{1F3AF} \("eating_goal_card".localized)")
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -739,7 +972,7 @@ struct DayDetailSheetView: View {
         .themeCard()
     }
 
-    // MARK: - Kalori Açığı Card
+    // MARK: - Kalori Acigi Card
 
     private var deficitCard: some View {
         let actualDeficit = plan.tdee - plan.consumedCalories
@@ -758,7 +991,7 @@ struct DayDetailSheetView: View {
         }
 
         return VStack(alignment: .leading, spacing: 10) {
-            Text("🔥 \("calorie_deficit_card".localized)")
+            Text("\u{1F525} \("calorie_deficit_card".localized)")
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
