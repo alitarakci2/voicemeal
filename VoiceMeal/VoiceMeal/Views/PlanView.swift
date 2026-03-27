@@ -848,6 +848,7 @@ struct DayDetailSheetView: View {
                 }
                 .padding()
             }
+            .background(Theme.background)
             .navigationTitle(L.dayDetail.localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -857,6 +858,7 @@ struct DayDetailSheetView: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .presentationBackground(Theme.background)
     }
 
     private var isPastOlderThan7Days: Bool {

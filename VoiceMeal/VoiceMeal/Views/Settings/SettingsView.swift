@@ -50,202 +50,232 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Section: Profile
-                Section(L.profile.localized) {
-                    TextField(L.nameField.localized, text: $name)
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Section: Profile
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            sectionHeader(L.profile.localized)
 
-                    Picker(L.gender.localized, selection: $gender) {
-                        Text(L.male.localized).tag("male")
-                        Text(L.female.localized).tag("female")
-                    }
-
-                    Stepper("\(L.age.localized): \(age)", value: $age, in: 15...80)
-
-                    HStack {
-                        Text(L.height.localized)
-                        Spacer()
-                        Text("\(Int(heightCm)) cm")
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    HStack {
-                        Slider(value: $heightCm, in: 120...220, step: 1)
-                            .tint(Theme.accent)
-                        TextField("", value: $heightCm, format: .number.precision(.fractionLength(0)))
-                            .keyboardType(.numberPad)
-                            .frame(width: 60)
-                            .textFieldStyle(.roundedBorder)
-                    }
-
-                    HStack {
-                        Text(L.weight.localized)
-                        Spacer()
-                        Text("\(String(format: "%.2f", currentWeightKg)) kg")
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    HStack {
-                        Slider(value: $currentWeightKg, in: 40...200, step: 0.05)
-                            .tint(Theme.accent)
-                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(2)))
-                            .keyboardType(.decimalPad)
-                            .frame(width: 60)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                }
-
-                // Section: Coach Style
-                Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(CoachStyle.allCases, id: \.self) { style in
-                            Button {
-                                selectedCoachStyle = style
-                            } label: {
-                                HStack(spacing: 12) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(selectedLanguage == "en"
-                                            ? style.displayNameEn
-                                            : style.displayName)
-                                            .font(.subheadline.weight(.medium))
-                                            .foregroundColor(.primary)
-                                        Text(selectedLanguage == "en"
-                                            ? style.descriptionEn
-                                            : style.description)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    Spacer()
-                                    if selectedCoachStyle == style {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(Color(hex: "6C63FF"))
-                                    } else {
-                                        Image(systemName: "circle")
-                                            .foregroundColor(.secondary)
-                                    }
+                            VStack(spacing: 12) {
+                                settingsRow(label: L.nameField.localized) {
+                                    TextField(L.nameField.localized, text: $name)
+                                        .multilineTextAlignment(.trailing)
+                                        .foregroundStyle(.white)
                                 }
-                                .padding(12)
-                                .background(
-                                    selectedCoachStyle == style
-                                        ? Color(hex: "6C63FF").opacity(0.1)
-                                        : Color(hex: "1C1C24")
-                                )
-                                .cornerRadius(10)
+
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                settingsRow(label: L.gender.localized) {
+                                    Picker("", selection: $gender) {
+                                        Text(L.male.localized).tag("male")
+                                        Text(L.female.localized).tag("female")
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .frame(width: 160)
+                                }
+
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                settingsRow(label: L.age.localized) {
+                                    Stepper("\(age)", value: $age, in: 15...80)
+                                        .frame(width: 130)
+                                }
+
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                VStack(spacing: 6) {
+                                    settingsRow(label: L.height.localized) {
+                                        Text("\(Int(heightCm)) cm")
+                                            .foregroundStyle(Theme.textSecondary)
+                                    }
+                                    Slider(value: $heightCm, in: 120...220, step: 1)
+                                        .tint(Theme.accent)
+                                }
+
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                VStack(spacing: 6) {
+                                    settingsRow(label: L.weight.localized) {
+                                        Text("\(String(format: "%.1f", currentWeightKg)) kg")
+                                            .foregroundStyle(Theme.textSecondary)
+                                    }
+                                    Slider(value: $currentWeightKg, in: 40...200, step: 0.1)
+                                        .tint(Theme.accent)
+                                }
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                } header: {
-                    Text("coach_style".localized)
-                }
 
-                // Section: Notifications
-                Section(L.notifications.localized) {
-                    Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
-                    if weightReminderEnabled {
-                        Stepper(
-                            String(format: "weight_reminder_days".localized, weightReminderDays),
-                            value: $weightReminderDays,
-                            in: 1...7
-                        )
-                        DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
-                        Text(String(format: "weight_reminder_explanation".localized, weightReminderDays))
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
+                    // Section: Coach Style
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader("coach_style".localized)
 
-                // Section: Premium
-                Section {
-                    Toggle(selectedLanguage == "en" ? "Water Tracking" : "Su Takibi", isOn: $isWaterTrackingEnabled)
-
-                    if isWaterTrackingEnabled {
-                        Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
-                    }
-
-                    if isWaterTrackingEnabled && !waterGoalAuto {
-                        HStack {
-                            Text(L.waterGoal.localized)
-                            Spacer()
-                            Text("\(Int(waterGoalManualMl)) ml")
-                                .foregroundStyle(Theme.textSecondary)
+                            ForEach(CoachStyle.allCases, id: \.self) { style in
+                                Button {
+                                    selectedCoachStyle = style
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(selectedLanguage == "en"
+                                                ? style.displayNameEn
+                                                : style.displayName)
+                                                .font(Theme.bodyFont)
+                                                .fontWeight(.medium)
+                                                .foregroundStyle(.white)
+                                            Text(selectedLanguage == "en"
+                                                ? style.descriptionEn
+                                                : style.description)
+                                                .font(Theme.captionFont)
+                                                .foregroundStyle(Theme.textSecondary)
+                                        }
+                                        Spacer()
+                                        Image(systemName: selectedCoachStyle == style
+                                            ? "checkmark.circle.fill" : "circle")
+                                            .foregroundStyle(selectedCoachStyle == style
+                                                ? Theme.accent : Theme.textTertiary)
+                                            .font(.system(size: 22))
+                                    }
+                                    .padding(14)
+                                    .background(
+                                        selectedCoachStyle == style
+                                            ? Theme.accent.opacity(0.1)
+                                            : Color(hex: "2C2C2E").opacity(0.5)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        HStack {
-                            Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
-                                .tint(Theme.blue)
-                            TextField("", value: $waterGoalManualMl, format: .number.precision(.fractionLength(0)))
-                                .keyboardType(.numberPad)
-                                .frame(width: 60)
-                                .textFieldStyle(.roundedBorder)
-                        }
-                    } else if isWaterTrackingEnabled && waterGoalAuto {
-                        Text(L.waterFormula.localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
                     }
-                } header: {
-                    Text(selectedLanguage == "en" ? "Premium" : "Premium")
-                }
 
-                // Save button
-                Section {
+                    // Section: Notifications
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(L.notifications.localized)
+
+                            Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
+                                .tint(Theme.accent)
+
+                            if weightReminderEnabled {
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                settingsRow(label: "weight_reminder_days".localized) {
+                                    Stepper("\(weightReminderDays)", value: $weightReminderDays, in: 1...7)
+                                        .frame(width: 130)
+                                }
+
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
+                                    .tint(Theme.accent)
+                            }
+                        }
+                    }
+
+                    // Section: Premium
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader("Premium")
+
+                            Toggle(selectedLanguage == "en" ? "Water Tracking" : "Su Takibi", isOn: $isWaterTrackingEnabled)
+                                .tint(Theme.accent)
+
+                            if isWaterTrackingEnabled {
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
+                                    .tint(Theme.accent)
+                            }
+
+                            if isWaterTrackingEnabled && !waterGoalAuto {
+                                Divider().overlay(Color(hex: "2C2C2E"))
+
+                                VStack(spacing: 6) {
+                                    settingsRow(label: L.waterGoal.localized) {
+                                        Text("\(Int(waterGoalManualMl)) ml")
+                                            .foregroundStyle(Theme.textSecondary)
+                                    }
+                                    Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
+                                        .tint(Theme.blue)
+                                }
+                            } else if isWaterTrackingEnabled && waterGoalAuto {
+                                Text(L.waterFormula.localized)
+                                    .font(Theme.captionFont)
+                                    .foregroundStyle(Theme.textTertiary)
+                            }
+                        }
+                    }
+
+                    // Save button
                     Button {
                         handleSave()
                     } label: {
                         Text(L.save.localized)
-                            .fontWeight(.semibold)
+                            .font(Theme.headlineFont)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(hex: "6C63FF"))
-                            .foregroundColor(.white)
-                            .cornerRadius(14)
+                            .padding(.vertical, 16)
+                            .background(Theme.accent)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.clear)
-                }
 
-                // Section: Language
-                Section(L.language.localized) {
-                    Picker(L.language.localized, selection: $selectedLanguage) {
-                        Text(L.systemDefault.localized).tag("")
-                        Text("Turkce").tag("tr")
-                        Text("English").tag("en")
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: selectedLanguage) { _, newValue in
-                        if newValue != previousLanguage {
-                            applyLanguage(newValue)
-                            previousLanguage = newValue
+                    // Section: Language
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(L.language.localized)
+
+                            Picker(L.language.localized, selection: $selectedLanguage) {
+                                Text(L.systemDefault.localized).tag("")
+                                Text("Turkce").tag("tr")
+                                Text("English").tag("en")
+                            }
+                            .pickerStyle(.segmented)
+                            .onChange(of: selectedLanguage) { _, newValue in
+                                if newValue != previousLanguage {
+                                    applyLanguage(newValue)
+                                    previousLanguage = newValue
+                                }
+                            }
                         }
                     }
-                }
 
-                // Section: App
-                Section(L.appSection.localized) {
-                    HStack {
-                        Text(L.version.localized)
-                        Spacer()
-                        Text("1.0.0")
-                            .foregroundStyle(Theme.textSecondary)
+                    // Section: App
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(L.appSection.localized)
+
+                            settingsRow(label: L.version.localized) {
+                                Text("1.0.0")
+                                    .foregroundStyle(Theme.textTertiary)
+                            }
+
+                            Divider().overlay(Color(hex: "2C2C2E"))
+
+                            Button {
+                                showResetAlert = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "arrow.counterclockwise")
+                                    Text(L.resetOnboarding.localized)
+                                }
+                                .foregroundStyle(Theme.red)
+                                .font(Theme.bodyFont)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
 
-                    Button(role: .destructive) {
-                        showResetAlert = true
-                    } label: {
-                        Label(L.resetOnboarding.localized, systemImage: "arrow.counterclockwise")
-                    }
+                    Spacer(minLength: 40)
                 }
+                .padding()
             }
+            .background(Theme.background)
             .navigationTitle(L.settings.localized)
             .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
-            .background(Theme.background)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(L.save.localized) {
-                        handleSave()
-                    }
-                    .fontWeight(.semibold)
-                }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button(L.done.localized) {
@@ -254,7 +284,7 @@ struct SettingsView: View {
                             to: nil, from: nil, for: nil
                         )
                     }
-                    .foregroundColor(Color(hex: "6C63FF"))
+                    .foregroundColor(Theme.accent)
                     .fontWeight(.semibold)
                 }
             }
@@ -322,6 +352,31 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Card Helpers
+
+    private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(20)
+            .background(Theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(Theme.headlineFont)
+            .foregroundStyle(.white)
+    }
+
+    private func settingsRow<Content: View>(label: String, @ViewBuilder trailing: () -> Content) -> some View {
+        HStack {
+            Text(label)
+                .font(Theme.bodyFont)
+                .foregroundStyle(.white)
+            Spacer()
+            trailing()
+        }
+    }
+
     // MARK: - Load / Save
 
     private func applyLanguage(_ lang: String) {
@@ -357,13 +412,11 @@ struct SettingsView: View {
     }
 
     private func handleSave() {
-        // Check HealthKit weight conflict
         if let hkWeight = healthKitWeight,
            abs(hkWeight - currentWeightKg) > 0.5 {
             showWeightConflictAlert = true
             return
         }
-
         performSave()
     }
 

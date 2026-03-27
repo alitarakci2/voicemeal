@@ -79,6 +79,12 @@ struct ContentView: View {
                 UINavigationBar.appearance().standardAppearance = navAppearance
                 UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
                 UINavigationBar.appearance().compactAppearance = navAppearance
+
+                // Segmented control styling
+                UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(Color(hex: "6C63FF"))
+                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(white: 0.6, alpha: 1)], for: .normal)
+                UISegmentedControl.appearance().backgroundColor = UIColor(Color(hex: "1C1C1E"))
             }
             .environment(goalEngine)
             .environment(groqService)

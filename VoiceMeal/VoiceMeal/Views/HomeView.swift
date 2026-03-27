@@ -987,6 +987,7 @@ struct HomeView: View {
                 }
                 .padding()
             }
+            .background(Theme.background)
             .navigationTitle("goal_details".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -995,6 +996,7 @@ struct HomeView: View {
                 }
             }
         }
+        .presentationBackground(Theme.background)
         .presentationDetents([.medium, .large])
     }
 
