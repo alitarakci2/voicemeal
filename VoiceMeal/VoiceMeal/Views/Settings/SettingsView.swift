@@ -52,8 +52,8 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                        // Section: Profile
-                        settingsCard {
+                    // Section: Profile
+                    settingsCard {
                         VStack(alignment: .leading, spacing: 16) {
                             sectionHeader(L.profile.localized)
 
@@ -267,11 +267,11 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
                         }
                     }
-
                 }
                 .padding()
                 .padding(.bottom, 40)
             }
+            .scrollDismissesKeyboard(.interactively)
             .background(Theme.background)
             .navigationTitle(L.settings.localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -331,12 +331,6 @@ struct SettingsView: View {
                 Button("OK") {}
             } message: {
                 Text(L.languageRestart.localized)
-            }
-            .onTapGesture {
-                UIApplication.shared.sendAction(
-                    #selector(UIResponder.resignFirstResponder),
-                    to: nil, from: nil, for: nil
-                )
             }
             .onAppear {
                 loadProfile()
