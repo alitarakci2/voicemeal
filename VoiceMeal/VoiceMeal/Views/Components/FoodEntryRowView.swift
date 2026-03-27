@@ -9,35 +9,64 @@ struct FoodEntryRowView: View {
     let entry: FoodEntry
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(spacing: 12) {
+            // Emoji circle
             Text(foodEmoji(entry.name))
                 .font(.title3)
-                .frame(width: 28)
+                .frame(width: 42, height: 42)
+                .background(Color.white.opacity(0.06))
+                .clipShape(Circle())
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(entry.name)
-                    .font(Theme.bodyFont)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Theme.textPrimary)
+            VStack(alignment: .leading, spacing: 6) {
+                // Name + calories
+                HStack(alignment: .firstTextBaseline) {
+                    Text(entry.name)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
 
-                if !entry.amount.isEmpty {
-                    Text("\(entry.amount)  \u{2022}  \(entry.calories) kcal")
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
-                } else {
-                    Text("\(entry.calories) kcal")
-                        .font(Theme.captionFont)
+                    if !entry.amount.isEmpty {
+                        Text(entry.amount)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textTertiary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer()
+
+                    Text("\(entry.calories)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    + Text(" kcal")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundStyle(Theme.textSecondary)
                 }
 
-                Text("P: \(Int(entry.protein))g  K: \(Int(entry.carbs))g  Y: \(Int(entry.fat))g")
-                    .font(Theme.microFont)
-                    .foregroundStyle(Theme.textTertiary)
+                // Macro pills
+                HStack(spacing: 6) {
+                    macroPill("P", value: Int(entry.protein), color: Theme.blue)
+                    macroPill("K", value: Int(entry.carbs), color: Theme.orange)
+                    macroPill("Y", value: Int(entry.fat), color: Color(hex: "FF6B9D"))
+                }
             }
-
-            Spacer()
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
+    }
+
+    private func macroPill(_ label: String, value: Int, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text("\(label) \(value)g")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.12))
+        .clipShape(Capsule())
     }
 
     private func foodEmoji(_ name: String) -> String {
@@ -61,7 +90,6 @@ struct FoodEntryRowView: View {
         if lower.contains("pizza") { return "\u{1F355}" }
         if lower.contains("hamburger") || lower.contains("burger") { return "\u{1F354}" }
         if lower.contains("\u{00E7}orba") || lower.contains("corba") { return "\u{1F372}" }
-        // "et" checked last — too short, could match "internet" etc.
         if lower.contains(" et ") || lower.contains(" et,") || lower == "et" || lower.hasSuffix(" et") { return "\u{1F969}" }
         return "\u{1F37D}\u{FE0F}"
     }

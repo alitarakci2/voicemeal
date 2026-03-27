@@ -337,12 +337,14 @@ struct HomeView: View {
                         .padding(.horizontal)
                         .padding(.top, 4)
 
-                        Text("P: \(Int(eatenProtein))g  K: \(Int(eatenCarbs))g  Y: \(Int(eatenFat))g")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.horizontal)
-                            .padding(.bottom, 8)
+                        HStack(spacing: 6) {
+                            Spacer()
+                            MacroTotalPill("P", value: Int(eatenProtein), color: Theme.blue)
+                            MacroTotalPill("K", value: Int(eatenCarbs), color: Theme.orange)
+                            MacroTotalPill("Y", value: Int(eatenFat), color: Color(hex: "FF6B9D"))
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
                     }
                     .themeCard()
                 }

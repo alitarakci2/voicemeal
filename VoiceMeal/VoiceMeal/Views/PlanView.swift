@@ -799,9 +799,11 @@ struct DayDetailSheetView: View {
                             .padding(.top, 4)
                         Text("\(L.goal.localized): \(plan.targetCalories) kcal")
                             .foregroundStyle(Theme.textSecondary)
-                        Text("P: \(plan.targetProtein)g  K: \(plan.targetCarbs)g  Y: \(plan.targetFat)g")
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textSecondary)
+                        HStack(spacing: 6) {
+                            MacroTotalPill("P", value: plan.targetProtein, color: Theme.blue)
+                            MacroTotalPill("K", value: plan.targetCarbs, color: Theme.orange)
+                            MacroTotalPill("Y", value: plan.targetFat, color: Color(hex: "FF6B9D"))
+                        }
                     } else if dayEntries.isEmpty {
                         Text(L.noFoodLog.localized)
                             .foregroundStyle(Theme.textSecondary)
@@ -840,10 +842,12 @@ struct DayDetailSheetView: View {
                         let totalP = dayEntries.reduce(0.0) { $0 + $1.protein }
                         let totalC = dayEntries.reduce(0.0) { $0 + $1.carbs }
                         let totalF = dayEntries.reduce(0.0) { $0 + $1.fat }
-                        Text("P: \(Int(totalP))g  K: \(Int(totalC))g  Y: \(Int(totalF))g")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        HStack(spacing: 6) {
+                            Spacer()
+                            MacroTotalPill("P", value: Int(totalP), color: Theme.blue)
+                            MacroTotalPill("K", value: Int(totalC), color: Theme.orange)
+                            MacroTotalPill("Y", value: Int(totalF), color: Color(hex: "FF6B9D"))
+                        }
                     }
                 }
                 .padding()

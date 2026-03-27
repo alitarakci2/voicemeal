@@ -128,6 +128,35 @@ struct DestructiveButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Macro Total Pill
+
+struct MacroTotalPill: View {
+    let label: String
+    let value: Int
+    let color: Color
+
+    init(_ label: String, value: Int, color: Color) {
+        self.label = label
+        self.value = value
+        self.color = color
+    }
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text("\(label) \(value)g")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.12))
+        .clipShape(Capsule())
+    }
+}
+
 // MARK: - Pill Badge
 
 struct PillBadge: View {
