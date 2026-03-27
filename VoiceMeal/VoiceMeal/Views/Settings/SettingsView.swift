@@ -268,9 +268,9 @@ struct SettingsView: View {
                         }
                     }
 
-                    Spacer(minLength: 40)
                 }
                 .padding()
+                .padding(.bottom, 40)
             }
             .background(Theme.background)
             .navigationTitle(L.settings.localized)
