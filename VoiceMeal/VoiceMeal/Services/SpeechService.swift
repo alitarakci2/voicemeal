@@ -10,6 +10,7 @@ import Speech
 class SpeechService: ObservableObject {
     @Published var transcript: String = ""
     @Published var isRecording: Bool = false
+    @Published var lastError: String?
 
     private nonisolated(unsafe) var audioEngine = AVAudioEngine()
     private nonisolated(unsafe) var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
@@ -22,17 +23,39 @@ class SpeechService: ObservableObject {
                 continuation.resume(returning: status)
             }
         }
-        guard speechStatus == .authorized else { return false }
-        return await AVAudioApplication.requestRecordPermission()
+        guard speechStatus == .authorized else {
+            lastError = "Mikrofon izni gerekli. Ayarlardan izin verin."
+            print("❌ [SpeechService] Speech recognition not authorized: \(speechStatus.rawValue)")
+            return false
+        }
+        let micGranted = await AVAudioApplication.requestRecordPermission()
+        if !micGranted {
+            lastError = "Mikrofon izni gerekli. Ayarlardan izin verin."
+            print("❌ [SpeechService] Microphone permission denied")
+        }
+        return micGranted
     }
 
     func startListening() throws {
+        lastError = nil
         recognitionTask?.cancel()
         recognitionTask = nil
 
+        guard speechRecognizer?.isAvailable == true else {
+            lastError = "Ses tanıma şu an kullanılamıyor."
+            print("❌ [SpeechService] Speech recognizer not available")
+            throw SpeechError.recognitionUnavailable
+        }
+
         let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        do {
+            try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            lastError = "Ses kaydı başlatılamadı."
+            print("❌ [SpeechService] Audio session error: \(error)")
+            throw error
+        }
 
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
@@ -56,7 +79,18 @@ class SpeechService: ObservableObject {
                 if let result {
                     self.transcript = result.bestTranscription.formattedString
                 }
-                if error != nil || (result?.isFinal ?? false) {
+                if let error {
+                    let nsError = error as NSError
+                    print("❌ [SpeechService] Recognition error: \(nsError.domain) \(nsError.code) - \(error.localizedDescription)")
+                    if nsError.domain == "kAFAssistantErrorDomain" && nsError.code == 1110 {
+                        self.lastError = "Ses algılanamadı. Tekrar deneyin."
+                    } else if nsError.domain == NSURLErrorDomain {
+                        self.lastError = "İnternet bağlantısı gerekli."
+                    } else {
+                        self.lastError = "Ses tanıma hatası: \(error.localizedDescription)"
+                    }
+                    self.stopListening()
+                } else if result?.isFinal ?? false {
                     self.stopListening()
                 }
             }
@@ -71,5 +105,15 @@ class SpeechService: ObservableObject {
         recognitionTask?.cancel()
         recognitionTask = nil
         isRecording = false
+    }
+}
+
+enum SpeechError: LocalizedError {
+    case recognitionUnavailable
+
+    var errorDescription: String? {
+        switch self {
+        case .recognitionUnavailable: "Ses tanıma şu an kullanılamıyor."
+        }
     }
 }

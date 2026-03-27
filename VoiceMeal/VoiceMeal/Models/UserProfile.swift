@@ -27,6 +27,7 @@ final class UserProfile {
     var preferredProteinsJSON: String
     var programStartWeightKg: Double = 0
     var waterGoalOverrideMl: Int?
+    var isWaterTrackingEnabled: Bool = false
     var useMetric: Bool = true
     var preferredLanguage: String = ""
     var weightReminderEnabled: Bool = true

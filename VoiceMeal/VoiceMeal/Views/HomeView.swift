@@ -16,11 +16,12 @@ struct HomeView: View {
     @Query private var profiles: [UserProfile]
     @State private var permissionGranted = false
     @State private var isAnalyzing = false
-    @State private var parsedMeals: [ParsedMeal] = []
-    @State private var clarificationQuestion: String?
     @State private var errorMessage: String?
-    @State private var fullTranscript = ""
     @State private var showSavedConfirmation = false
+    @State private var clarificationQuestion = ""
+    @State private var pendingMeals: [ParsedMeal] = []
+    @State private var showConfirmation = false
+    @State private var originalSpeechText = ""
     @State private var showGoalInfo = false
     @State private var showWeightBanner = false
     @State private var showSettings = false
@@ -58,6 +59,8 @@ struct HomeView: View {
     }
 
     private var todayWaterMl: Int { todayWaterEntries.reduce(0) { $0 + $1.amountMl } }
+
+    private var isWaterTrackingEnabled: Bool { profiles.first?.isWaterTrackingEnabled ?? false }
 
     private var eatenCalories: Int { todayEntries.reduce(0) { $0 + $1.calories } }
     private var eatenProtein: Double { todayEntries.reduce(0.0) { $0 + $1.protein } }
@@ -225,56 +228,41 @@ struct HomeView: View {
                         .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
                 }
 
-                // Transcript
-                if !speechService.transcript.isEmpty {
-                    Text(speechService.transcript)
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.textPrimary)
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .themeCard()
-                }
-
-                // Parsed results
-                if !parsedMeals.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(parsedMeals) { meal in
-                            HStack {
-                                Text(meal.name)
-                                Spacer()
-                                Text("\(Int(meal.calories)) kcal")
-                                    .foregroundStyle(Theme.textSecondary)
-                            }
-                        }
-                        Divider()
-                        HStack {
-                            Text(L.total.localized)
-                                .fontWeight(.semibold)
-                            Spacer()
-                            Text("\(Int(parsedMeals.reduce(0) { $0 + $1.calories })) kcal")
-                                .fontWeight(.semibold)
-                        }
-                    }
-                    .padding()
-                    .themeCard()
-                }
-
                 // Clarification question
-                if let question = clarificationQuestion {
-                    Text(question)
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.orange)
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.orange.opacity(0.1))
-                        .themeCard()
+                if !clarificationQuestion.isEmpty {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("\u{1F916}")
+                        Text(clarificationQuestion)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
+                // Confirmation card
+                if showConfirmation {
+                    confirmationCard
                 }
 
                 // Error
                 if let error = errorMessage {
-                    Text(error)
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.red)
+                    VStack(spacing: 4) {
+                        Text("\u{26A0}\u{FE0F} Hata")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Theme.red)
+                        Text(error)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.red.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
                 // Today's meal list
@@ -403,13 +391,12 @@ struct HomeView: View {
                         proteinTarget: goalEngine.proteinTarget,
                         tdee: Int(goalEngine.tdee),
                         intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
-                        waterMl: todayWaterMl,
-                        waterGoalMl: waterGoalService.dailyGoalMl,
+                        waterMl: isWaterTrackingEnabled ? todayWaterMl : 0,
+                        waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
                         coachStyle: profiles.first?.coachStyle ?? .supportive
                     )
 
-                    if false {
-                        // Hidden for now - planned as premium feature
+                    if isWaterTrackingEnabled {
                         WaterTrackingCard(
                             todayWaterMl: todayWaterMl,
                             goalMl: waterGoalService.dailyGoalMl,
@@ -445,8 +432,12 @@ struct HomeView: View {
             }
         }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
-            if oldValue && !newValue && !speechService.transcript.isEmpty {
-                sendToGroq()
+            if oldValue && !newValue {
+                if let speechError = speechService.lastError {
+                    errorMessage = speechError
+                } else if !speechService.transcript.isEmpty {
+                    sendToGroq()
+                }
             }
         }
         .onChange(of: scenePhase) {
@@ -530,7 +521,8 @@ struct HomeView: View {
                     image: image,
                     imageData: data,
                     onSave: { meals in
-                        saveEntries(from: meals)
+                        pendingMeals = meals
+                        showConfirmation = true
                     },
                     onRetake: {
                         showCamera = true
@@ -554,6 +546,115 @@ struct HomeView: View {
         .sheet(isPresented: $showBarcodeScanner) {
             BarcodeResultView()
         }
+
+
+    }
+
+    // MARK: - Confirmation Card
+
+    private var confirmationCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(groqService.appLanguage == "en" ? "Save these?" : "Bunlar\u{0131} kaydedelim mi?")
+                .font(Theme.bodyFont)
+                .fontWeight(.bold)
+                .foregroundStyle(Theme.textPrimary)
+
+            ForEach(pendingMeals) { meal in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(mealEmoji(for: meal.name) + " " + meal.name.capitalized)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text("\(Int(meal.calories ?? 0)) kcal")
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    HStack(spacing: 8) {
+                        if !meal.amount.isEmpty {
+                            Text(meal.amount)
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        if let p = meal.protein, p > 0 {
+                            Text("P: \(Int(p))g")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        if let c = meal.carbs, c > 0 {
+                            Text("K: \(Int(c))g")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        if let f = meal.fat, f > 0 {
+                            Text("Y: \(Int(f))g")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+                }
+            }
+
+            Divider().overlay(Theme.cardBorder)
+
+            HStack {
+                Text(groqService.appLanguage == "en" ? "Total" : "Toplam")
+                    .font(Theme.bodyFont)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Text("\(pendingMeals.reduce(0) { $0 + Int($1.calories ?? 0) }) kcal")
+                    .font(Theme.bodyFont)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Theme.accent)
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    resetVoiceState()
+                } label: {
+                    Label(
+                        groqService.appLanguage == "en" ? "Redo" : "Tekrar",
+                        systemImage: "arrow.counterclockwise"
+                    )
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Theme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    saveEntries(from: pendingMeals)
+                    resetVoiceState()
+                } label: {
+                    Label(
+                        groqService.appLanguage == "en" ? "Save" : "Kaydet",
+                        systemImage: "checkmark"
+                    )
+                    .font(Theme.bodyFont)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Theme.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func resetVoiceState() {
+        clarificationQuestion = ""
+        pendingMeals = []
+        showConfirmation = false
+        originalSpeechText = ""
     }
 
     // MARK: - Daily Goal Card
@@ -982,8 +1083,8 @@ struct HomeView: View {
             consumedCarbs: eatenCarbs,
             consumedFat: eatenFat,
             modelContext: modelContext,
-            totalWaterMl: todayWaterMl,
-            waterGoalMl: waterGoalService.dailyGoalMl
+            totalWaterMl: isWaterTrackingEnabled ? todayWaterMl : 0,
+            waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0
         )
         updateWidgetData()
     }
@@ -995,8 +1096,8 @@ struct HomeView: View {
             remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
             targetDeficit: Int(goalEngine.cappedDailyDeficit),
             actualDeficit: Int(goalEngine.tdee) - eatenCalories,
-            waterConsumed: todayWaterMl,
-            waterGoal: waterGoalService.dailyGoalMl,
+            waterConsumed: isWaterTrackingEnabled ? todayWaterMl : 0,
+            waterGoal: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
             lastUpdated: Date()
         )
         WidgetDataStore.shared.save(data)
@@ -1111,25 +1212,30 @@ struct HomeView: View {
             guard permissionGranted else { return }
             errorMessage = nil
             showSavedConfirmation = false
-            if clarificationQuestion == nil {
-                parsedMeals = []
-                fullTranscript = ""
+            // If not in clarification mode, start fresh
+            if clarificationQuestion.isEmpty {
+                resetVoiceState()
             }
-            clarificationQuestion = nil
             do {
                 try speechService.startListening()
             } catch {
-                errorMessage = "mic_error".localized
+                errorMessage = speechService.lastError ?? "mic_error".localized
+                print("❌ [HomeView] Mic start error: \(error)")
             }
         }
     }
 
     private func sendToGroq() {
         let newText = speechService.transcript
-        if fullTranscript.isEmpty {
-            fullTranscript = newText
+
+        // If clarifying, combine original + answer
+        let transcript: String
+        if !clarificationQuestion.isEmpty && !originalSpeechText.isEmpty {
+            transcript = originalSpeechText + ". " + newText
+            clarificationQuestion = ""
         } else {
-            fullTranscript += " " + newText
+            originalSpeechText = newText
+            transcript = newText
         }
 
         isAnalyzing = true
@@ -1137,33 +1243,30 @@ struct HomeView: View {
 
         Task {
             do {
-                let response = try await groqService.parseMeals(transcript: fullTranscript)
+                let response = try await groqService.parseMeals(transcript: transcript)
 
-                // Handle water if detected
-                if let waterMl = response.waterMl, waterMl > 0 {
+                // Handle water if detected and water tracking is enabled
+                if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
                     addWater(ml: waterMl, source: "voice")
                 }
 
                 if response.isCorrection == true {
                     handleCorrection(response)
                 } else if response.clarification_needed {
-                    parsedMeals = response.meals
-                    clarificationQuestion = response.clarification_question
-                } else {
-                    parsedMeals = response.meals
-                    clarificationQuestion = nil
-                    if !response.meals.isEmpty {
-                        saveEntries(from: response.meals)
-                    } else if response.waterMl != nil {
-                        showSavedConfirmation = true
-                        Task {
-                            try? await Task.sleep(for: .seconds(2))
-                            showSavedConfirmation = false
-                        }
+                    clarificationQuestion = response.clarification_question ?? ""
+                } else if !response.meals.isEmpty {
+                    pendingMeals = response.meals
+                    showConfirmation = true
+                } else if response.waterMl != nil {
+                    showSavedConfirmation = true
+                    Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        showSavedConfirmation = false
                     }
                 }
             } catch {
-                errorMessage = "Bir hata olu\u{015F}tu, tekrar deneyin"
+                print("❌ [HomeView] Groq error: \(error)")
+                errorMessage = (error as? LocalizedError)?.errorDescription ?? "Bir hata olu\u{015F}tu, tekrar deneyin"
             }
             isAnalyzing = false
         }
@@ -1244,10 +1347,10 @@ struct HomeView: View {
             let entry = FoodEntry(
                 name: meal.name,
                 amount: meal.amount,
-                calories: Int(meal.calories),
-                protein: meal.protein,
-                carbs: meal.carbs,
-                fat: meal.fat
+                calories: Int(meal.calories ?? 0),
+                protein: meal.protein ?? 0,
+                carbs: meal.carbs ?? 0,
+                fat: meal.fat ?? 0
             )
             modelContext.insert(entry)
         }

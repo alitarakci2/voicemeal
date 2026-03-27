@@ -29,6 +29,7 @@ struct SettingsView: View {
     @State private var intensityLevel: Double = 0.5
 
     // Water
+    @State private var isWaterTrackingEnabled = false
     @State private var waterGoalAuto = true
     @State private var waterGoalManualMl: Double = 2500
 
@@ -175,9 +176,13 @@ struct SettingsView: View {
 
                 // Section: Water Goal
                 Section {
-                    Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
+                    Toggle(selectedLanguage == "en" ? "Water Tracking" : "Su Takibi", isOn: $isWaterTrackingEnabled)
 
-                    if !waterGoalAuto {
+                    if isWaterTrackingEnabled {
+                        Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
+                    }
+
+                    if isWaterTrackingEnabled && !waterGoalAuto {
                         HStack {
                             Text(L.waterGoal.localized)
                             Spacer()
@@ -192,7 +197,7 @@ struct SettingsView: View {
                                 .frame(width: 60)
                                 .textFieldStyle(.roundedBorder)
                         }
-                    } else {
+                    } else if isWaterTrackingEnabled && waterGoalAuto {
                         Text(L.waterFormula.localized)
                             .font(Theme.captionFont)
                             .foregroundStyle(Theme.textSecondary)
@@ -532,6 +537,7 @@ struct SettingsView: View {
         weeklySchedule = p.weeklySchedule
         originalSchedule = p.weeklySchedule
         selectedLanguage = p.preferredLanguage
+        isWaterTrackingEnabled = p.isWaterTrackingEnabled
         if let override = p.waterGoalOverrideMl {
             waterGoalAuto = false
             waterGoalManualMl = Double(override)
@@ -586,6 +592,7 @@ struct SettingsView: View {
         p.weightReminderDays = weightReminderDays
         p.weightReminderHour = Calendar.current.component(.hour, from: weightReminderTime)
         p.preferredProteins = Array(preferredProteins)
+        p.isWaterTrackingEnabled = isWaterTrackingEnabled
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
         p.coachStyle = selectedCoachStyle
         p.preferredLanguage = selectedLanguage

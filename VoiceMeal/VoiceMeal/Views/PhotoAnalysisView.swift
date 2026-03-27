@@ -136,9 +136,9 @@ struct PhotoAnalysisView: View {
                     .overlay(Theme.cardBorder)
 
                 if let meals = response?.meals {
-                    let totalP = meals.reduce(0.0) { $0 + $1.protein }
-                    let totalC = meals.reduce(0.0) { $0 + $1.carbs }
-                    let totalF = meals.reduce(0.0) { $0 + $1.fat }
+                    let totalP = meals.reduce(0.0) { $0 + ($1.protein ?? 0) }
+                    let totalC = meals.reduce(0.0) { $0 + ($1.carbs ?? 0) }
+                    let totalF = meals.reduce(0.0) { $0 + ($1.fat ?? 0) }
 
                     HStack(spacing: 16) {
                         macroItem(icon: "\u{1F969}", label: L.protein.localized, value: "\(Int(totalP))g")
@@ -164,7 +164,7 @@ struct PhotoAnalysisView: View {
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
-            Text("\(Int(meal.calories)) kcal")
+            Text("\(Int(meal.calories ?? 0)) kcal")
                 .font(Theme.bodyFont)
                 .fontWeight(.semibold)
                 .foregroundStyle(Theme.accent)

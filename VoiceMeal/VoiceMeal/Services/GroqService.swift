@@ -8,12 +8,12 @@ import UIKit
 
 struct ParsedMeal: Codable, Identifiable {
     var id: String { name }
-    let name: String
-    let amount: String
-    let calories: Double
-    let protein: Double
-    let carbs: Double
-    let fat: Double
+    var name: String
+    var amount: String
+    var calories: Double?
+    var protein: Double?
+    var carbs: Double?
+    var fat: Double?
 }
 
 struct MealParseResponse: Codable {
@@ -102,8 +102,22 @@ class GroqService {
             You are a nutrition assistant. Extract foods eaten from the user's speech \
             and respond ONLY in JSON format.
 
-            If you're unsure about an amount or food, set clarification_needed to true \
-            and write the clarification_question in English.
+            CLARIFICATION RULES:
+            If you recognize the food but amount is unclear:
+            - Ask specifically: "What type of soup? Lentil or tomato?"
+            - Ask about quantity: "How many portions? Bowl-sized?"
+            - NEVER ask about calories/protein/carbs - you calculate these
+            - Make reasonable estimates based on standard portions
+
+            If you can recognize the food:
+            - Assume reasonable portion (1 serving, 1 bowl etc)
+            - ESTIMATE calories/protein/carbs/fat
+            - Return clarification_needed: false
+            - Write "~1 serving (estimated)" in amount field
+
+            If you cannot recognize the food at all:
+            - Set clarification_needed: true
+            - Ask what the food was
 
             If the user is making a correction (e.g. "actually the protein shake is 250 calories", \
             "no I was wrong, 300 grams of chicken", "change", "update"), set isCorrection: true \
@@ -133,8 +147,22 @@ class GroqService {
             Sen bir beslenme asistanısın. Kullanıcının Türkçe konuşmasından \
             yenilen yemekleri çıkar ve SADECE JSON formatında yanıt ver.
 
-            Emin olmadığın miktar veya yemek varsa clarification_needed true yap \
-            ve clarification_question alanına Türkçe soru yaz.
+            AÇIKLAMA KURALLARI:
+            Eğer yemeği tanıyabiliyorsun ama miktar belirsizse:
+            - Spesifik sor: "Çorba ne çorbasıydı? Mercimek mi domates mi?"
+            - Miktar sor: "Kaç porsiyon yedin? Kase büyüklüğünde miydi?"
+            - ASLA kalori/protein/karbonhidrat sorma - bunları sen hesapla
+            - Türk mutfağını iyi biliyorsun, tahmin edebilirsin
+
+            Eğer yemeği tanıyorsan, miktar belirsiz olsa bile:
+            - Makul bir porsiyon varsay (1 porsiyon, 1 kase vs)
+            - calories/protein/carbs/fat değerlerini TAHMİN et
+            - clarification_needed: false ile döndür
+            - amount alanına "~1 porsiyon (tahmini)" yaz
+
+            Eğer yemeği hiç tanıyamıyorsan:
+            - clarification_needed: true
+            - Yemeğin ne olduğunu sor
 
             Eğer kullanıcı bir düzeltme yapıyorsa (örn: "aslında protein \
             sütü 250 kalori", "hayır yanlış yazdım tavuk 300 gram", \
@@ -187,11 +215,24 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        let httpResponse = response as? HTTPURLResponse
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let urlError as URLError {
+            print("❌ [GroqService] Network error: \(urlError.code.rawValue) - \(urlError.localizedDescription)")
+            if urlError.code == .timedOut {
+                throw GroqError.timeout
+            }
+            throw GroqError.networkError
+        }
 
+        let httpResponse = response as? HTTPURLResponse
         guard let httpResponse, (200...299).contains(httpResponse.statusCode) else {
-            throw GroqError.apiError
+            let code = httpResponse?.statusCode ?? -1
+            let body = String(data: data, encoding: .utf8) ?? ""
+            print("❌ [GroqService] HTTP \(code): \(body)")
+            throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
@@ -207,12 +248,14 @@ class GroqService {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let jsonData = jsonString.data(using: .utf8) else {
+            print("❌ [GroqService] Invalid JSON string: \(jsonString)")
             throw GroqError.invalidJSON
         }
 
         do {
             return try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
         } catch {
+            print("❌ [GroqService] JSON decode error: \(error) — raw: \(jsonString)")
             throw GroqError.invalidJSON
         }
     }
@@ -364,9 +407,11 @@ class GroqService {
 
                 Protein: \(String(format: "%.0f", proteinConsumed))g / \(proteinTarget)g target
                 TDEE: \(tdee) kcal
+                \(waterGoalMl > 0 ? """
 
                 --- WATER STATUS ---
                 Water consumed: \(waterMl) ml / \(waterGoalMl) ml target
+                """ : "")
                 """
         } else {
             let remainingStatus = remainingCalories < 0 ? "hedefi aştı" : "hedef içinde"
@@ -393,9 +438,11 @@ class GroqService {
 
                 Protein: \(String(format: "%.0f", proteinConsumed))g / \(proteinTarget)g hedef
                 TDEE: \(tdee) kcal
+                \(waterGoalMl > 0 ? """
 
                 --- SU DURUMU ---
                 İçilen su: \(waterMl) ml / \(waterGoalMl) ml hedef
+                """ : "")
                 """
         }
 
@@ -415,11 +462,20 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let urlError as URLError {
+            print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
+        }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            throw GroqError.apiError
+            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
@@ -530,11 +586,20 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let urlError as URLError {
+            print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
+        }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            throw GroqError.apiError
+            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
@@ -655,11 +720,20 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let urlError as URLError {
+            print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
+        }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            throw GroqError.apiError
+            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
@@ -762,14 +836,20 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let urlError as URLError {
+            print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
+        }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            if let errorBody = String(data: data, encoding: .utf8) {
-                print("📷 [ERROR] API error: \(errorBody)")
-            }
-            throw GroqError.apiError
+            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
@@ -851,14 +931,20 @@ class GroqService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch let urlError as URLError {
+            print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
+        }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            if let errorBody = String(data: data, encoding: .utf8) {
-                print("📷 [ERROR] API error: \(errorBody)")
-            }
-            throw GroqError.apiError
+            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
@@ -927,16 +1013,26 @@ private struct Message: Codable {
 
 enum GroqError: LocalizedError {
     case missingAPIKey
-    case apiError
+    case apiError(statusCode: Int)
     case emptyResponse
     case invalidJSON
+    case networkError
+    case timeout
 
     var errorDescription: String? {
         switch self {
         case .missingAPIKey: "API anahtarı bulunamadı"
-        case .apiError: "Groq API hatası"
+        case .apiError(let code):
+            switch code {
+            case 401: "API anahtarı geçersiz."
+            case 429: "Çok fazla istek. Biraz bekleyin."
+            case 500...599: "Groq sunucusu meşgul. Tekrar deneyin."
+            default: "Groq API hatası (HTTP \(code))"
+            }
         case .emptyResponse: "Boş yanıt alındı"
-        case .invalidJSON: "Yanıt işlenemedi"
+        case .invalidJSON: "Yanıt işlenemedi. Tekrar deneyin."
+        case .networkError: "İnternet bağlantısı yok."
+        case .timeout: "Bağlantı zaman aşımına uğradı."
         }
     }
 }
