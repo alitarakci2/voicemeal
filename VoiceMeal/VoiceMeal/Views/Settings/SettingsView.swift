@@ -343,7 +343,9 @@ struct SettingsView: View {
                 }
             }
         }
-        .background(Theme.background)
+        .background {
+            Theme.background.ignoresSafeArea()
+        }
     }
 
     // MARK: - Card Helpers

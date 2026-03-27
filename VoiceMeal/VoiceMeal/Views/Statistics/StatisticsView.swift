@@ -118,7 +118,9 @@ struct StatisticsView: View {
                 await loadWeeklyInsight()
             }
         }
-        .background(Theme.background)
+        .background {
+            Theme.background.ignoresSafeArea()
+        }
     }
 
     private var trendEmoji: String {

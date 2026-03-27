@@ -318,7 +318,9 @@ struct PlanView: View {
             }
             .animation(.easeInOut, value: showSavedToast)
         }
-        .background(Theme.background)
+        .background {
+            Theme.background.ignoresSafeArea()
+        }
     }
 
     // MARK: - Plan Settings Card
