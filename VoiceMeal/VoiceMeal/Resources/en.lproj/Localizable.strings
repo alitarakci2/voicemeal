@@ -358,6 +358,8 @@
 "calorie_deficit_label" = "Calorie Deficit";
 "actual_label" = "Actual";
 "eating_exceeded_format" = "Eating: %d%% exceeded";
+"eating_exceeded_short" = "Exceeded";
+"on_track_label" = "On Track";
 "eating_completed_format" = "Eating: %d%% completed";
 "deficit_progress_format" = "Deficit: %d / %d kcal (%d%%)";
 "protein_label" = "Protein";

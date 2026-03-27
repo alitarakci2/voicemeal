@@ -34,9 +34,9 @@ extension Color {
 // MARK: - Theme Colors
 
 enum Theme {
-    static let background = Color(hex: "0A0A0F")
-    static let cardBackground = Color(hex: "1C1C24")
-    static let cardBorder = Color(hex: "2A2A38")
+    static let background = Color(hex: "000000")
+    static let cardBackground = Color(hex: "1C1C1E")
+    static let cardBorder = Color(hex: "2C2C2E")
     static let accent = Color(hex: "6C63FF")
     static let green = Color(hex: "34C759")
     static let orange = Color(hex: "FF9F0A")
