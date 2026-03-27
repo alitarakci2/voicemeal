@@ -285,7 +285,9 @@ struct PlanView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                 }
-                .background(Theme.background)
+                .background(Theme.background.ignoresSafeArea())
+                .toolbarBackground(Color.black, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
                 .onAppear {
                     loadPlanSettings()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

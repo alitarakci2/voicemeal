@@ -419,7 +419,9 @@ struct HomeView: View {
             }
             .padding()
         }
-        .background(Theme.background)
+        .background(Theme.background.ignoresSafeArea())
+        .toolbarBackground(Color.black, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
         .task {
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {

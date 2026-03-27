@@ -272,7 +272,9 @@ struct SettingsView: View {
                 }
                 .padding()
             }
-            .background(Theme.background)
+            .background(Theme.background.ignoresSafeArea())
+            .toolbarBackground(Color.black, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
             .navigationTitle(L.settings.localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -106,7 +106,9 @@ struct StatisticsView: View {
                 }
                 .padding()
             }
-            .background(Theme.background)
+            .background(Theme.background.ignoresSafeArea())
+            .toolbarBackground(Color.black, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
             .navigationTitle(L.statistics.localized)
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
