@@ -17,6 +17,63 @@ struct ContentView: View {
         !profiles.isEmpty || onboardingComplete
     }
 
+    init() {
+        let black = UIColor.black
+
+        // Tab bar - force black for ALL states
+        let tabAppearance = UITabBarAppearance()
+        tabAppearance.configureWithOpaqueBackground()
+        tabAppearance.backgroundColor = black
+        tabAppearance.shadowColor = .clear
+
+        // Normal icons/text
+        let normalColor = UIColor(white: 0.45, alpha: 1)
+        tabAppearance.stackedLayoutAppearance.normal.iconColor = normalColor
+        tabAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
+        tabAppearance.compactInlineLayoutAppearance.normal.iconColor = normalColor
+        tabAppearance.compactInlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
+        tabAppearance.inlineLayoutAppearance.normal.iconColor = normalColor
+        tabAppearance.inlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
+
+        // Selected icons/text
+        let accent = UIColor(Color(hex: "6C63FF"))
+        tabAppearance.stackedLayoutAppearance.selected.iconColor = accent
+        tabAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
+        tabAppearance.compactInlineLayoutAppearance.selected.iconColor = accent
+        tabAppearance.compactInlineLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
+        tabAppearance.inlineLayoutAppearance.selected.iconColor = accent
+        tabAppearance.inlineLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
+
+        UITabBar.appearance().standardAppearance = tabAppearance
+        UITabBar.appearance().scrollEdgeAppearance = tabAppearance
+        UITabBar.appearance().barTintColor = black
+        UITabBar.appearance().backgroundColor = black
+        UITabBar.appearance().isTranslucent = false
+        UITabBar.appearance().unselectedItemTintColor = normalColor
+
+        // Navigation bar
+        let navAppearance = UINavigationBarAppearance()
+        navAppearance.configureWithOpaqueBackground()
+        navAppearance.backgroundColor = black
+        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        navAppearance.shadowColor = .clear
+
+        UINavigationBar.appearance().standardAppearance = navAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
+        UINavigationBar.appearance().compactAppearance = navAppearance
+
+        // Segmented control
+        UISegmentedControl.appearance().selectedSegmentTintColor = accent
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(white: 0.6, alpha: 1)], for: .normal)
+        UISegmentedControl.appearance().backgroundColor = UIColor(Color(hex: "1C1C1E"))
+
+        print("DEBUG TAB BAR: init() called - appearance set")
+        print("DEBUG TAB BAR: isTranslucent = \(UITabBar.appearance().isTranslucent)")
+        print("DEBUG TAB BAR: backgroundColor = \(String(describing: UITabBar.appearance().backgroundColor))")
+    }
+
     var body: some View {
         Group {
             if hasProfile {
@@ -46,6 +103,13 @@ struct ContentView: View {
                         .tag(3)
                 }
                 .tint(Theme.accent)
+                .onAppear {
+                    // Debug: verify tab bar state at runtime
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first {
+                        findTabBar(in: window)
+                    }
+                }
                 .environment(goalEngine)
                 .environment(groqService)
                 .onAppear {
@@ -64,6 +128,26 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private func findTabBar(in view: UIView) {
+        if let tabBar = view as? UITabBar {
+            print("DEBUG TAB BAR FOUND:")
+            print("  backgroundColor: \(String(describing: tabBar.backgroundColor))")
+            print("  barTintColor: \(String(describing: tabBar.barTintColor))")
+            print("  isTranslucent: \(tabBar.isTranslucent)")
+            print("  standardAppearance.backgroundColor: \(String(describing: tabBar.standardAppearance.backgroundColor))")
+            print("  scrollEdgeAppearance.backgroundColor: \(String(describing: tabBar.scrollEdgeAppearance?.backgroundColor))")
+
+            // Force override at runtime
+            tabBar.backgroundColor = .black
+            tabBar.barTintColor = .black
+            tabBar.isTranslucent = false
+            return
+        }
+        for subview in view.subviews {
+            findTabBar(in: subview)
+        }
     }
 }
 
