@@ -19,19 +19,13 @@ struct FoodEntryRowView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 // Name + calories
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .top) {
                     Text(entry.name)
                         .font(Theme.bodyFont)
                         .fontWeight(.semibold)
                         .foregroundStyle(Theme.textPrimary)
-                        .lineLimit(1)
-
-                    if !entry.amount.isEmpty {
-                        Text(entry.amount)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textTertiary)
-                            .lineLimit(1)
-                    }
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Spacer()
 
@@ -43,8 +37,17 @@ struct FoodEntryRowView: View {
                         .foregroundStyle(Theme.textSecondary)
                 }
 
-                // Macro pills
+                // Amount + Macro pills
                 HStack(spacing: 6) {
+                    if !entry.amount.isEmpty {
+                        Text(entry.amount)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(Theme.textTertiary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Theme.textTertiary.opacity(0.15))
+                            .clipShape(Capsule())
+                    }
                     macroPill("P", value: Int(entry.protein), color: Theme.blue)
                     macroPill("K", value: Int(entry.carbs), color: Theme.orange)
                     macroPill("Y", value: Int(entry.fat), color: Color(hex: "FF6B9D"))

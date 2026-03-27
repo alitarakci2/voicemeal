@@ -69,9 +69,6 @@ struct ContentView: View {
         UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(white: 0.6, alpha: 1)], for: .normal)
         UISegmentedControl.appearance().backgroundColor = UIColor(Color(hex: "1C1C1E"))
 
-        print("DEBUG TAB BAR: init() called - appearance set")
-        print("DEBUG TAB BAR: isTranslucent = \(UITabBar.appearance().isTranslucent)")
-        print("DEBUG TAB BAR: backgroundColor = \(String(describing: UITabBar.appearance().backgroundColor))")
     }
 
     var body: some View {
@@ -103,13 +100,6 @@ struct ContentView: View {
                         .tag(3)
                 }
                 .tint(Theme.accent)
-                .onAppear {
-                    // Debug: verify tab bar state at runtime
-                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                       let window = windowScene.windows.first {
-                        findTabBar(in: window)
-                    }
-                }
                 .environment(goalEngine)
                 .environment(groqService)
                 .onAppear {
@@ -128,26 +118,6 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
-    }
-
-    private func findTabBar(in view: UIView) {
-        if let tabBar = view as? UITabBar {
-            print("DEBUG TAB BAR FOUND:")
-            print("  backgroundColor: \(String(describing: tabBar.backgroundColor))")
-            print("  barTintColor: \(String(describing: tabBar.barTintColor))")
-            print("  isTranslucent: \(tabBar.isTranslucent)")
-            print("  standardAppearance.backgroundColor: \(String(describing: tabBar.standardAppearance.backgroundColor))")
-            print("  scrollEdgeAppearance.backgroundColor: \(String(describing: tabBar.scrollEdgeAppearance?.backgroundColor))")
-
-            // Force override at runtime
-            tabBar.backgroundColor = .black
-            tabBar.barTintColor = .black
-            tabBar.isTranslucent = false
-            return
-        }
-        for subview in view.subviews {
-            findTabBar(in: subview)
-        }
     }
 }
 
