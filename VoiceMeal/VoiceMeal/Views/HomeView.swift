@@ -68,9 +68,7 @@ struct HomeView: View {
     private var eatenFat: Double { todayEntries.reduce(0.0) { $0 + $1.fat } }
 
     var body: some View {
-        ZStack {
-            Theme.background.ignoresSafeArea()
-            ScrollView {
+        ScrollView {
             VStack(spacing: 24) {
                 // Weight update banner
                 if showWeightBanner, let banner = goalEngine.weightUpdatedBanner {
@@ -421,9 +419,7 @@ struct HomeView: View {
             }
             .padding()
         }
-        }
-        .toolbarBackground(Color.black, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
+        .background(Theme.background)
         .task {
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {

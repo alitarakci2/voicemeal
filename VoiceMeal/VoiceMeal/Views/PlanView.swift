@@ -218,10 +218,8 @@ struct PlanView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Theme.background.ignoresSafeArea()
-                ScrollViewReader { proxy in
-                    ScrollView {
+            ScrollViewReader { proxy in
+                ScrollView {
                     LazyVStack(spacing: 8) {
                         // Plan settings (collapsible)
                         planSettingsCard
@@ -295,10 +293,8 @@ struct PlanView: View {
                         }
                     }
                 }
-                }
+                .background(Theme.background)
             }
-            .toolbarBackground(Color.black, for: .tabBar)
-            .toolbarBackground(.visible, for: .tabBar)
             .navigationTitle("Plan")
             .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
                 planService.regeneratePlans()

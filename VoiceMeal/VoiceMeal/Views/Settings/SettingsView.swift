@@ -50,10 +50,8 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Theme.background.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: 16) {
+            ScrollView {
+                VStack(spacing: 16) {
                         // Section: Profile
                         settingsCard {
                         VStack(alignment: .leading, spacing: 16) {
@@ -274,9 +272,7 @@ struct SettingsView: View {
                 }
                 .padding()
             }
-            }
-            .toolbarBackground(Color.black, for: .tabBar)
-            .toolbarBackground(.visible, for: .tabBar)
+            .background(Theme.background)
             .navigationTitle(L.settings.localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
