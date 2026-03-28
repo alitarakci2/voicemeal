@@ -12,6 +12,8 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var goalEngine = GoalEngine()
     @State private var groqService = GroqService()
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var backgroundedAt: Date?
 
     private var hasProfile: Bool {
         !profiles.isEmpty || onboardingComplete
@@ -118,6 +120,16 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background {
+                backgroundedAt = Date()
+            } else if newPhase == .active, let bgDate = backgroundedAt {
+                if Date().timeIntervalSince(bgDate) > 300 {
+                    selectedTab = 0
+                }
+                backgroundedAt = nil
+            }
+        }
     }
 }
 
