@@ -503,3 +503,15 @@
 "weight_reminder_enabled" = "Tartı Hatırlatması";
 "weight_reminder_days" = "Her %d günde bir";
 "weight_reminder_explanation" = "Son tartıdan %d gün geçmişse bildirim gönderilir";
+
+// Onboarding HealthKit
+"healthkit_imported" = "Apple Health'ten veriler alındı";
+"healthkit_intro_title" = "Apple Health";
+"healthkit_intro_body" = "Profilini daha hızlı oluşturabilmemiz için Apple Health'ten bilgilerini alabiliriz.";
+"healthkit_feature_weight" = "Kilo";
+"healthkit_feature_height" = "Boy";
+"healthkit_feature_profile" = "Yaş ve Cinsiyet";
+"healthkit_feature_calories" = "Günlük kalori yakımı";
+
+// Onboarding Coach Style
+"coach_style_intro" = "Sana en uygun koçluk tarzını seç. Bu, uygulamanın seninle nasıl iletişim kuracağını belirler.";

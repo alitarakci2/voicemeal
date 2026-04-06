@@ -13,6 +13,7 @@
 		576FDB3CDC207A8DB01E8FE7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C0606C1299A210188E74A0C7 /* Assets.xcassets */; };
 		5C3D4CC472F04E9FD271CA6E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57E81C569171BFCD30DCD03 /* SwiftUI.framework */; };
 		B60BB7B386E00991775510BD /* VoiceMealWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 653665859AD431C4DDD50613 /* VoiceMealWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B974CE8B2F78296600EEC453 /* VoiceMealWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B974CE6B2F78296500EEC453 /* VoiceMealWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F6235255A93E69CAFC75D426 /* VoiceMealWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518844E37B2DADF4C884F472 /* VoiceMealWidget.swift */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +24,27 @@
 			proxyType = 1;
 			remoteGlobalIDString = 14915B99E49B2F1FA5A7EB96;
 			remoteInfo = VoiceMealWidgetExtension;
+		};
+		B974CE782F78296600EEC453 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B98021612F620F300032CCEB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B974CE6A2F78296500EEC453;
+			remoteInfo = "VoiceMealWatch Watch App";
+		};
+		B974CE822F78296600EEC453 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B98021612F620F300032CCEB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B974CE6A2F78296500EEC453;
+			remoteInfo = "VoiceMealWatch Watch App";
+		};
+		B974CE892F78296600EEC453 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B98021612F620F300032CCEB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B974CE6A2F78296500EEC453;
+			remoteInfo = "VoiceMealWatch Watch App";
 		};
 		B98021792F620F310032CCEB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +74,17 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B974CE8F2F78296600EEC453 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B974CE8B2F78296600EEC453 /* VoiceMealWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -61,6 +94,9 @@
 		653665859AD431C4DDD50613 /* VoiceMealWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VoiceMealWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6AD0D608C9DEFF8CF4C9FA38 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		9AED2027D01E948A3A16A55A /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		B974CE6B2F78296500EEC453 /* VoiceMealWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VoiceMealWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B974CE772F78296600EEC453 /* VoiceMealWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VoiceMealWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B974CE812F78296600EEC453 /* VoiceMealWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VoiceMealWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B98021692F620F300032CCEB /* VoiceMeal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoiceMeal.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B98021782F620F310032CCEB /* VoiceMealTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceMealTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B98021822F620F310032CCEB /* VoiceMealUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceMealUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,6 +108,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		B974CE6C2F78296500EEC453 /* VoiceMealWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "VoiceMealWatch Watch App";
+			sourceTree = "<group>";
+		};
+		B974CE7A2F78296600EEC453 /* VoiceMealWatch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "VoiceMealWatch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		B974CE842F78296600EEC453 /* VoiceMealWatch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "VoiceMealWatch Watch AppUITests";
+			sourceTree = "<group>";
+		};
 		B980216B2F620F300032CCEB /* VoiceMeal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = VoiceMeal;
@@ -97,6 +148,27 @@
 				09563B9A4F337D45BD9C4DAE /* Foundation.framework in Frameworks */,
 				40DCCBCFB0092D2D45D24443 /* WidgetKit.framework in Frameworks */,
 				5C3D4CC472F04E9FD271CA6E /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE682F78296500EEC453 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE742F78296600EEC453 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE7E2F78296600EEC453 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -151,6 +223,9 @@
 				B980216B2F620F300032CCEB /* VoiceMeal */,
 				B980217B2F620F310032CCEB /* VoiceMealTests */,
 				B98021852F620F310032CCEB /* VoiceMealUITests */,
+				B974CE6C2F78296500EEC453 /* VoiceMealWatch Watch App */,
+				B974CE7A2F78296600EEC453 /* VoiceMealWatch Watch AppTests */,
+				B974CE842F78296600EEC453 /* VoiceMealWatch Watch AppUITests */,
 				B980216A2F620F300032CCEB /* Products */,
 				99AADD580271C3262B8BDBC2 /* Frameworks */,
 				CBC27E4D1C63A3C93411C616 /* VoiceMealWidget */,
@@ -165,6 +240,9 @@
 				B98021782F620F310032CCEB /* VoiceMealTests.xctest */,
 				B98021822F620F310032CCEB /* VoiceMealUITests.xctest */,
 				653665859AD431C4DDD50613 /* VoiceMealWidgetExtension.appex */,
+				B974CE6B2F78296500EEC453 /* VoiceMealWatch Watch App.app */,
+				B974CE772F78296600EEC453 /* VoiceMealWatch Watch AppTests.xctest */,
+				B974CE812F78296600EEC453 /* VoiceMealWatch Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -207,6 +285,74 @@
 			productReference = 653665859AD431C4DDD50613 /* VoiceMealWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B974CE8C2F78296600EEC453 /* Build configuration list for PBXNativeTarget "VoiceMealWatch Watch App" */;
+			buildPhases = (
+				B974CE672F78296500EEC453 /* Sources */,
+				B974CE682F78296500EEC453 /* Frameworks */,
+				B974CE692F78296500EEC453 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B974CE6C2F78296500EEC453 /* VoiceMealWatch Watch App */,
+			);
+			name = "VoiceMealWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "VoiceMealWatch Watch App";
+			productReference = B974CE6B2F78296500EEC453 /* VoiceMealWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B974CE762F78296600EEC453 /* VoiceMealWatch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B974CE902F78296600EEC453 /* Build configuration list for PBXNativeTarget "VoiceMealWatch Watch AppTests" */;
+			buildPhases = (
+				B974CE732F78296600EEC453 /* Sources */,
+				B974CE742F78296600EEC453 /* Frameworks */,
+				B974CE752F78296600EEC453 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B974CE792F78296600EEC453 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B974CE7A2F78296600EEC453 /* VoiceMealWatch Watch AppTests */,
+			);
+			name = "VoiceMealWatch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "VoiceMealWatch Watch AppTests";
+			productReference = B974CE772F78296600EEC453 /* VoiceMealWatch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B974CE802F78296600EEC453 /* VoiceMealWatch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B974CE932F78296600EEC453 /* Build configuration list for PBXNativeTarget "VoiceMealWatch Watch AppUITests" */;
+			buildPhases = (
+				B974CE7D2F78296600EEC453 /* Sources */,
+				B974CE7E2F78296600EEC453 /* Frameworks */,
+				B974CE7F2F78296600EEC453 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B974CE832F78296600EEC453 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B974CE842F78296600EEC453 /* VoiceMealWatch Watch AppUITests */,
+			);
+			name = "VoiceMealWatch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "VoiceMealWatch Watch AppUITests";
+			productReference = B974CE812F78296600EEC453 /* VoiceMealWatch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		B98021682F620F300032CCEB /* VoiceMeal */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B980218C2F620F310032CCEB /* Build configuration list for PBXNativeTarget "VoiceMeal" */;
@@ -215,11 +361,13 @@
 				B98021662F620F300032CCEB /* Frameworks */,
 				B98021672F620F300032CCEB /* Resources */,
 				A8A7B6DAE132D549B00B2149 /* Embed Foundation Extensions */,
+				B974CE8F2F78296600EEC453 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				C215759AB9BABBA821C0CF79 /* PBXTargetDependency */,
+				B974CE8A2F78296600EEC453 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B980216B2F620F300032CCEB /* VoiceMeal */,
@@ -281,6 +429,17 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					B974CE6A2F78296500EEC453 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					B974CE762F78296600EEC453 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = B974CE6A2F78296500EEC453;
+					};
+					B974CE802F78296600EEC453 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = B974CE6A2F78296500EEC453;
+					};
 					B98021682F620F300032CCEB = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -313,6 +472,9 @@
 				B98021772F620F310032CCEB /* VoiceMealTests */,
 				B98021812F620F310032CCEB /* VoiceMealUITests */,
 				14915B99E49B2F1FA5A7EB96 /* VoiceMealWidgetExtension */,
+				B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */,
+				B974CE762F78296600EEC453 /* VoiceMealWatch Watch AppTests */,
+				B974CE802F78296600EEC453 /* VoiceMealWatch Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -323,6 +485,27 @@
 			buildActionMask = 2147483647;
 			files = (
 				576FDB3CDC207A8DB01E8FE7 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE692F78296500EEC453 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE752F78296600EEC453 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE7F2F78296600EEC453 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -359,6 +542,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B974CE672F78296500EEC453 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE732F78296600EEC453 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B974CE7D2F78296600EEC453 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B98021652F620F300032CCEB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -383,6 +587,21 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		B974CE792F78296600EEC453 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */;
+			targetProxy = B974CE782F78296600EEC453 /* PBXContainerItemProxy */;
+		};
+		B974CE832F78296600EEC453 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */;
+			targetProxy = B974CE822F78296600EEC453 /* PBXContainerItemProxy */;
+		};
+		B974CE8A2F78296600EEC453 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */;
+			targetProxy = B974CE892F78296600EEC453 /* PBXContainerItemProxy */;
+		};
 		B980217A2F620F310032CCEB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B98021682F620F300032CCEB /* VoiceMeal */;
@@ -462,6 +681,162 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B974CE8D2F78296600EEC453 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NAPXV2993R;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = VoiceMealWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = indio.VoiceMeal;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = indio.VoiceMeal.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		B974CE8E2F78296600EEC453 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NAPXV2993R;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = VoiceMealWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = indio.VoiceMeal;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = indio.VoiceMeal.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		B974CE912F78296600EEC453 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NAPXV2993R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "indio.VoiceMealWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoiceMealWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VoiceMealWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		B974CE922F78296600EEC453 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NAPXV2993R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "indio.VoiceMealWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoiceMealWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VoiceMealWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		B974CE942F78296600EEC453 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NAPXV2993R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "indio.VoiceMealWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "VoiceMealWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		B974CE952F78296600EEC453 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NAPXV2993R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "indio.VoiceMealWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "VoiceMealWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
 			};
 			name = Release;
 		};
@@ -754,6 +1129,33 @@
 			buildConfigurations = (
 				76928D0CAC80C0ABD5584800 /* Release */,
 				2BC81038337D12C81094F8B9 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B974CE8C2F78296600EEC453 /* Build configuration list for PBXNativeTarget "VoiceMealWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B974CE8D2F78296600EEC453 /* Debug */,
+				B974CE8E2F78296600EEC453 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B974CE902F78296600EEC453 /* Build configuration list for PBXNativeTarget "VoiceMealWatch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B974CE912F78296600EEC453 /* Debug */,
+				B974CE922F78296600EEC453 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B974CE932F78296600EEC453 /* Build configuration list for PBXNativeTarget "VoiceMealWatch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B974CE942F78296600EEC453 /* Debug */,
+				B974CE952F78296600EEC453 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

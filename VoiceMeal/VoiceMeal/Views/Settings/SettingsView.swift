@@ -212,20 +212,6 @@ struct SettingsView: View {
                         }
                     }
 
-                    // Save button
-                    Button {
-                        handleSave()
-                    } label: {
-                        Text(L.save.localized)
-                            .font(Theme.headlineFont)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Theme.accent)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                    }
-                    .buttonStyle(.plain)
-
                     // Section: Language
                     settingsCard {
                         VStack(alignment: .leading, spacing: 12) {
@@ -245,6 +231,20 @@ struct SettingsView: View {
                             }
                         }
                     }
+
+                    // Save button
+                    Button {
+                        handleSave()
+                    } label: {
+                        Text(L.save.localized)
+                            .font(Theme.headlineFont)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Theme.accent)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    .buttonStyle(.plain)
 
                     // Section: App
                     settingsCard {

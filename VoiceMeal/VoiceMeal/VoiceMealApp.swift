@@ -10,12 +10,13 @@ import SwiftUI
 
 @main
 struct VoiceMealApp: App {
+    init() {
+        _ = WatchConnectivityService.shared
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .task {
-                    _ = await NotificationService.shared.requestPermission()
-                }
         }
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self])
     }

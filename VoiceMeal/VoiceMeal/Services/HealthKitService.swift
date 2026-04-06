@@ -98,8 +98,11 @@ class HealthKitService {
             HKQuantityType(.basalEnergyBurned),
             HKQuantityType(.vo2Max),
             HKQuantityType(.bodyMass),
+            HKQuantityType(.height),
             HKCategoryType(.sleepAnalysis),
             HKQuantityType(.heartRateVariabilitySDNN),
+            HKCharacteristicType(.biologicalSex),
+            HKCharacteristicType(.dateOfBirth),
         ]
         if HKQuantityType.quantityType(forIdentifier: .leanBodyMass) != nil {
             types.insert(HKQuantityType(.leanBodyMass))
@@ -349,6 +352,54 @@ class HealthKitService {
         let avg = values.reduce(0, +) / Double(values.count)
         hrvBaseline = avg
         return avg
+    }
+
+    // MARK: - Onboarding Characteristics
+
+    func fetchBiologicalSex() -> String? {
+        guard let store else { return nil }
+        do {
+            let sex = try store.biologicalSex().biologicalSex
+            switch sex {
+            case .male: return "male"
+            case .female: return "female"
+            default: return nil
+            }
+        } catch {
+            return nil
+        }
+    }
+
+    func fetchAge() -> Int? {
+        guard let store else { return nil }
+        do {
+            let components = try store.dateOfBirthComponents()
+            guard let year = components.year else { return nil }
+            let now = Calendar.current.dateComponents([.year], from: .now)
+            guard let currentYear = now.year else { return nil }
+            let age = currentYear - year
+            return (age >= 15 && age <= 80) ? age : nil
+        } catch {
+            return nil
+        }
+    }
+
+    func fetchLatestHeight() async -> Double? {
+        guard let store else { return nil }
+
+        let type = HKQuantityType(.height)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+        let result: Double? = await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, _ in
+                let value = (samples?.first as? HKQuantitySample)?
+                    .quantity.doubleValue(for: .meterUnit(with: .centi))
+                continuation.resume(returning: value)
+            }
+            store.execute(query)
+        }
+
+        return result
     }
 
     private func fetchSum(store: HKHealthStore, type: HKQuantityType, predicate: NSPredicate) async -> Double {

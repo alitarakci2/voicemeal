@@ -10,6 +10,9 @@ struct Step3GoalView: View {
     @Binding var goalWeightKg: Double
     @Binding var goalDays: Int
 
+    @State private var goalWeightText = ""
+    @FocusState private var goalWeightFocused: Bool
+
     private let presetDays = [30, 60, 90, 120]
 
     private var weeklyLoss: Double {
@@ -31,12 +34,17 @@ struct Step3GoalView: View {
 
                 // Goal weight
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("\("goal_weight_label".localized): \(String(format: "%.2f", goalWeightKg)) kg")
+                    Text("\("goal_weight_label".localized): \(String(format: "%.1f", goalWeightKg)) kg")
                         .font(Theme.headlineFont)
                     HStack {
-                        Slider(value: $goalWeightKg, in: 40...200, step: 0.05)
+                        Slider(value: $goalWeightKg, in: 40...200, step: 0.1)
                             .tint(Theme.accent)
-                        TextField("", value: $goalWeightKg, format: .number.precision(.fractionLength(2)))
+                            .onChange(of: goalWeightKg) { _, newVal in
+                                if !goalWeightFocused {
+                                    goalWeightText = String(format: "%.1f", newVal)
+                                }
+                            }
+                        TextField("", text: $goalWeightText)
                             .keyboardType(.decimalPad)
                             .frame(width: 64)
                             .padding(8)
@@ -44,8 +52,11 @@ struct Step3GoalView: View {
                             .cornerRadius(8)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .onChange(of: goalWeightKg) { _, newVal in
-                                goalWeightKg = min(200, max(40, (newVal * 100).rounded() / 100))
+                            .focused($goalWeightFocused)
+                            .onChange(of: goalWeightFocused) { _, focused in
+                                if !focused {
+                                    validateGoalWeight()
+                                }
                             }
                     }
                 }
@@ -118,6 +129,21 @@ struct Step3GoalView: View {
                 }
             }
             .padding()
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .onAppear {
+            goalWeightText = String(format: "%.1f", goalWeightKg)
+        }
+    }
+
+    private func validateGoalWeight() {
+        let cleaned = goalWeightText.replacingOccurrences(of: ",", with: ".")
+        if let val = Double(cleaned) {
+            let clamped = min(200, max(40, val))
+            goalWeightKg = (clamped * 10).rounded() / 10
+            goalWeightText = String(format: "%.1f", goalWeightKg)
+        } else {
+            goalWeightText = String(format: "%.1f", goalWeightKg)
         }
     }
 }

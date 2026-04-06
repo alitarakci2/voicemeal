@@ -11,6 +11,11 @@ struct Step2BodyView: View {
     @Binding var heightCm: Double
     @Binding var currentWeightKg: Double
 
+    @State private var heightText = ""
+    @State private var weightText = ""
+    @FocusState private var heightFocused: Bool
+    @FocusState private var weightFocused: Bool
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -43,7 +48,12 @@ struct Step2BodyView: View {
                     HStack {
                         Slider(value: $heightCm, in: 140...220, step: 1)
                             .tint(Theme.accent)
-                        TextField("", value: $heightCm, format: .number.precision(.fractionLength(0)))
+                            .onChange(of: heightCm) { _, newVal in
+                                if !heightFocused {
+                                    heightText = "\(Int(newVal))"
+                                }
+                            }
+                        TextField("", text: $heightText)
                             .keyboardType(.numberPad)
                             .frame(width: 64)
                             .padding(8)
@@ -51,20 +61,28 @@ struct Step2BodyView: View {
                             .cornerRadius(8)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .onChange(of: heightCm) { _, newVal in
-                                heightCm = min(220, max(140, newVal)).rounded()
+                            .focused($heightFocused)
+                            .onChange(of: heightFocused) { _, focused in
+                                if !focused {
+                                    validateHeight()
+                                }
                             }
                     }
                 }
 
                 // Weight
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("\("current_weight_label".localized): \(String(format: "%.2f", currentWeightKg)) kg")
+                    Text("\("current_weight_label".localized): \(String(format: "%.1f", currentWeightKg)) kg")
                         .font(Theme.headlineFont)
                     HStack {
-                        Slider(value: $currentWeightKg, in: 40...200, step: 0.05)
+                        Slider(value: $currentWeightKg, in: 40...200, step: 0.1)
                             .tint(Theme.accent)
-                        TextField("", value: $currentWeightKg, format: .number.precision(.fractionLength(2)))
+                            .onChange(of: currentWeightKg) { _, newVal in
+                                if !weightFocused {
+                                    weightText = String(format: "%.1f", newVal)
+                                }
+                            }
+                        TextField("", text: $weightText)
                             .keyboardType(.decimalPad)
                             .frame(width: 64)
                             .padding(8)
@@ -72,15 +90,48 @@ struct Step2BodyView: View {
                             .cornerRadius(8)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                            .onChange(of: currentWeightKg) { _, newVal in
-                                currentWeightKg = min(200, max(40, (newVal * 100).rounded() / 100))
+                            .focused($weightFocused)
+                            .onChange(of: weightFocused) { _, focused in
+                                if !focused {
+                                    validateWeight()
+                                }
                             }
                     }
                 }
             }
             .padding()
         }
+        .scrollDismissesKeyboard(.interactively)
+        .onAppear {
+            heightText = "\(Int(heightCm))"
+            weightText = String(format: "%.1f", currentWeightKg)
+        }
     }
+
+    // MARK: - Validation
+
+    private func validateHeight() {
+        if let val = Double(heightText) {
+            let clamped = min(220, max(140, val)).rounded()
+            heightCm = clamped
+            heightText = "\(Int(clamped))"
+        } else {
+            heightText = "\(Int(heightCm))"
+        }
+    }
+
+    private func validateWeight() {
+        let cleaned = weightText.replacingOccurrences(of: ",", with: ".")
+        if let val = Double(cleaned) {
+            let clamped = min(200, max(40, val))
+            currentWeightKg = (clamped * 10).rounded() / 10
+            weightText = String(format: "%.1f", currentWeightKg)
+        } else {
+            weightText = String(format: "%.1f", currentWeightKg)
+        }
+    }
+
+    // MARK: - UI
 
     private func genderCard(label: String, value: String, icon: String) -> some View {
         Button {

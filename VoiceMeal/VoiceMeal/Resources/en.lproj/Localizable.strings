@@ -476,3 +476,15 @@
 "weight_reminder_enabled" = "Weight Reminder";
 "weight_reminder_days" = "Every %d days";
 "weight_reminder_explanation" = "You'll be reminded after %d days without weighing in";
+
+// Onboarding HealthKit
+"healthkit_imported" = "Data imported from Apple Health";
+"healthkit_intro_title" = "Apple Health";
+"healthkit_intro_body" = "We can import your data from Apple Health to set up your profile faster.";
+"healthkit_feature_weight" = "Weight";
+"healthkit_feature_height" = "Height";
+"healthkit_feature_profile" = "Age & Gender";
+"healthkit_feature_calories" = "Daily calorie burn";
+
+// Onboarding Coach Style
+"coach_style_intro" = "Choose the coaching style that suits you best. This affects how the app communicates with you.";

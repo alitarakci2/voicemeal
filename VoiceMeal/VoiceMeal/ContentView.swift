@@ -8,12 +8,45 @@ import SwiftUI
 
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
+    @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @State private var onboardingComplete = false
     @State private var selectedTab = 0
     @State private var goalEngine = GoalEngine()
     @State private var groqService = GroqService()
     @Environment(\.scenePhase) private var scenePhase
     @State private var backgroundedAt: Date?
+    private let watchService = WatchConnectivityService.shared
+
+    private var todayEntries: [FoodEntry] {
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        return allEntries.filter { $0.date >= startOfDay }
+    }
+
+    private func syncToWatch() {
+        let entries = todayEntries
+        let eaten = entries.reduce(0) { $0 + $1.calories }
+        let protein = entries.reduce(0.0) { $0 + $1.protein }
+        let carbs = entries.reduce(0.0) { $0 + $1.carbs }
+        let fat = entries.reduce(0.0) { $0 + $1.fat }
+        let realDeficit = Int(goalEngine.tdee) - eaten
+
+        let meals = entries.map { e in
+            (name: e.name, amount: e.amount, calories: e.calories, protein: e.protein, carbs: e.carbs, fat: e.fat)
+        }
+
+        watchService.sendDailyData(
+            eatenCalories: eaten,
+            goalCalories: goalEngine.dailyCalorieTarget,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            proteinTarget: Double(goalEngine.proteinTarget),
+            carbTarget: Double(goalEngine.carbTarget),
+            fatTarget: Double(goalEngine.fatTarget),
+            deficit: realDeficit,
+            meals: meals
+        )
+    }
 
     private var hasProfile: Bool {
         !profiles.isEmpty || onboardingComplete
@@ -107,6 +140,9 @@ struct ContentView: View {
                 .onAppear {
                     goalEngine.update(with: profiles.first)
                 }
+                .task {
+                    _ = await NotificationService.shared.requestPermission()
+                }
                 .onChange(of: profiles) {
                     goalEngine.update(with: profiles.first)
                 }
@@ -114,6 +150,10 @@ struct ContentView: View {
                     if let profile = profiles.first {
                         goalEngine.updateProfile(profile)
                     }
+                    syncToWatch()
+                }
+                .onChange(of: allEntries.count) {
+                    syncToWatch()
                 }
             } else {
                 OnboardingContainerView(onboardingComplete: $onboardingComplete)
