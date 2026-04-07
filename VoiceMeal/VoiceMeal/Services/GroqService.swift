@@ -924,6 +924,7 @@ class GroqService {
         }
     }
 
+    // meta-llama/llama-4-scout-17b-16e-instruct supports vision (multimodal) on Groq
     func analyzeFood(imageData: Data) async throws -> PhotoAnalysisResponse {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
