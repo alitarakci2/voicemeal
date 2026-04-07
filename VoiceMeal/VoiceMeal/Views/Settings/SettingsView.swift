@@ -391,8 +391,12 @@ struct SettingsView: View {
     private func applyLanguage(_ lang: String) {
         if lang.isEmpty {
             UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+            UserDefaults.standard.removeObject(forKey: "appLanguage")
+            UserDefaults(suiteName: "group.indio.VoiceMeal")?.removeObject(forKey: "appLanguage")
         } else {
             UserDefaults.standard.set([lang], forKey: "AppleLanguages")
+            UserDefaults.standard.set(lang, forKey: "appLanguage")
+            UserDefaults(suiteName: "group.indio.VoiceMeal")?.set(lang, forKey: "appLanguage")
         }
         UserDefaults.standard.synchronize()
         showLanguageRestart = true

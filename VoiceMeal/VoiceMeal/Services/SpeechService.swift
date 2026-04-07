@@ -16,15 +16,21 @@ class SpeechService: ObservableObject {
     private nonisolated(unsafe) var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private nonisolated(unsafe) var recognitionTask: SFSpeechRecognitionTask?
     private nonisolated(unsafe) var speechRecognizer: SFSpeechRecognizer? = {
-        let lang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
-            .stringArray(forKey: "AppleLanguages")?.first
-            ?? UserDefaults.standard
-                .stringArray(forKey: "AppleLanguages")?.first
-            ?? "tr"
-        let locale = lang.hasPrefix("en")
+        let appLang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
+            .string(forKey: "appLanguage")
+            ?? UserDefaults.standard.string(forKey: "appLanguage")
+
+        if let lang = appLang {
+            return SFSpeechRecognizer(locale: lang == "en"
+                ? Locale(identifier: "en-US")
+                : Locale(identifier: "tr-TR"))
+        }
+
+        let systemLang = UserDefaults.standard
+            .stringArray(forKey: "AppleLanguages")?.first ?? "tr"
+        return SFSpeechRecognizer(locale: systemLang.hasPrefix("en")
             ? Locale(identifier: "en-US")
-            : Locale(identifier: "tr-TR")
-        return SFSpeechRecognizer(locale: locale)
+            : Locale(identifier: "tr-TR"))
     }()
 
     func requestPermissions() async -> Bool {
