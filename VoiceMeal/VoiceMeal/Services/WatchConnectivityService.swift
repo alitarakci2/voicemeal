@@ -41,7 +41,8 @@ class WatchConnectivityService: NSObject {
             "carbTarget": carbTarget,
             "fatTarget": fatTarget,
             "deficit": deficit,
-            "timestamp": Date().timeIntervalSince1970
+            "timestamp": Date().timeIntervalSince1970,
+            "appLanguage": UserDefaults.standard.stringArray(forKey: "AppleLanguages")?.first ?? "tr"
         ]
 
         let mealsData: [[String: Any]] = meals.map { m in

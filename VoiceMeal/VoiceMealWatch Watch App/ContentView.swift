@@ -5,6 +5,12 @@
 
 import SwiftUI
 
+private func watchString(_ tr: String, _ en: String) -> String {
+    let lang = UserDefaults.standard
+        .stringArray(forKey: "AppleLanguages")?.first ?? "tr"
+    return lang.hasPrefix("en") ? en : tr
+}
+
 struct ContentView: View {
     @State private var sessionManager = WatchSessionManager()
 
@@ -21,7 +27,7 @@ struct ContentView: View {
                 Image(systemName: "iphone.and.arrow.forward")
                     .font(.system(size: 32))
                     .foregroundStyle(.gray)
-                Text("iPhone'dan\nveri bekleniyor")
+                Text(watchString("iPhone'dan\nveri bekleniyor", "Waiting for\niPhone data"))
                     .font(.caption)
                     .foregroundStyle(.gray)
                     .multilineTextAlignment(.center)
@@ -71,7 +77,7 @@ struct CalorieSummaryView: View {
                     Text("\(session.remainingCalories)")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(session.remainingCalories >= 0 ? .green : .red)
-                    Text("Kalan")
+                    Text(watchString("Kalan", "Left"))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.gray)
                 }
@@ -84,7 +90,7 @@ struct CalorieSummaryView: View {
                     Text("\(session.deficit)")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(session.deficit > 0 ? .green : .red)
-                    Text("Açık")
+                    Text(watchString("Açık", "Deficit"))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.gray)
                 }
@@ -104,21 +110,21 @@ struct MacroDetailView: View {
     var body: some View {
         VStack(spacing: 14) {
             macroRow(
-                label: "Protein",
+                label: watchString("Protein", "Protein"),
                 current: session.protein,
                 target: session.proteinTarget,
                 color: blue
             )
 
             macroRow(
-                label: "Karbonhidrat",
+                label: watchString("Karb", "Carbs"),
                 current: session.carbs,
                 target: session.carbTarget,
                 color: .orange
             )
 
             macroRow(
-                label: "Yağ",
+                label: watchString("Yağ", "Fat"),
                 current: session.fat,
                 target: session.fatTarget,
                 color: pink
@@ -173,11 +179,11 @@ struct MealListView: View {
         ScrollView {
             VStack(spacing: 6) {
                 HStack {
-                    Text("Bugün")
+                    Text(watchString("Bugün", "Today"))
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                     Spacer()
-                    Text("\(session.meals.count) öğün")
+                    Text("\(session.meals.count) \(watchString("öğün", "meals"))")
                         .font(.system(size: 11))
                         .foregroundStyle(.gray)
                 }
@@ -188,7 +194,7 @@ struct MealListView: View {
                         Image(systemName: "fork.knife")
                             .font(.system(size: 24))
                             .foregroundStyle(.gray)
-                        Text("Henüz kayıt yok")
+                        Text(watchString("Henüz kayıt yok", "No entries yet"))
                             .font(.system(size: 12))
                             .foregroundStyle(.gray)
                     }

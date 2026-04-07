@@ -84,6 +84,10 @@ class WatchSessionManager: NSObject {
                 }
             }
 
+            if let lang = data["appLanguage"] as? String {
+                UserDefaults.standard.set([lang], forKey: "AppleLanguages")
+            }
+
             if let ts = data["timestamp"] as? TimeInterval {
                 self.lastUpdate = Date(timeIntervalSince1970: ts)
             } else {
