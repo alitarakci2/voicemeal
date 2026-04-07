@@ -198,15 +198,23 @@ class GroqService {
 
             CLARIFICATION RULES:
             - If food name is GENERIC (soup, meat, salad, fruit, drink, food), \
-            you MUST ask which specific type:
-              "Which soup? (lentil, tomato, chicken broth, ezogelin...)"
-              "Which meat? (chicken, beef, lamb...)"
+            you MUST ask which specific type
             - If food name is SPECIFIC (lentil soup, chicken breast, apple), \
             do NOT ask - proceed with estimation
             - If amount is unclear for a specific food, estimate with "~" prefix, do NOT ask
             - Only ask ONE clarification question at a time
             - Keep questions short and give examples in parentheses
             - NEVER ask about calories/protein/carbs - you calculate these
+
+            MULTI-FOOD CLARIFICATION:
+            When user mentions multiple foods:
+            1. ALWAYS include ALL foods in the meals array with your best estimates
+            2. For specific foods: estimate normally
+            3. For generic/ambiguous foods: still include in meals with best-guess calories, \
+            BUT also set clarification_needed: true
+            4. In clarification_question, confirm the clear items and ask about ambiguous ones:
+               Example: "Boiled eggs saved. Which soup? (lentil, tomato, chicken broth...)"
+            5. When user answers, keep confirmed meals unchanged, only update the ambiguous one
 
             If you can recognize the food:
             - Assume reasonable portion (1 serving, 1 bowl etc)
@@ -216,6 +224,7 @@ class GroqService {
 
             If you cannot recognize the food at all:
             - Set clarification_needed: true
+            - Include best-guess in meals array anyway
             - Ask what the food was
 
             If the user is making a correction (e.g. "actually the protein shake is 250 calories", \
@@ -250,15 +259,23 @@ class GroqService {
 
             AÇIKLAMA KURALLARI:
             - Yemek adı GENEL ise (çorba, et, salata, meyve, içecek, yemek), \
-            hangi tür olduğunu MUTLAKA sor:
-              "Hangi çorba? (mercimek, domates, tavuk suyu, ezogelin...)"
-              "Hangi et? (tavuk, dana, kuzu...)"
+            hangi tür olduğunu MUTLAKA sor
             - Yemek adı SPESIFIK ise (mercimek çorbası, tavuk göğsü, elma), \
             SORMA - tahminine devam et
             - Spesifik yemek için miktar belirsizse "~" ile tahmin et, SORMA
             - Tek seferde sadece BİR açıklama sorusu sor
             - Soruları kısa tut ve parantez içinde örnekler ver
             - ASLA kalori/protein/karbonhidrat sorma - bunları sen hesapla
+
+            ÇOKLU YEMEK AÇIKLAMA:
+            Kullanıcı birden fazla yemek söylediğinde:
+            1. TÜM yemekleri meals dizisine dahil et, en iyi tahminlerinle
+            2. Spesifik yemekler için: normal tahmin yap
+            3. Genel/belirsiz yemekler için: yine de meals'a en iyi tahminle ekle, \
+            AMA clarification_needed: true yap
+            4. clarification_question'da net olanları onayla, belirsiz olanı sor:
+               Örnek: "Yumurtayı kaydettim ✅ Hangi çorba? (mercimek, domates, tavuk suyu...)"
+            5. Kullanıcı cevapladığında, onaylanmış yemekleri değiştirme, sadece belirsiz olanı güncelle
 
             Eğer yemeği tanıyorsan, miktar belirsiz olsa bile:
             - Makul bir porsiyon varsay (1 porsiyon, 1 kase vs)
@@ -268,6 +285,7 @@ class GroqService {
 
             Eğer yemeği hiç tanıyamıyorsan:
             - clarification_needed: true
+            - Yine de meals dizisine en iyi tahminle ekle
             - Yemeğin ne olduğunu sor
 
             Eğer kullanıcı bir düzeltme yapıyorsa (örn: "aslında protein \
