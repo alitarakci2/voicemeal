@@ -1319,9 +1319,19 @@ struct HomeView: View {
                     addWater(ml: waterMl, source: "voice")
                 }
 
+                print("🏠 [HomeView] entering meal result handler")
+                print("🏠 [HomeView] clarification_needed: \(response.clarification_needed)")
+                print("🏠 [HomeView] clarification_question: \(response.clarification_question ?? "nil")")
+                print("🏠 [HomeView] isCorrection: \(response.isCorrection ?? false)")
+                print("🏠 [HomeView] meals count: \(response.meals.count)")
+                print("🏠 [HomeView] showConfirmation before: \(showConfirmation)")
+                print("🏠 [HomeView] pendingMeals count before: \(pendingMeals.count)")
+
                 if response.isCorrection == true {
+                    print("🏠 [HomeView] → branch: correction")
                     handleCorrection(response)
                 } else if response.clarification_needed {
+                    print("🏠 [HomeView] → branch: clarification (NOT saving)")
                     // Store meals as pending but do NOT save yet
                     pendingMeals = response.meals
                     // Show confirmed items inline with the question
@@ -1332,7 +1342,9 @@ struct HomeView: View {
                     } else {
                         clarificationQuestion = response.clarification_question ?? ""
                     }
+                    print("🏠 [HomeView] pendingMeals count after: \(pendingMeals.count)")
                 } else if !response.meals.isEmpty {
+                    print("🏠 [HomeView] → branch: confirmation card")
                     pendingMeals = response.meals
                     showConfirmation = true
                 } else if response.waterMl != nil {

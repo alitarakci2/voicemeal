@@ -202,31 +202,31 @@ class GroqService {
             Examples: "2 boiled eggs and soup" → parse both. \
             "eggs soup" → parse both. Do NOT require verbs.
 
-            CLARIFICATION RULES:
-            - If food name is GENERIC (soup, meat, salad, fruit, drink, food), \
-            you MUST ask which specific type
-            - If food name is SPECIFIC (lentil soup, chicken breast, apple), \
-            do NOT ask - proceed with estimation
-            - If amount is unclear for a specific food, estimate with "~" prefix, do NOT ask
-            - Only ask ONE clarification question at a time
-            - Keep questions short and give examples in parentheses
+            MANDATORY CLARIFICATION - NEVER SKIP:
+            These food categories ALWAYS require clarification, no exceptions:
+            ALWAYS ASK: soup, meat, fish, salad, fruit, vegetable, rice dish, \
+            pastry, drink (except water), dessert, food, breakfast item
+            When ANY of these generic terms appear:
+            - Set clarification_needed: true (MANDATORY)
+            - Set clarification_question with specific options in parentheses
+            - Still include best-guess calories in meals array
+            - Confirm specific foods in the question
+            NEVER set clarification_needed: false for generic foods. This rule overrides everything.
+
+            SPECIFIC FOODS (no clarification needed):
+            - If food name is SPECIFIC (lentil soup, chicken breast, apple, \
+            grilled salmon, Caesar salad), proceed with estimation
+            - If amount is unclear, estimate with "~" prefix, do NOT ask
             - NEVER ask about calories/protein/carbs - you calculate these
 
-            MULTI-FOOD CLARIFICATION:
+            MULTI-FOOD RULE:
             When user mentions multiple foods:
             1. ALWAYS include ALL foods in the meals array with your best estimates
-            2. For specific foods: estimate normally
-            3. For generic/ambiguous foods: still include in meals with best-guess calories, \
-            BUT also set clarification_needed: true
-            4. In clarification_question, confirm the clear items and ask about ambiguous ones:
-               Example: "Boiled eggs saved. Which soup? (lentil, tomato, chicken broth...)"
-            5. When user answers, keep confirmed meals unchanged, only update the ambiguous one
-
-            If you can recognize the food:
-            - Assume reasonable portion (1 serving, 1 bowl etc)
-            - ESTIMATE calories/protein/carbs/fat
-            - Return clarification_needed: false
-            - Write "~1 serving (estimated)" in amount field
+            2. For specific foods: estimate normally, include in meals
+            3. For generic foods: include best-guess in meals, set clarification_needed: true
+            4. In clarification_question, confirm specific items and ask about generic ones:
+               Example: "Boiled eggs noted ✅ Which soup? (lentil/tomato/chicken broth)"
+            5. Only ask ONE clarification question at a time
 
             If you cannot recognize the food at all:
             - Set clarification_needed: true
@@ -253,6 +253,12 @@ class GroqService {
             If there's food with water, fill both meals and waterMl. \
             If no water, set waterMl: null.
             \(nullWarning)
+            CRITICAL JSON RULES:
+            - calories, protein, carbs, fat fields must be plain numbers ONLY: 200, not ~200
+            - The "~" prefix for estimates goes ONLY in the "amount" field: "~1 bowl"
+            - Never use ~ in numeric fields
+            - Never add any prefix/suffix to numeric values
+
             JSON format must be exactly as follows, write nothing else:
             \(jsonFormat)
             """
@@ -269,31 +275,31 @@ class GroqService {
             Örnekler: "2 haşlanmış yumurta bir tabak çorba" → ikisini de parse et. \
             "yumurta çorba" → ikisini de parse et. Fiil ZORUNLU DEĞİL.
 
-            AÇIKLAMA KURALLARI:
-            - Yemek adı GENEL ise (çorba, et, salata, meyve, içecek, yemek), \
-            hangi tür olduğunu MUTLAKA sor
-            - Yemek adı SPESIFIK ise (mercimek çorbası, tavuk göğsü, elma), \
-            SORMA - tahminine devam et
-            - Spesifik yemek için miktar belirsizse "~" ile tahmin et, SORMA
-            - Tek seferde sadece BİR açıklama sorusu sor
-            - Soruları kısa tut ve parantez içinde örnekler ver
+            ZORUNLU AÇIKLAMA - ASLA ATLAMA:
+            Bu yemek kategorileri HER ZAMAN açıklama gerektirir, istisna yok:
+            HER ZAMAN SOR: çorba, et, balık, salata, meyve, sebze, \
+            pilav çeşidi, börek çeşidi, içecek (su hariç), tatlı, yemek, kahvaltılık
+            Bu genel terimlerden herhangi biri geçtiğinde:
+            - clarification_needed: true yap (ZORUNLU)
+            - clarification_question'da parantez içinde seçenekler ver
+            - Yine de meals dizisine en iyi tahminle ekle
+            - Spesifik yemekleri soruda onayla
+            Genel yemekler için ASLA clarification_needed: false yapma. Bu kural diğer her şeyi geçersiz kılar.
+
+            SPESİFİK YEMEKLER (açıklama gerekmez):
+            - Yemek adı SPESİFİK ise (mercimek çorbası, tavuk göğsü, elma, \
+            ızgara somon, Sezar salatası), tahminine devam et
+            - Miktar belirsizse "~" ile tahmin et, SORMA
             - ASLA kalori/protein/karbonhidrat sorma - bunları sen hesapla
 
-            ÇOKLU YEMEK AÇIKLAMA:
+            ÇOKLU YEMEK KURALI:
             Kullanıcı birden fazla yemek söylediğinde:
             1. TÜM yemekleri meals dizisine dahil et, en iyi tahminlerinle
-            2. Spesifik yemekler için: normal tahmin yap
-            3. Genel/belirsiz yemekler için: yine de meals'a en iyi tahminle ekle, \
-            AMA clarification_needed: true yap
-            4. clarification_question'da net olanları onayla, belirsiz olanı sor:
-               Örnek: "Yumurtayı kaydettim ✅ Hangi çorba? (mercimek, domates, tavuk suyu...)"
-            5. Kullanıcı cevapladığında, onaylanmış yemekleri değiştirme, sadece belirsiz olanı güncelle
-
-            Eğer yemeği tanıyorsan, miktar belirsiz olsa bile:
-            - Makul bir porsiyon varsay (1 porsiyon, 1 kase vs)
-            - calories/protein/carbs/fat değerlerini TAHMİN et
-            - clarification_needed: false ile döndür
-            - amount alanına "~1 porsiyon (tahmini)" yaz
+            2. Spesifik yemekler için: normal tahmin yap, meals'a ekle
+            3. Genel yemekler için: en iyi tahminle meals'a ekle, clarification_needed: true yap
+            4. clarification_question'da spesifik olanları onayla, genel olanı sor:
+               Örnek: "Haşlanmış yumurta tamam ✅ Hangi çorba? (mercimek/domates/tavuk suyu)"
+            5. Tek seferde sadece BİR açıklama sorusu sor
 
             Eğer yemeği hiç tanıyamıyorsan:
             - clarification_needed: true
@@ -324,10 +330,25 @@ class GroqService {
             Su ile birlikte yemek de varsa hem meals hem waterMl doldur. \
             Su yoksa waterMl: null yaz.
             \(nullWarning)
+            KRİTİK JSON KURALLARI:
+            - calories, protein, carbs, fat alanları SADECE düz sayı olmalı: 200, ~200 DEĞİL
+            - "~" tahmini sadece "amount" alanında kullanılır: "~1 tabak"
+            - Sayısal alanlarda asla ~ kullanma
+            - Sayısal değerlere asla önek/sonek ekleme
+
             JSON formatı kesinlikle şu şekilde olmalı, başka hiçbir şey yazma:
             \(jsonFormat)
             """
         }
+    }
+
+    private func cleanGroqJSON(_ raw: String) -> String {
+        var cleaned = raw
+        if let regex = try? NSRegularExpression(pattern: #":\s*~(\d+\.?\d*)"#) {
+            let range = NSRange(cleaned.startIndex..., in: cleaned)
+            cleaned = regex.stringByReplacingMatches(in: cleaned, range: range, withTemplate: ": $1")
+        }
+        return cleaned
     }
 
     func parseMeals(transcript: String, personalContext: String = "") async throws -> MealParseResponse {
@@ -383,13 +404,23 @@ class GroqService {
             .replacingOccurrences(of: "```", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard let jsonData = jsonString.data(using: .utf8) else {
-            print("❌ [GroqService] Invalid JSON string: \(jsonString)")
+        let cleanedJSON = cleanGroqJSON(jsonString)
+
+        guard let jsonData = cleanedJSON.data(using: .utf8) else {
+            print("❌ [GroqService] Invalid JSON string: \(cleanedJSON)")
             throw GroqError.invalidJSON
         }
 
         do {
-            return try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
+            let result = try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
+            print("🤖 [Groq] Raw response: \(jsonString)")
+            print("🤖 [Groq] clarification_needed: \(result.clarification_needed)")
+            print("🤖 [Groq] clarification_question: \(result.clarification_question ?? "nil")")
+            print("🤖 [Groq] meals count: \(result.meals.count)")
+            for meal in result.meals {
+                print("🤖 [Groq] meal: \(meal.name) | \(meal.amount) | cal:\(meal.calories ?? -1)")
+            }
+            return result
         } catch {
             print("❌ [GroqService] JSON decode error: \(error) — raw: \(jsonString)")
             throw GroqError.invalidJSON
