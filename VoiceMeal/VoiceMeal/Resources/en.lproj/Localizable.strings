@@ -493,3 +493,8 @@
 "personal_preferences" = "Personal Preferences";
 "tell_coach" = "Tell your AI coach about yourself:";
 "personal_context_example" = "Example: My portions are usually larger. I'm lactose intolerant. I eat dinner late around 9pm.";
+
+// Per-item correction
+"fix_entry" = "Fix";
+"what_to_change" = "What to change about %@?";
+"entry_updated" = "Updated";

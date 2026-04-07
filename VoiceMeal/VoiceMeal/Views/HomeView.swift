@@ -35,6 +35,8 @@ struct HomeView: View {
     @State private var waterGoalService = WaterGoalService()
     @State private var tdeeWarningDismissed = false
     @State private var showGoalUpdatedToast = false
+    @State private var entryToCorrect: FoodEntry?
+    @State private var correctionQuestion = ""
 
     // Camera state
     @State private var showCamera = false
@@ -228,6 +230,21 @@ struct HomeView: View {
                         .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
                 }
 
+                // Per-item correction prompt
+                if !correctionQuestion.isEmpty {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("\u{270F}\u{FE0F}")
+                        Text(correctionQuestion)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.accent.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
                 // Clarification question
                 if !clarificationQuestion.isEmpty {
                     HStack(alignment: .top, spacing: 8) {
@@ -290,6 +307,18 @@ struct HomeView: View {
                             HStack(alignment: .center, spacing: 4) {
                                 FoodEntryRowView(entry: entry)
 
+                                Button {
+                                    startVoiceCorrection(for: entry)
+                                } label: {
+                                    Text("fix_entry".localized)
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.accent)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Theme.accent.opacity(0.15))
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                }
+                                .buttonStyle(.plain)
                                 Button {
                                     entryToEdit = entry
                                 } label: {
@@ -653,8 +682,23 @@ struct HomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
+    private func startVoiceCorrection(for entry: FoodEntry) {
+        resetVoiceState()
+        entryToCorrect = entry
+        correctionQuestion = String(format: "what_to_change".localized, entry.name)
+        errorMessage = nil
+        showSavedConfirmation = false
+        do {
+            try speechService.startListening()
+        } catch {
+            errorMessage = speechService.lastError ?? "mic_error".localized
+        }
+    }
+
     private func resetVoiceState() {
         clarificationQuestion = ""
+        correctionQuestion = ""
+        entryToCorrect = nil
         pendingMeals = []
         showConfirmation = false
         originalSpeechText = ""
@@ -1199,8 +1243,8 @@ struct HomeView: View {
             guard permissionGranted else { return }
             errorMessage = nil
             showSavedConfirmation = false
-            // If not in clarification mode, start fresh
-            if clarificationQuestion.isEmpty {
+            // If not in clarification or correction mode, start fresh
+            if clarificationQuestion.isEmpty && correctionQuestion.isEmpty {
                 resetVoiceState()
             }
             do {
@@ -1214,6 +1258,44 @@ struct HomeView: View {
 
     private func sendToGroq() {
         let newText = speechService.transcript
+
+        // Per-item correction mode: build targeted correction prompt
+        if let entry = entryToCorrect {
+            let lang = groqService.appLanguage
+            let correctionTranscript: String
+            if lang == "en" {
+                correctionTranscript = """
+                Previously saved: \(entry.name), \(entry.amount), \(entry.calories) kcal, \
+                P:\(Int(entry.protein))g C:\(Int(entry.carbs))g F:\(Int(entry.fat))g. \
+                User wants to change: "\(newText)". \
+                Update only the changed fields. Set isCorrection: true, targetFoodName: "\(entry.name)".
+                """
+            } else {
+                correctionTranscript = """
+                Daha önce kaydedilen: \(entry.name), \(entry.amount), \(entry.calories) kcal, \
+                P:\(Int(entry.protein))g K:\(Int(entry.carbs))g Y:\(Int(entry.fat))g. \
+                Kullanıcı düzeltmek istiyor: "\(newText)". \
+                Sadece değişen alanları güncelle. isCorrection: true, targetFoodName: "\(entry.name)" yap.
+                """
+            }
+
+            isAnalyzing = true
+            errorMessage = nil
+            correctionQuestion = ""
+
+            Task {
+                do {
+                    let response = try await groqService.parseMeals(transcript: correctionTranscript, personalContext: profiles.first?.personalContext ?? "")
+                    applyCorrection(to: entry, from: response)
+                    entryToCorrect = nil
+                } catch {
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? "mic_error".localized
+                    entryToCorrect = nil
+                }
+                isAnalyzing = false
+            }
+            return
+        }
 
         // If clarifying, combine original + answer
         let transcript: String
