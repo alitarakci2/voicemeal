@@ -197,9 +197,15 @@ class GroqService {
             and respond ONLY in JSON format.
 
             CLARIFICATION RULES:
-            If you recognize the food but amount is unclear:
-            - Ask specifically: "What type of soup? Lentil or tomato?"
-            - Ask about quantity: "How many portions? Bowl-sized?"
+            - If food name is GENERIC (soup, meat, salad, fruit, drink, food), \
+            you MUST ask which specific type:
+              "Which soup? (lentil, tomato, chicken broth, ezogelin...)"
+              "Which meat? (chicken, beef, lamb...)"
+            - If food name is SPECIFIC (lentil soup, chicken breast, apple), \
+            do NOT ask - proceed with estimation
+            - If amount is unclear for a specific food, estimate with "~" prefix, do NOT ask
+            - Only ask ONE clarification question at a time
+            - Keep questions short and give examples in parentheses
             - NEVER ask about calories/protein/carbs - you calculate these
 
             If you can recognize the food:
@@ -243,9 +249,15 @@ class GroqService {
             yenilen yemekleri çıkar ve SADECE JSON formatında yanıt ver.
 
             AÇIKLAMA KURALLARI:
-            Eğer yemeği tanıyabiliyorsun ama miktar belirsizse:
-            - Spesifik sor: "Çorba ne çorbasıydı? Mercimek mi domates mi?"
-            - Miktar sor: "Kaç porsiyon yedin? Kase büyüklüğünde miydi?"
+            - Yemek adı GENEL ise (çorba, et, salata, meyve, içecek, yemek), \
+            hangi tür olduğunu MUTLAKA sor:
+              "Hangi çorba? (mercimek, domates, tavuk suyu, ezogelin...)"
+              "Hangi et? (tavuk, dana, kuzu...)"
+            - Yemek adı SPESIFIK ise (mercimek çorbası, tavuk göğsü, elma), \
+            SORMA - tahminine devam et
+            - Spesifik yemek için miktar belirsizse "~" ile tahmin et, SORMA
+            - Tek seferde sadece BİR açıklama sorusu sor
+            - Soruları kısa tut ve parantez içinde örnekler ver
             - ASLA kalori/protein/karbonhidrat sorma - bunları sen hesapla
 
             Eğer yemeği tanıyorsan, miktar belirsiz olsa bile:
