@@ -15,7 +15,17 @@ class SpeechService: ObservableObject {
     private nonisolated(unsafe) var audioEngine = AVAudioEngine()
     private nonisolated(unsafe) var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private nonisolated(unsafe) var recognitionTask: SFSpeechRecognitionTask?
-    private nonisolated(unsafe) var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "tr-TR"))
+    private nonisolated(unsafe) var speechRecognizer: SFSpeechRecognizer? = {
+        let lang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
+            .stringArray(forKey: "AppleLanguages")?.first
+            ?? UserDefaults.standard
+                .stringArray(forKey: "AppleLanguages")?.first
+            ?? "tr"
+        let locale = lang.hasPrefix("en")
+            ? Locale(identifier: "en-US")
+            : Locale(identifier: "tr-TR")
+        return SFSpeechRecognizer(locale: locale)
+    }()
 
     func requestPermissions() async -> Bool {
         let speechStatus = await withCheckedContinuation { continuation in
