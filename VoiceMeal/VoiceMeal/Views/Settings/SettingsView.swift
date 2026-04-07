@@ -24,6 +24,9 @@ struct SettingsView: View {
     // Coach Style
     @State private var selectedCoachStyle: CoachStyle = .supportive
 
+    // Personal Context
+    @State private var personalContext = ""
+
     // Notifications
     @State private var weightReminderEnabled = true
     @State private var weightReminderDays: Int = 1
@@ -151,6 +154,30 @@ struct SettingsView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+                        }
+                    }
+
+                    // Section: Personal Preferences
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader("personal_preferences".localized)
+
+                            Text("tell_coach".localized)
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.textSecondary)
+
+                            TextEditor(text: $personalContext)
+                                .frame(minHeight: 100)
+                                .padding(8)
+                                .scrollContentBackground(.hidden)
+                                .background(Color(hex: "1C1C24"))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(.white)
+
+                            Text("personal_context_example".localized)
+                                .font(.caption2)
+                                .foregroundStyle(Theme.textTertiary)
                         }
                     }
 
@@ -391,6 +418,7 @@ struct SettingsView: View {
         weightReminderDays = p.weightReminderDays
         weightReminderTime = Calendar.current.date(from: DateComponents(hour: p.weightReminderHour, minute: 0)) ?? .now
         selectedCoachStyle = p.coachStyle
+        personalContext = p.personalContext
     }
 
     private func handleSave() {
@@ -424,6 +452,7 @@ struct SettingsView: View {
         p.isWaterTrackingEnabled = isWaterTrackingEnabled
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
         p.coachStyle = selectedCoachStyle
+        p.personalContext = personalContext
         p.preferredLanguage = selectedLanguage
         p.updatedAt = .now
 

@@ -515,3 +515,8 @@
 
 // Onboarding Coach Style
 "coach_style_intro" = "Sana en uygun koçluk tarzını seç. Bu, uygulamanın seninle nasıl iletişim kuracağını belirler.";
+
+// Personal Preferences
+"personal_preferences" = "Kişisel Tercihler";
+"tell_coach" = "AI koçuna kendini tanıt:";
+"personal_context_example" = "Örnek: Porsiyonlarım genellikle büyük olur. Süt ürünlerine dikkat ederim. Akşam yemeğimi geç yerim.";

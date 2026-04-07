@@ -71,7 +71,78 @@ class GroqService {
 
     private let model = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-    private var systemPrompt: String {
+    // MARK: - Locale-Aware Nutrition Expert
+
+    var userLocale: String {
+        Locale.current.region?.identifier ?? "TR"
+    }
+
+    func localeToDescription(_ locale: String) -> String {
+        switch locale {
+        case "TR": return "Turkish"
+        case "US", "CA": return "American/North American"
+        case "GB", "IE": return "British"
+        case "DE", "AT", "CH": return "German/Central European"
+        case "JP": return "Japanese"
+        case "KR": return "Korean"
+        case "IT": return "Italian"
+        case "FR": return "French"
+        case "ES", "MX": return "Spanish/Latin American"
+        case "BR": return "Brazilian"
+        case "IN": return "Indian"
+        case "CN", "TW", "HK": return "Chinese"
+        case "GR": return "Greek/Mediterranean"
+        case "SA", "AE", "EG": return "Middle Eastern/Arabic"
+        default: return "International"
+        }
+    }
+
+    func buildNutritionExpertPrompt(language: String, locale: String, personalContext: String) -> String {
+        let localeDescription = localeToDescription(locale)
+
+        var prompt = """
+        You are a world-class nutrition expert and dietitian \
+        with deep knowledge of all global cuisines.
+
+        USER CONTEXT:
+        - Language: \(language)
+        - Region/Culture: \(localeDescription)
+
+        EXPERTISE:
+        - You know standard portion sizes for \(localeDescription) cuisine
+        - You recognize local dishes, brands, and ingredients
+        - You understand cooking methods common in this region
+        - You know local restaurant chains and their typical portions
+
+        UNIVERSAL PORTION STANDARDS:
+        - 1 bowl soup = 250-300ml
+        - 1 main dish serving = 200-250g
+        - 1 glass liquid = 200-250ml
+        - 1 tablespoon oil = 10ml = 90 kcal
+        - 1 medium egg = 70 kcal, P:6g, K:0g, Y:5g
+
+        CRITICAL RULES:
+        1. NEVER return null for calories/protein/carbs/fat
+        2. Always estimate if uncertain - use "~" in amount
+        3. Use \(language) language in all responses
+        4. Apply \(localeDescription) portion standards
+        5. Consider local cooking methods (oil usage, etc.)
+        """
+
+        if !personalContext.isEmpty {
+            prompt += """
+
+            IMPORTANT - Personal notes about this user:
+            \(personalContext)
+            Apply these preferences when estimating portions \
+            and nutritional values.
+            """
+        }
+
+        return prompt
+    }
+
+    private func systemPrompt(personalContext: String = "") -> String {
         let jsonFormat = """
         {
           "meals": [
@@ -97,6 +168,12 @@ class GroqService {
         }
         """
 
+        let expertPrompt = buildNutritionExpertPrompt(
+            language: appLanguage == "en" ? "English" : "Turkish",
+            locale: userLocale,
+            personalContext: personalContext
+        )
+
         let nullWarning: String
         if appLanguage == "en" {
             nullWarning = """
@@ -114,28 +191,7 @@ class GroqService {
 
         if appLanguage == "en" {
             return """
-            You are an expert nutritionist with deep knowledge of \
-            both Turkish and international cuisine.
-
-            EXPERTISE:
-            - Turkish dishes: lentil soup, rice, kebabs, börek, etc.
-            - International foods: pasta, salads, sandwiches, etc.
-            - Packaged foods and their standard serving sizes
-            - Restaurant vs home-cooked portion differences
-
-            PORTION STANDARDS:
-            - 1 bowl soup = 250-300ml
-            - 1 serving main dish = 200-250g
-            - 1 glass drink = 200-250ml
-            - 1 tablespoon oil = 10ml = 90 kcal
-            - 1 medium egg = 55-60g
-
-            RULES:
-            1. If amount unclear, use reasonable standard portion
-            2. NEVER return null - always estimate
-            3. Add "~" to amount when estimating: "~1 bowl"
-            4. Consider cooking method (fried vs grilled)
-            5. Home-cooked portions differ from restaurant portions
+            \(expertPrompt)
 
             Extract foods eaten from the user's speech \
             and respond ONLY in JSON format.
@@ -181,51 +237,7 @@ class GroqService {
             """
         } else {
             return """
-            Sen Türkiye'nin en iyi beslenme uzmanı ve diyetisyenisin. \
-            Türk mutfağını, ev yemeklerini, sokak yemeklerini ve \
-            Türk market ürünlerini çok iyi biliyorsun.
-
-            UZMANLIK ALANLARIN:
-            - Türk ev yemekleri: mercimek çorbası, kuru fasulye, pilav, dolma, sarma, börek, menemen, vs.
-            - Türk kahvaltısı: beyaz peynir, zeytin, kaşar, simit, poğaça, yumurta çeşitleri, bal, kaymak
-            - Türk içecekleri: çay, ayran, şalgam, boza, salep
-            - Fast food: döner, lahmacun, pide, köfte, tantuni
-            - Türk tatlıları: baklava, sütlaç, kazandibi, helva
-            - Market ürünleri: Ülker, Sek, Pınar, Torku, Eti markaları
-            - Restoran porsiyonları ve ev porsiyonları arasındaki fark
-
-            PORSIYON STANDARTLARIN:
-            - 1 kase çorba = 250-300ml
-            - 1 porsiyon ana yemek = 200-250g
-            - 1 bardak ayran = 200ml, 1 büyük bardak = 300ml
-            - 1 simit = 150-180g
-            - 1 dilim ekmek = 25-30g
-            - Çay bardağı = 100ml
-            - 1 yemek kaşığı yağ = 10ml = 90 kcal
-            - 1 orta boy yumurta = 55-60g
-
-            KALORİ REHBERİ (sık kullanılan):
-            - Mercimek çorbası 1 kase: 180 kcal, P:10g, K:25g, Y:4g
-            - Kuru fasulye 1 porsiyon: 280 kcal, P:14g, K:40g, Y:6g
-            - Pilav 1 porsiyon (150g): 220 kcal, P:4g, K:45g, Y:3g
-            - Tavuk göğsü ızgara 150g: 248 kcal, P:46g, K:0g, Y:5g
-            - Döner dürüm: 550 kcal, P:28g, K:55g, Y:22g
-            - Lahmacun 1 adet: 320 kcal, P:14g, K:45g, Y:9g
-            - Ayran 200ml: 80 kcal, P:4g, K:6g, Y:3g
-            - Simit 1 adet: 290 kcal, P:9g, K:55g, Y:4g
-            - Beyaz ekmek 1 dilim: 75 kcal, P:2g, K:14g, Y:1g
-            - Beyaz peynir 30g: 75 kcal, P:5g, K:0g, Y:6g
-            - Tam yağlı süt 200ml: 130 kcal, P:7g, K:10g, Y:7g
-            - Yumurta 1 orta: 70 kcal, P:6g, K:0g, Y:5g
-            - Zeytinyağı 1 yemek kaşığı: 90 kcal, P:0g, K:0g, Y:10g
-
-            TEMEL KURALLAR:
-            1. Miktar belirsizse makul Türk porsiyonu varsay
-            2. ASLA null döndürme - her zaman tahmin et
-            3. Tahmin ettiğinde amount'a "~" ekle: "~1 kase"
-            4. Ev yapımı vs hazır/restoran farkını göz önünde bulundur
-            5. Türk yemeklerinde yağ oranı genellikle yüksektir
-            6. Mevsimlik sebzelerde kalori düşüktür
+            \(expertPrompt)
 
             Kullanıcının Türkçe konuşmasından \
             yenilen yemekleri çıkar ve SADECE JSON formatında yanıt ver.
@@ -276,7 +288,7 @@ class GroqService {
         }
     }
 
-    func parseMeals(transcript: String) async throws -> MealParseResponse {
+    func parseMeals(transcript: String, personalContext: String = "") async throws -> MealParseResponse {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
             throw GroqError.missingAPIKey
@@ -285,7 +297,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": systemPrompt + languageInstruction],
+                ["role": "system", "content": systemPrompt(personalContext: personalContext) + languageInstruction],
                 ["role": "user", "content": transcript]
             ],
             "temperature": 0.1
@@ -363,10 +375,18 @@ class GroqService {
 
     // MARK: - Daily Insight
 
-    private var insightSystemPrompt: String {
+    private func insightSystemPrompt(personalContext: String = "") -> String {
+        let expertBase = buildNutritionExpertPrompt(
+            language: appLanguage == "en" ? "English" : "Turkish",
+            locale: userLocale,
+            personalContext: personalContext
+        )
+
         if appLanguage == "en" {
             return """
-            You are a personal nutrition and fitness coach. \
+            \(expertBase)
+
+            You are also a personal fitness coach. \
             Analyze the user's CURRENT status. \
             ONLY 2-3 sentences, English, friendly, you may use emojis.
 
@@ -387,7 +407,9 @@ class GroqService {
             """
         } else {
             return """
-            Sen kişisel bir beslenme ve fitness koçusun. \
+            \(expertBase)
+
+            Aynı zamanda kişisel bir fitness koçusun. \
             Kullanıcının o ANKİ durumunu analiz et. \
             SADECE 2-3 cümle, Türkçe, samimi, emoji kullanabilirsin.
 
@@ -428,7 +450,8 @@ class GroqService {
         intensityLevel: Double,
         waterMl: Int = 0,
         waterGoalMl: Int = 0,
-        coachStyle: CoachStyle = .supportive
+        coachStyle: CoachStyle = .supportive,
+        personalContext: String = ""
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -531,7 +554,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": insightSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
+                ["role": "system", "content": insightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -570,10 +593,18 @@ class GroqService {
 
     // MARK: - Weekly Insight
 
-    private var weeklyInsightSystemPrompt: String {
+    private func weeklyInsightSystemPrompt(personalContext: String = "") -> String {
+        let expertBase = buildNutritionExpertPrompt(
+            language: appLanguage == "en" ? "English" : "Turkish",
+            locale: userLocale,
+            personalContext: personalContext
+        )
+
         if appLanguage == "en" {
             return """
-            You are a personal nutrition and fitness coach. \
+            \(expertBase)
+
+            You are also a personal fitness coach. \
             Analyze the user's weekly statistics and write \
             ONLY a 2-3 sentence short, friendly weekly assessment in English. \
             Use scientific but conversational language. \
@@ -582,7 +613,9 @@ class GroqService {
             """
         } else {
             return """
-            Sen kişisel bir beslenme ve fitness koçusun. \
+            \(expertBase)
+
+            Aynı zamanda kişisel bir fitness koçusun. \
             Kullanıcının haftalık istatistiklerini analiz edip \
             SADECE 2-3 cümlelik kısa, samimi, Türkçe bir haftalık \
             değerlendirme yaz. Bilimsel ama sohbet dili kullan. \
@@ -601,7 +634,8 @@ class GroqService {
         totalDeficit: Int,
         currentWeight: Double,
         goalWeight: Double,
-        coachStyle: CoachStyle = .supportive
+        coachStyle: CoachStyle = .supportive,
+        personalContext: String = ""
     ) async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
@@ -655,7 +689,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": weeklyInsightSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
+                ["role": "system", "content": weeklyInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -693,10 +727,18 @@ class GroqService {
     }
     // MARK: - Program Insight
 
-    private var programInsightSystemPrompt: String {
+    private func programInsightSystemPrompt(personalContext: String = "") -> String {
+        let expertBase = buildNutritionExpertPrompt(
+            language: appLanguage == "en" ? "English" : "Turkish",
+            locale: userLocale,
+            personalContext: personalContext
+        )
+
         if appLanguage == "en" {
             return """
-            You are a personal fitness coach. \
+            \(expertBase)
+
+            You are also a personal fitness coach. \
             Analyze the user's program summary and write \
             a 2-3 sentence assessment in English. \
             Be motivating but realistic. \
@@ -706,7 +748,9 @@ class GroqService {
             """
         } else {
             return """
-            Sen kişisel bir fitness koçusun. \
+            \(expertBase)
+
+            Aynı zamanda kişisel bir fitness koçusun. \
             Kullanıcının program özetini analiz et ve \
             2-3 cümlelik Türkçe bir değerlendirme yap. \
             Motive edici ama gerçekçi ol. \
@@ -717,7 +761,7 @@ class GroqService {
         }
     }
 
-    func generateProgramInsight(summary: ProgramSummary, coachStyle: CoachStyle = .supportive) async throws -> String {
+    func generateProgramInsight(summary: ProgramSummary, coachStyle: CoachStyle = .supportive, personalContext: String = "") async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
 
@@ -789,7 +833,7 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": programInsightSystemPrompt + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
+                ["role": "system", "content": programInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,

@@ -64,7 +64,8 @@ struct StatisticsView: View {
                                 targetCarbs: goalEngine.carbTarget,
                                 targetFat: goalEngine.fatTarget,
                                 realWeightDate: goalEngine.latestWeightDate,
-                                coachStyle: profile.coachStyle
+                                coachStyle: profile.coachStyle,
+                                personalContext: profile.personalContext
                             )
                         }
                     } else {
@@ -312,7 +313,8 @@ struct StatisticsView: View {
                 totalDeficit: statisticsService.totalDeficitThisWeek,
                 currentWeight: profiles.first?.currentWeightKg ?? 0,
                 goalWeight: profiles.first?.goalWeightKg ?? 0,
-                coachStyle: profiles.first?.coachStyle ?? .supportive
+                coachStyle: profiles.first?.coachStyle ?? .supportive,
+                personalContext: profiles.first?.personalContext ?? ""
             )
             weeklyInsight = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)

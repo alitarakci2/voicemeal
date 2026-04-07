@@ -488,3 +488,8 @@
 
 // Onboarding Coach Style
 "coach_style_intro" = "Choose the coaching style that suits you best. This affects how the app communicates with you.";
+
+// Personal Preferences
+"personal_preferences" = "Personal Preferences";
+"tell_coach" = "Tell your AI coach about yourself:";
+"personal_context_example" = "Example: My portions are usually larger. I'm lactose intolerant. I eat dinner late around 9pm.";

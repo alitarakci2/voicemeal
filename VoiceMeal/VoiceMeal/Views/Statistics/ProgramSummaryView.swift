@@ -12,6 +12,7 @@ struct ProgramSummaryView: View {
     let targetFat: Int
     let realWeightDate: Date?
     var coachStyle: CoachStyle = .supportive
+    var personalContext: String = ""
 
     @State private var insightText: String?
     @State private var insightLoading = false
@@ -420,7 +421,7 @@ struct ProgramSummaryView: View {
 
         insightLoading = true
         do {
-            let insight = try await groqService.generateProgramInsight(summary: summary, coachStyle: coachStyle)
+            let insight = try await groqService.generateProgramInsight(summary: summary, coachStyle: coachStyle, personalContext: personalContext)
             insightText = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)
         } catch {

@@ -395,7 +395,8 @@ struct HomeView: View {
                         intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
                         waterMl: isWaterTrackingEnabled ? todayWaterMl : 0,
                         waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
-                        coachStyle: profiles.first?.coachStyle ?? .supportive
+                        coachStyle: profiles.first?.coachStyle ?? .supportive,
+                        personalContext: profiles.first?.personalContext ?? ""
                     )
 
                     if isWaterTrackingEnabled {
@@ -1229,7 +1230,7 @@ struct HomeView: View {
 
         Task {
             do {
-                let response = try await groqService.parseMeals(transcript: transcript)
+                let response = try await groqService.parseMeals(transcript: transcript, personalContext: profiles.first?.personalContext ?? "")
 
                 // Handle water if detected and water tracking is enabled
                 if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {

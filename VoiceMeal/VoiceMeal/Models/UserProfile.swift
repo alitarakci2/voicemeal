@@ -34,6 +34,7 @@ final class UserProfile {
     var weightReminderDays: Int = 1
     var weightReminderHour: Int = 9
     var coachStyleRaw: String = CoachStyle.supportive.rawValue
+    var personalContext: String = ""
     var createdAt: Date
     var updatedAt: Date
 
