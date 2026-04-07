@@ -1322,12 +1322,13 @@ struct HomeView: View {
                 if response.isCorrection == true {
                     handleCorrection(response)
                 } else if response.clarification_needed {
-                    // Save clear meals that came with clarification
+                    // Store meals as pending but do NOT save yet
+                    pendingMeals = response.meals
+                    // Show confirmed items inline with the question
                     let clearMeals = response.meals.filter { ($0.calories ?? 0) > 0 }
                     if !clearMeals.isEmpty {
-                        saveEntries(from: clearMeals)
-                        let savedNames = clearMeals.map { "\u{2705} \($0.name) (\($0.calories ?? 0) kcal)" }.joined(separator: "\n")
-                        clarificationQuestion = savedNames + "\n\n" + (response.clarification_question ?? "")
+                        let confirmedNames = clearMeals.map { "\u{2705} \($0.name) (\(Int($0.calories ?? 0)) kcal)" }.joined(separator: "\n")
+                        clarificationQuestion = confirmedNames + "\n\n" + (response.clarification_question ?? "")
                     } else {
                         clarificationQuestion = response.clarification_question ?? ""
                     }

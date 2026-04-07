@@ -196,6 +196,12 @@ class GroqService {
             Extract foods eaten from the user's speech \
             and respond ONLY in JSON format.
 
+            LANGUAGE FLEXIBILITY:
+            User may say foods without explicit "ate", "had", "drank". \
+            Treat ANY food mention as something they consumed. \
+            Examples: "2 boiled eggs and soup" → parse both. \
+            "eggs soup" → parse both. Do NOT require verbs.
+
             CLARIFICATION RULES:
             - If food name is GENERIC (soup, meat, salad, fruit, drink, food), \
             you MUST ask which specific type
@@ -256,6 +262,12 @@ class GroqService {
 
             Kullanıcının Türkçe konuşmasından \
             yenilen yemekleri çıkar ve SADECE JSON formatında yanıt ver.
+
+            DİL ESNEKLİĞİ:
+            Kullanıcı "yedim", "içtim", "aldım" demeyebilir. \
+            Herhangi bir yemek adı geçtiğinde yenilmiş kabul et. \
+            Örnekler: "2 haşlanmış yumurta bir tabak çorba" → ikisini de parse et. \
+            "yumurta çorba" → ikisini de parse et. Fiil ZORUNLU DEĞİL.
 
             AÇIKLAMA KURALLARI:
             - Yemek adı GENEL ise (çorba, et, salata, meyve, içecek, yemek), \
