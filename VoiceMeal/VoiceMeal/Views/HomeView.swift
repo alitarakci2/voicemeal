@@ -19,9 +19,10 @@ struct HomeView: View {
     @State private var errorMessage: String?
     @State private var showSavedConfirmation = false
     @State private var clarificationQuestion = ""
-    @State private var pendingMeals: [ParsedMeal] = []
-    @State private var showConfirmation = false
+    @State private var reviewMeals: [ParsedMeal] = []
+    @State private var showReviewCard = false
     @State private var originalSpeechText = ""
+    @State private var fixingMealName: String?
     @State private var showGoalInfo = false
     @State private var showWeightBanner = false
     @State private var showSettings = false
@@ -230,7 +231,7 @@ struct HomeView: View {
                         .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
                 }
 
-                // Per-item correction prompt
+                // Per-item correction prompt (for saved entries)
                 if !correctionQuestion.isEmpty {
                     HStack(alignment: .top, spacing: 8) {
                         Text("\u{270F}\u{FE0F}")
@@ -245,51 +246,9 @@ struct HomeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                // Clarification card with pending meals preview
-                if !clarificationQuestion.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Show confirmed meals
-                        let clearMeals = pendingMeals.filter { ($0.calories ?? 0) > 0 }
-                        if !clearMeals.isEmpty {
-                            ForEach(clearMeals) { meal in
-                                HStack {
-                                    Text("\u{2705} \(meal.name)")
-                                        .font(Theme.captionFont)
-                                        .foregroundStyle(Theme.green)
-                                    Spacer()
-                                    Text("\(Int(meal.calories ?? 0)) kcal")
-                                        .font(Theme.captionFont)
-                                        .foregroundStyle(Theme.textSecondary)
-                                }
-                            }
-                            Divider().overlay(Theme.cardBorder.opacity(0.5))
-                        }
-
-                        // Clarification question
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("\u{1F916}")
-                            Text(clarificationQuestion)
-                                .font(Theme.bodyFont)
-                                .foregroundStyle(Theme.textPrimary)
-                        }
-
-                        // Mic hint
-                        Text(groqService.appLanguage == "en"
-                            ? "Tap mic to answer"
-                            : "Cevaplamak i\u{00E7}in mikrofona bas")
-                            .font(.caption2)
-                            .foregroundStyle(Theme.textTertiary)
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-
-                // Confirmation card (only when no active clarification)
-                if showConfirmation && clarificationQuestion.isEmpty {
-                    confirmationCard
+                // Review card — shows parsed meals for review/fix/save
+                if showReviewCard && !reviewMeals.isEmpty {
+                    mealReviewCard
                 }
 
                 // Error
@@ -580,8 +539,8 @@ struct HomeView: View {
                     image: image,
                     imageData: data,
                     onSave: { meals in
-                        pendingMeals = meals
-                        showConfirmation = true
+                        reviewMeals = meals
+                        showReviewCard = true
                     },
                     onRetake: {
                         showCamera = true
@@ -609,102 +568,170 @@ struct HomeView: View {
 
     }
 
-    // MARK: - Confirmation Card
+    // MARK: - Meal Review Card
 
-    private var confirmationCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(groqService.appLanguage == "en" ? "Save these?" : "Bunlar\u{0131} kaydedelim mi?")
-                .font(Theme.bodyFont)
-                .fontWeight(.bold)
-                .foregroundStyle(Theme.textPrimary)
-
-            ForEach(pendingMeals) { meal in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(mealEmoji(for: meal.name) + " " + meal.name.capitalized)
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textPrimary)
-                        Spacer()
-                        Text("\(Int(meal.calories ?? 0)) kcal")
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    HStack(spacing: 8) {
-                        if !meal.amount.isEmpty {
-                            Text(meal.amount)
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        if let p = meal.protein, p > 0 {
-                            Text("P: \(Int(p))g")
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        if let c = meal.carbs, c > 0 {
-                            Text("K: \(Int(c))g")
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        if let f = meal.fat, f > 0 {
-                            Text("Y: \(Int(f))g")
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                    }
-                }
-            }
-
-            Divider().overlay(Theme.cardBorder)
-
+    private var mealReviewCard: some View {
+        let isEN = groqService.appLanguage == "en"
+        return VStack(spacing: 0) {
+            // Header
             HStack {
-                Text(groqService.appLanguage == "en" ? "Total" : "Toplam")
+                Text(isEN ? "Review your meals" : "Yemekleri kontrol et")
                     .font(Theme.bodyFont)
                     .fontWeight(.bold)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Text("\(pendingMeals.reduce(0) { $0 + Int($1.calories ?? 0) }) kcal")
-                    .font(Theme.bodyFont)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Theme.accent)
-            }
-
-            HStack(spacing: 12) {
-                Button {
-                    resetVoiceState()
-                } label: {
-                    Label(
-                        groqService.appLanguage == "en" ? "Redo" : "Tekrar",
-                        systemImage: "arrow.counterclockwise"
-                    )
-                    .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Theme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    saveEntries(from: pendingMeals)
-                    resetVoiceState()
-                } label: {
-                    Label(
-                        groqService.appLanguage == "en" ? "Save" : "Kaydet",
-                        systemImage: "checkmark"
-                    )
-                    .font(Theme.bodyFont)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Theme.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                Button { resetVoiceState() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(Theme.textTertiary)
                 }
                 .buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+
+            Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
+
+            // Meal list
+            ForEach(Array(reviewMeals.enumerated()), id: \.offset) { index, meal in
+                VStack(spacing: 0) {
+                    HStack(alignment: .top, spacing: 10) {
+                        Text(mealEmoji(for: meal.name))
+                            .font(.title3)
+                            .frame(width: 32)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(meal.name.capitalized)
+                                .font(Theme.bodyFont)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.textPrimary)
+
+                            if !meal.amount.isEmpty {
+                                Text(meal.amount)
+                                    .font(Theme.captionFont)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+
+                            HStack(spacing: 6) {
+                                Text("\(Int(meal.calories ?? 0)) kcal")
+                                    .font(Theme.captionFont)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.white)
+                                Text("P:\(Int(meal.protein ?? 0))g")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(Theme.blue.opacity(0.8))
+                                Text("K:\(Int(meal.carbs ?? 0))g")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(Theme.orange.opacity(0.8))
+                                Text("Y:\(Int(meal.fat ?? 0))g")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(Theme.green.opacity(0.8))
+                            }
+                        }
+
+                        Spacer()
+
+                        // Fix button
+                        Button { startFixingReviewMeal(meal) } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "mic.fill")
+                                    .font(.system(size: 10))
+                                Text(isEN ? "Fix" : "Düzelt")
+                                    .font(.caption)
+                            }
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+                    if index < reviewMeals.count - 1 {
+                        Divider().overlay(Theme.cardBorder.opacity(0.2)).padding(.horizontal, 16)
+                    }
+                }
+            }
+
+            // Clarification inside review card
+            if !clarificationQuestion.isEmpty {
+                Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
+                HStack(alignment: .top, spacing: 8) {
+                    Text("\u{1F916}")
+                    Text(clarificationQuestion)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.accent.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+
+                Text(isEN ? "Tap mic to answer" : "Cevaplamak i\u{00E7}in mikrofona bas")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.textTertiary)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 4)
+            }
+
+            // Fix-mode prompt
+            if let fixing = fixingMealName {
+                Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
+                HStack(alignment: .top, spacing: 8) {
+                    Text("\u{270F}\u{FE0F}")
+                    Text(isEN
+                        ? "Tell me about \(fixing) — amount, brand, or correct values"
+                        : "\(fixing) hakk\u{0131}nda s\u{00F6}yle — miktar, marka veya de\u{011F}erleri d\u{00FC}zelt")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.accent.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+            }
+
+            Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
+
+            // Total + Save
+            VStack(spacing: 8) {
+                HStack {
+                    Text(isEN ? "Total" : "Toplam")
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text("\(reviewMeals.reduce(0) { $0 + Int($1.calories ?? 0) }) kcal")
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.accent)
+                }
+
+                Button {
+                    saveEntries(from: reviewMeals)
+                    resetVoiceState()
+                } label: {
+                    Label(isEN ? "Save All" : "Kaydet", systemImage: "checkmark")
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Theme.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(16)
         }
-        .padding()
         .background(Theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
@@ -722,12 +749,24 @@ struct HomeView: View {
         }
     }
 
+    private func startFixingReviewMeal(_ meal: ParsedMeal) {
+        fixingMealName = meal.name
+        errorMessage = nil
+        do {
+            try speechService.startListening()
+        } catch {
+            errorMessage = speechService.lastError ?? "mic_error".localized
+            fixingMealName = nil
+        }
+    }
+
     private func resetVoiceState() {
         clarificationQuestion = ""
         correctionQuestion = ""
         entryToCorrect = nil
-        pendingMeals = []
-        showConfirmation = false
+        fixingMealName = nil
+        reviewMeals = []
+        showReviewCard = false
         originalSpeechText = ""
     }
 
@@ -1224,8 +1263,11 @@ struct HomeView: View {
             guard permissionGranted else { return }
             errorMessage = nil
             showSavedConfirmation = false
-            // If not in clarification or correction mode, start fresh
-            if clarificationQuestion.isEmpty && correctionQuestion.isEmpty {
+            // Preserve state if in clarification, correction, or fix mode
+            let preserveState = !clarificationQuestion.isEmpty
+                || !correctionQuestion.isEmpty
+                || fixingMealName != nil
+            if !preserveState {
                 resetVoiceState()
             }
             do {
@@ -1240,7 +1282,51 @@ struct HomeView: View {
     private func sendToGroq() {
         let newText = speechService.transcript
 
-        // Per-item correction mode: build targeted correction prompt
+        // Fix mode for review meals (not yet saved)
+        if let mealName = fixingMealName,
+           let mealIndex = reviewMeals.firstIndex(where: { $0.name == mealName }) {
+            let meal = reviewMeals[mealIndex]
+            let lang = groqService.appLanguage
+            let fixTranscript: String
+            if lang == "en" {
+                fixTranscript = """
+                Current meal: \(meal.name), \(meal.amount), \(Int(meal.calories ?? 0)) kcal, \
+                P:\(Int(meal.protein ?? 0))g C:\(Int(meal.carbs ?? 0))g F:\(Int(meal.fat ?? 0))g. \
+                User correction: "\(newText)". \
+                Update values based on what user said. Verify consistency: \
+                protein×4 + carbs×4 + fat×9 ≈ calories (adjust carbs if needed). \
+                Return updated meal in meals array. clarification_needed: false.
+                """
+            } else {
+                fixTranscript = """
+                Mevcut yemek: \(meal.name), \(meal.amount), \(Int(meal.calories ?? 0)) kcal, \
+                P:\(Int(meal.protein ?? 0))g K:\(Int(meal.carbs ?? 0))g Y:\(Int(meal.fat ?? 0))g. \
+                Kullanıcı düzeltmesi: "\(newText)". \
+                Söylenene göre değerleri güncelle. Tutarlılık kontrolü: \
+                protein×4 + karb×4 + yağ×9 ≈ kalori (gerekirse karbı ayarla). \
+                Güncel yemeği meals dizisinde döndür. clarification_needed: false.
+                """
+            }
+
+            isAnalyzing = true
+            errorMessage = nil
+
+            Task {
+                do {
+                    let response = try await groqService.parseMeals(transcript: fixTranscript, personalContext: profiles.first?.personalContext ?? "")
+                    if let updatedMeal = response.meals.first {
+                        reviewMeals[mealIndex] = updatedMeal
+                    }
+                } catch {
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? "mic_error".localized
+                }
+                fixingMealName = nil
+                isAnalyzing = false
+            }
+            return
+        }
+
+        // Per-item correction mode for saved entries
         if let entry = entryToCorrect {
             let lang = groqService.appLanguage
             let correctionTranscript: String
@@ -1305,23 +1391,23 @@ struct HomeView: View {
                 print("🏠 [HomeView] clarification_question: \(response.clarification_question ?? "nil")")
                 print("🏠 [HomeView] isCorrection: \(response.isCorrection ?? false)")
                 print("🏠 [HomeView] meals count: \(response.meals.count)")
-                print("🏠 [HomeView] showConfirmation before: \(showConfirmation)")
-                print("🏠 [HomeView] pendingMeals count before: \(pendingMeals.count)")
+                print("🏠 [HomeView] showReviewCard before: \(showReviewCard)")
+                print("🏠 [HomeView] reviewMeals count before: \(reviewMeals.count)")
 
                 if response.isCorrection == true {
                     print("🏠 [HomeView] → branch: correction")
                     handleCorrection(response)
                 } else if response.clarification_needed {
                     print("🏠 [HomeView] → branch: clarification (NOT saving)")
-                    // Store meals as pending but do NOT save yet
-                    pendingMeals = response.meals
-                    // Only store question text — confirmed meals shown visually in card
+                    // Store meals and show review card with clarification inside it
+                    reviewMeals = response.meals
                     clarificationQuestion = response.clarification_question ?? ""
-                    print("🏠 [HomeView] pendingMeals count after: \(pendingMeals.count)")
+                    showReviewCard = true
+                    print("🏠 [HomeView] reviewMeals count after: \(reviewMeals.count)")
                 } else if !response.meals.isEmpty {
                     print("🏠 [HomeView] → branch: confirmation card")
-                    pendingMeals = response.meals
-                    showConfirmation = true
+                    reviewMeals = response.meals
+                    showReviewCard = true
                 } else if response.waterMl != nil {
                     showSavedConfirmation = true
                     Task {

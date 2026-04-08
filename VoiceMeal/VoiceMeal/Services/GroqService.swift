@@ -253,6 +253,13 @@ class GroqService {
             If there's food with water, fill both meals and waterMl. \
             If no water, set waterMl: null.
             \(nullWarning)
+            CONSISTENCY CHECK:
+            After determining calories and macros, verify: \
+            protein×4 + carbs×4 + fat×9 ≈ calories. \
+            If total deviates by more than 15%, adjust carbs first to match. \
+            ONE QUESTION RULE: Ask maximum ONE clarification question per response. \
+            After one clarification round, always proceed with best estimates.
+
             CRITICAL JSON RULES:
             - calories, protein, carbs, fat fields must be plain numbers ONLY: 200, not ~200
             - The "~" prefix for estimates goes ONLY in the "amount" field: "~1 bowl"
@@ -330,6 +337,13 @@ class GroqService {
             Su ile birlikte yemek de varsa hem meals hem waterMl doldur. \
             Su yoksa waterMl: null yaz.
             \(nullWarning)
+            TUTARLILIK KONTROLÜ:
+            Kalori ve makroları belirledikten sonra doğrula: \
+            protein×4 + karb×4 + yağ×9 ≈ kalori. \
+            Fark %15'ten fazlaysa, önce karbı ayarla. \
+            TEK SORU KURALI: Yanıt başına en fazla BİR açıklama sorusu sor. \
+            Bir açıklama turundan sonra her zaman en iyi tahminle devam et.
+
             KRİTİK JSON KURALLARI:
             - calories, protein, carbs, fat alanları SADECE düz sayı olmalı: 200, ~200 DEĞİL
             - "~" tahmini sadece "amount" alanında kullanılır: "~1 tabak"
