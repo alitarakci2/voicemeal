@@ -70,6 +70,8 @@ struct HomeView: View {
     private var eatenCarbs: Double { todayEntries.reduce(0.0) { $0 + $1.carbs } }
     private var eatenFat: Double { todayEntries.reduce(0.0) { $0 + $1.fat } }
 
+    private var isListening: Bool { speechService.isRecording }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -584,8 +586,10 @@ struct HomeView: View {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title3)
                         .foregroundStyle(Theme.textTertiary)
+                        .opacity(isListening ? 0.4 : 1.0)
                 }
                 .buttonStyle(.plain)
+                .disabled(isListening)
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -645,8 +649,10 @@ struct HomeView: View {
                             .padding(.vertical, 4)
                             .background(Theme.accent.opacity(0.15))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .opacity(isListening ? 0.4 : 1.0)
                         }
                         .buttonStyle(.plain)
+                        .disabled(isListening)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -699,6 +705,20 @@ struct HomeView: View {
                 .padding(.vertical, 6)
             }
 
+            // Listening indicator
+            if isListening {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Theme.red)
+                        .frame(width: 8, height: 8)
+                    Text(isEN ? "Listening..." : "Dinliyorum...")
+                        .font(.caption)
+                        .foregroundStyle(Theme.red)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
+            }
+
             Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
 
             // Total + Save
@@ -725,10 +745,11 @@ struct HomeView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Theme.accent)
+                        .background(isListening ? Theme.accent.opacity(0.4) : Theme.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
+                .disabled(isListening)
             }
             .padding(16)
         }
