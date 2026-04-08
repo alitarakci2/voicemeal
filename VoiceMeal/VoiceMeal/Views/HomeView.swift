@@ -245,23 +245,50 @@ struct HomeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                // Clarification question
+                // Clarification card with pending meals preview
                 if !clarificationQuestion.isEmpty {
-                    HStack(alignment: .top, spacing: 8) {
-                        Text("\u{1F916}")
-                        Text(clarificationQuestion)
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textPrimary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Show confirmed meals
+                        let clearMeals = pendingMeals.filter { ($0.calories ?? 0) > 0 }
+                        if !clearMeals.isEmpty {
+                            ForEach(clearMeals) { meal in
+                                HStack {
+                                    Text("\u{2705} \(meal.name)")
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.green)
+                                    Spacer()
+                                    Text("\(Int(meal.calories ?? 0)) kcal")
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
+                            }
+                            Divider().overlay(Theme.cardBorder.opacity(0.5))
+                        }
+
+                        // Clarification question
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\u{1F916}")
+                            Text(clarificationQuestion)
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+
+                        // Mic hint
+                        Text(groqService.appLanguage == "en"
+                            ? "Tap mic to answer"
+                            : "Cevaplamak i\u{00E7}in mikrofona bas")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.textTertiary)
                     }
-                    .padding(12)
+                    .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Theme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                // Confirmation card
-                if showConfirmation {
+                // Confirmation card (only when no active clarification)
+                if showConfirmation && clarificationQuestion.isEmpty {
                     confirmationCard
                 }
 
@@ -1334,14 +1361,8 @@ struct HomeView: View {
                     print("🏠 [HomeView] → branch: clarification (NOT saving)")
                     // Store meals as pending but do NOT save yet
                     pendingMeals = response.meals
-                    // Show confirmed items inline with the question
-                    let clearMeals = response.meals.filter { ($0.calories ?? 0) > 0 }
-                    if !clearMeals.isEmpty {
-                        let confirmedNames = clearMeals.map { "\u{2705} \($0.name) (\(Int($0.calories ?? 0)) kcal)" }.joined(separator: "\n")
-                        clarificationQuestion = confirmedNames + "\n\n" + (response.clarification_question ?? "")
-                    } else {
-                        clarificationQuestion = response.clarification_question ?? ""
-                    }
+                    // Only store question text — confirmed meals shown visually in card
+                    clarificationQuestion = response.clarification_question ?? ""
                     print("🏠 [HomeView] pendingMeals count after: \(pendingMeals.count)")
                 } else if !response.meals.isEmpty {
                     print("🏠 [HomeView] → branch: confirmation card")
