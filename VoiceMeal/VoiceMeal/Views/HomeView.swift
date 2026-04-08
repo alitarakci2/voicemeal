@@ -739,12 +739,8 @@ struct HomeView: View {
         let actualDeficit = Int(goalEngine.tdee) - eatenCalories
         let eatingProgress = goalEngine.dailyCalorieTarget > 0
             ? min(Double(eatenCalories) / Double(goalEngine.dailyCalorieTarget), 1.0) : 0
-        let eatingPercent = Int(eatingProgress * 100)
 
-        let deficitPercent = targetDeficit > 0
-            ? min(Int(Double(max(actualDeficit, 0)) / Double(targetDeficit) * 100), 999) : 0
-
-        return VStack(spacing: 20) {
+        return VStack(spacing: 12) {
             // Header
             HStack {
                 let names = goalEngine.todayActivityNames
@@ -782,135 +778,93 @@ struct HomeView: View {
                 }
             }
 
-            // Large circular calorie gauge
-            ZStack {
-                // Background arc
-                Circle()
-                    .trim(from: 0, to: 0.75)
-                    .stroke(Theme.trackBackground, style: StrokeStyle(lineWidth: 14, lineCap: .round))
-                    .rotationEffect(.degrees(135))
+            // Compact: Ellipse ring LEFT + stats RIGHT
+            HStack(spacing: 16) {
+                // Ellipse calorie ring
+                ZStack {
+                    Ellipse()
+                        .stroke(Theme.trackBackground, lineWidth: 8)
+                    Ellipse()
+                        .trim(from: 0, to: eatingProgress)
+                        .stroke(
+                            remaining < 0 ? Theme.red : Theme.accent,
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                    VStack(spacing: 0) {
+                        Text("\(eatenCalories)")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text("/ \(goalEngine.dailyCalorieTarget)")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                .frame(width: 90, height: 70)
 
-                // Progress arc with gradient
-                Circle()
-                    .trim(from: 0, to: 0.75 * eatingProgress)
-                    .stroke(
-                        AngularGradient(
-                            colors: remaining < 0
-                                ? [Theme.red, Theme.orange]
-                                : [Theme.orange, Color(hex: "FF6B2C"), Theme.red],
-                            center: .center,
-                            startAngle: .degrees(135),
-                            endAngle: .degrees(405)
-                        ),
-                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
+                // Right side: compact info rows
+                VStack(alignment: .leading, spacing: 6) {
+                    compactInfoRow(
+                        label: "remaining_label".localized,
+                        value: "\(remaining) kcal",
+                        color: remaining < 0 ? Theme.red : Theme.green
                     )
-                    .rotationEffect(.degrees(135))
-
-                // Center text
-                VStack(spacing: 2) {
-                    Text(remaining < 0
-                         ? ("eating_exceeded_short".localized)
-                         : ("on_track_label".localized))
-                        .font(Theme.captionFont)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Theme.textSecondary)
-                    Text("\(eatenCalories)")
-                        .font(.system(size: 44, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("/ \(goalEngine.dailyCalorieTarget) kcal")
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textTertiary)
-                }
-            }
-            .frame(width: 200, height: 200)
-            .frame(maxWidth: .infinity)
-
-            // Stats row below circle
-            HStack(spacing: 0) {
-                VStack(spacing: 4) {
-                    Text("remaining_label".localized)
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
-                    Text("\(remaining)")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(remaining < 0 ? Theme.red : .white)
-                    Text("kcal")
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .frame(maxWidth: .infinity)
-
-                Rectangle()
-                    .fill(Theme.cardBorder)
-                    .frame(width: 1, height: 40)
-
-                VStack(spacing: 4) {
-                    Text("calorie_deficit_label".localized)
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
-                    Text("\(actualDeficit)")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(actualDeficit < 0 ? Theme.red : Theme.green)
-                    Text("/ \(targetDeficit)")
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .frame(maxWidth: .infinity)
-
-                Rectangle()
-                    .fill(Theme.cardBorder)
-                    .frame(width: 1, height: 40)
-
-                VStack(spacing: 4) {
-                    Text("TDEE")
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
-                    Text("\(Int(goalEngine.tdee))")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("kcal")
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
+                    compactInfoRow(
+                        label: "calorie_deficit_label".localized,
+                        value: "\(actualDeficit) / \(targetDeficit)",
+                        color: actualDeficit < 0 ? Theme.red : Theme.green
+                    )
+                    compactInfoRow(
+                        label: "TDEE",
+                        value: "\(Int(goalEngine.tdee)) kcal",
+                        color: .white
+                    )
                 }
                 .frame(maxWidth: .infinity)
             }
 
-            // Macro bars
-            VStack(spacing: 10) {
-                macroRow("protein_label".localized, eaten: Int(eatenProtein), target: goalEngine.proteinTarget, color: Theme.blue)
-                macroRow("carb_label".localized, eaten: Int(eatenCarbs), target: goalEngine.carbTarget, color: Theme.orange)
-                macroRow("fat_label".localized, eaten: Int(eatenFat), target: goalEngine.fatTarget, color: Theme.green)
+            // Compact macro bars
+            HStack(spacing: 8) {
+                compactMacroBar("P", value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
+                compactMacroBar("K", value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
+                compactMacroBar("Y", value: eatenFat, target: Double(goalEngine.fatTarget), color: Theme.green)
             }
         }
-        .padding(20)
+        .padding(12)
         .background(Theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
-    private func macroRow(_ name: String, eaten: Int, target: Int, color: Color) -> some View {
-        VStack(spacing: 6) {
-            HStack {
-                Text(name)
-                    .font(Theme.captionFont)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white)
-                Spacer()
-                Text("\(eaten)g / \(target)g")
-                    .font(Theme.captionFont)
-                    .foregroundStyle(Theme.textSecondary)
-            }
+    private func compactInfoRow(label: String, value: String, color: Color) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(Theme.textTertiary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(color)
+        }
+    }
+
+    private func compactMacroBar(_ label: String, value: Double, target: Double, color: Color) -> some View {
+        let progress = target > 0 ? min(value / target, 1.0) : 0
+        return VStack(spacing: 2) {
             GeometryReader { geo in
-                let progress = target > 0 ? min(Double(eaten) / Double(target), 1.0) : 0
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: 2)
                         .fill(Theme.trackBackground)
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: 2)
                         .fill(color)
-                        .frame(width: max(geo.size.width * progress, 4))
+                        .frame(width: max(geo.size.width * progress, 2))
                 }
             }
-            .frame(height: 10)
+            .frame(height: 4)
+            Text("\(label): \(Int(value))g / \(Int(target))g")
+                .font(.system(size: 9, weight: .medium, design: .rounded))
+                .foregroundStyle(Theme.textSecondary)
         }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Nutrition Check Sheet
