@@ -805,7 +805,7 @@ struct DayDetailSheetView: View {
                         HStack(spacing: 6) {
                             MacroTotalPill("P", value: plan.targetProtein, color: Theme.blue)
                             MacroTotalPill("K", value: plan.targetCarbs, color: Theme.orange)
-                            MacroTotalPill("Y", value: plan.targetFat, color: Color(hex: "FF6B9D"))
+                            MacroTotalPill("Y", value: plan.targetFat, color: Theme.fatColor)
                         }
                     } else if dayEntries.isEmpty {
                         Text(L.noFoodLog.localized)
@@ -849,7 +849,7 @@ struct DayDetailSheetView: View {
                             Spacer()
                             MacroTotalPill("P", value: Int(totalP), color: Theme.blue)
                             MacroTotalPill("K", value: Int(totalC), color: Theme.orange)
-                            MacroTotalPill("Y", value: Int(totalF), color: Color(hex: "FF6B9D"))
+                            MacroTotalPill("Y", value: Int(totalF), color: Theme.fatColor)
                         }
                     }
                 }

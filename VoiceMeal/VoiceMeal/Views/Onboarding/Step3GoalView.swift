@@ -48,7 +48,7 @@ struct Step3GoalView: View {
                             .keyboardType(.decimalPad)
                             .frame(width: 64)
                             .padding(8)
-                            .background(Color(hex: "2A2A38"))
+                            .background(Theme.trackBackground)
                             .cornerRadius(8)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)

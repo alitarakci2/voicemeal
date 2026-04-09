@@ -34,20 +34,22 @@ extension Color {
 // MARK: - Theme Colors
 
 enum Theme {
-    static let background = Color(hex: "0A0A0F")
-    static let cardBackground = Color(hex: "1A0A2E")
-    static let cardBorder = Color(hex: "2A1A3E")
-    static let accent = Color(hex: "6C63FF")
+    private static var current: AppTheme { ThemeManager.shared.current }
 
-    // Gradient backgrounds
-    static let backgroundGradient = LinearGradient(
-        colors: [Color(hex: "2D0A4E"), Color(hex: "150828"), Color(hex: "0A0A0F")],
-        startPoint: .top, endPoint: .bottom
-    )
+    // Dynamic theme colors — read from active AppTheme
+    static var background: Color { Color(hex: "0A0A0F") }
+    static var cardBackground: Color { current.cardBackground }
+    static var cardBorder: Color { current.cardBorder }
+    static var accent: Color { current.accent }
+    static var gradientTop: Color { current.gradientTop }
+    static var backgroundGradient: LinearGradient { current.backgroundGradient }
+
+    // Fixed colors — same across all themes
     static let green = Color(hex: "34C759")
     static let orange = Color(hex: "FF9F0A")
     static let red = Color(hex: "FF453A")
     static let blue = Color(hex: "0A84FF")
+    static let fatColor = Color(hex: "FF6B9D")
     static let textPrimary = Color.white
     static let textSecondary = Color(hex: "8E8EA0")
     static let textTertiary = Color(hex: "48485A")
@@ -58,7 +60,9 @@ enum Theme {
     // Gradients
     static let greenGradient = LinearGradient(colors: [Color(hex: "34C759"), Color(hex: "30D158")], startPoint: .leading, endPoint: .trailing)
     static let orangeGradient = LinearGradient(colors: [Color(hex: "FF9F0A"), Color(hex: "FF6B2C")], startPoint: .leading, endPoint: .trailing)
-    static let accentGradient = LinearGradient(colors: [Color(hex: "6C63FF"), Color(hex: "8B5CF6")], startPoint: .leading, endPoint: .trailing)
+    static var accentGradient: LinearGradient {
+        LinearGradient(colors: [current.accent, current.accentLight], startPoint: .leading, endPoint: .trailing)
+    }
     static let fireGradient = LinearGradient(colors: [Color(hex: "FF453A"), Color(hex: "FF9F0A")], startPoint: .topLeading, endPoint: .bottomTrailing)
 
     // Typography

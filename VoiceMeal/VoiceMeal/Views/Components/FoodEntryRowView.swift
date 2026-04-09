@@ -34,7 +34,7 @@ struct FoodEntryRowView: View {
 
                     macroLabel("P", value: Int(entry.protein), color: Theme.blue)
                     macroLabel("K", value: Int(entry.carbs), color: Theme.orange)
-                    macroLabel("Y", value: Int(entry.fat), color: Color(hex: "FF6B9D"))
+                    macroLabel("Y", value: Int(entry.fat), color: Theme.fatColor)
 
                     Spacer(minLength: 4)
 

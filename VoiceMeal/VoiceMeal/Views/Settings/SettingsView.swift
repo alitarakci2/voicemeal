@@ -72,7 +72,7 @@ struct SettingsView: View {
                                         .foregroundStyle(.white)
                                 }
 
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 settingsRow(label: L.gender.localized) {
                                     Picker("", selection: $gender) {
@@ -83,14 +83,14 @@ struct SettingsView: View {
                                     .frame(width: 160)
                                 }
 
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 settingsRow(label: L.age.localized) {
                                     Stepper("\(age)", value: $age, in: 15...80)
                                         .frame(width: 130)
                                 }
 
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 VStack(spacing: 6) {
                                     settingsRow(label: L.height.localized) {
@@ -101,7 +101,7 @@ struct SettingsView: View {
                                         .tint(Theme.accent)
                                 }
 
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 VStack(spacing: 6) {
                                     settingsRow(label: L.weight.localized) {
@@ -149,7 +149,7 @@ struct SettingsView: View {
                                     .background(
                                         selectedCoachStyle == style
                                             ? Theme.accent.opacity(0.1)
-                                            : Color(hex: "2C2C2E").opacity(0.5)
+                                            : Theme.cardBorder.opacity(0.5)
                                     )
                                     .clipShape(RoundedRectangle(cornerRadius: 14))
                                 }
@@ -171,7 +171,7 @@ struct SettingsView: View {
                                 .frame(minHeight: 100)
                                 .padding(8)
                                 .scrollContentBackground(.hidden)
-                                .background(Color(hex: "1C1C24"))
+                                .background(Theme.trackBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                                 .font(Theme.bodyFont)
                                 .foregroundStyle(.white)
@@ -191,14 +191,14 @@ struct SettingsView: View {
                                 .tint(Theme.accent)
 
                             if weightReminderEnabled {
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 settingsRow(label: "weight_reminder_days".localized) {
                                     Stepper("\(weightReminderDays)", value: $weightReminderDays, in: 1...7)
                                         .frame(width: 130)
                                 }
 
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
                                     .tint(Theme.accent)
@@ -215,14 +215,14 @@ struct SettingsView: View {
                                 .tint(Theme.accent)
 
                             if isWaterTrackingEnabled {
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
                                     .tint(Theme.accent)
                             }
 
                             if isWaterTrackingEnabled && !waterGoalAuto {
-                                Divider().overlay(Color(hex: "2C2C2E"))
+                                Divider().overlay(Theme.cardBorder)
 
                                 VStack(spacing: 6) {
                                     settingsRow(label: L.waterGoal.localized) {
@@ -289,7 +289,7 @@ struct SettingsView: View {
                                     .background(
                                         themeManager.current == theme
                                             ? theme.accent.opacity(0.1)
-                                            : Color(hex: "2C2C2E").opacity(0.5)
+                                            : Theme.cardBorder.opacity(0.5)
                                     )
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
@@ -322,7 +322,7 @@ struct SettingsView: View {
                                     .foregroundStyle(Theme.textTertiary)
                             }
 
-                            Divider().overlay(Color(hex: "2C2C2E"))
+                            Divider().overlay(Theme.cardBorder)
 
                             Button {
                                 showResetAlert = true

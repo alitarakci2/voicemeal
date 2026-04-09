@@ -10,7 +10,6 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
-    @EnvironmentObject private var themeManager: ThemeManager
     @StateObject private var speechService = SpeechService()
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query(sort: \WaterEntry.date, order: .reverse) private var allWaterEntries: [WaterEntry]
@@ -83,7 +82,7 @@ struct HomeView: View {
     var body: some View {
         ZStack(alignment: .top) {
             // Full screen gradient
-            themeManager.current.backgroundGradient.ignoresSafeArea()
+            Theme.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // STICKY HEADER BAR
@@ -116,13 +115,13 @@ struct HomeView: View {
                     } label: {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.system(size: 22))
-                            .foregroundStyle(themeManager.current.accent)
+                            .foregroundStyle(Theme.accent)
                     }
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 10)
                 .background(
-                    themeManager.current.gradientTop.opacity(0.95)
+                    Theme.gradientTop.opacity(0.95)
                         .ignoresSafeArea(edges: .top)
                 )
                 .overlay(
@@ -204,13 +203,13 @@ struct HomeView: View {
                                 .font(.system(size: 36))
                                 .foregroundStyle(.white)
                                 .frame(width: 80, height: 80)
-                                .background(speechService.isRecording ? Theme.red : themeManager.current.cardBackground)
+                                .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(speechService.isRecording ? Theme.red.opacity(0.4) : themeManager.current.cardBorder.opacity(0.6), lineWidth: 2)
+                                        .stroke(speechService.isRecording ? Theme.red.opacity(0.4) : Theme.cardBorder.opacity(0.6), lineWidth: 2)
                                 )
-                                .shadow(color: speechService.isRecording ? Theme.red.opacity(0.5) : themeManager.current.accent.opacity(0.25), radius: 12, y: 2)
+                                .shadow(color: speechService.isRecording ? Theme.red.opacity(0.5) : Theme.accent.opacity(0.25), radius: 12, y: 2)
                         }
                         .disabled(isAnalyzing)
                         .sensoryFeedback(.impact, trigger: speechService.isRecording)
@@ -229,13 +228,13 @@ struct HomeView: View {
                                 .font(.system(size: 36))
                                 .foregroundStyle(.white)
                                 .frame(width: 80, height: 80)
-                                .background(themeManager.current.cardBackground)
+                                .background(Theme.cardBackground)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(themeManager.current.cardBorder.opacity(0.6), lineWidth: 2)
+                                        .stroke(Theme.cardBorder.opacity(0.6), lineWidth: 2)
                                 )
-                                .shadow(color: themeManager.current.accent.opacity(0.25), radius: 12, y: 2)
+                                .shadow(color: Theme.accent.opacity(0.25), radius: 12, y: 2)
                         }
                         .disabled(isAnalyzing)
 
@@ -253,13 +252,13 @@ struct HomeView: View {
                                 .font(.system(size: 36))
                                 .foregroundStyle(.white)
                                 .frame(width: 80, height: 80)
-                                .background(themeManager.current.cardBackground)
+                                .background(Theme.cardBackground)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(themeManager.current.cardBorder.opacity(0.6), lineWidth: 2)
+                                        .stroke(Theme.cardBorder.opacity(0.6), lineWidth: 2)
                                 )
-                                .shadow(color: themeManager.current.accent.opacity(0.25), radius: 12, y: 2)
+                                .shadow(color: Theme.accent.opacity(0.25), radius: 12, y: 2)
                         }
                         .disabled(isAnalyzing)
 
@@ -411,7 +410,7 @@ struct HomeView: View {
                             Spacer()
                             MacroTotalPill("P", value: Int(eatenProtein), color: Theme.blue)
                             MacroTotalPill("K", value: Int(eatenCarbs), color: Theme.orange)
-                            MacroTotalPill("Y", value: Int(eatenFat), color: Color(hex: "FF6B9D"))
+                            MacroTotalPill("Y", value: Int(eatenFat), color: Theme.fatColor)
                         }
                         .padding(.horizontal)
                         .padding(.bottom, 8)
@@ -901,7 +900,7 @@ struct HomeView: View {
                     value: "\(eatenCalories)",
                     subtitle: "/ \(goalEngine.dailyCalorieTarget) kcal",
                     progress: eatingProgress,
-                    ringColor: remaining < 0 ? Theme.red : themeManager.current.accent
+                    ringColor: remaining < 0 ? Theme.red : Theme.accent
                 )
 
                 // Deficit ring
@@ -934,16 +933,16 @@ struct HomeView: View {
             VStack(spacing: 8) {
                 macroProgressRow(label: "pro_short".localized, value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
                 macroProgressRow(label: "carb_short".localized, value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
-                macroProgressRow(label: "fat_short".localized, value: eatenFat, target: Double(goalEngine.fatTarget), color: Color(hex: "FF6B9D"))
+                macroProgressRow(label: "fat_short".localized, value: eatenFat, target: Double(goalEngine.fatTarget), color: Theme.fatColor)
             }
             .padding(.horizontal, 4)
         }
         .padding(16)
-        .background(themeManager.current.cardBackground)
+        .background(Theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(themeManager.current.cardBorder.opacity(0.5), lineWidth: 1)
+                .stroke(Theme.cardBorder.opacity(0.5), lineWidth: 1)
         )
     }
 
@@ -1636,6 +1635,5 @@ struct HomeView: View {
 #Preview {
     HomeView()
         .environment(GoalEngine())
-        .environmentObject(ThemeManager())
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self], inMemory: true)
 }
