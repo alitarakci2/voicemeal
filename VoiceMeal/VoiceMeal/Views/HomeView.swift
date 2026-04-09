@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var themeManager: ThemeManager
     @StateObject private var speechService = SpeechService()
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query(sort: \WaterEntry.date, order: .reverse) private var allWaterEntries: [WaterEntry]
@@ -38,6 +39,9 @@ struct HomeView: View {
     @State private var showGoalUpdatedToast = false
     @State private var entryToCorrect: FoodEntry?
     @State private var correctionQuestion = ""
+
+    // Scroll state
+    @State private var scrollProxy: ScrollViewProxy?
 
     // Camera state
     @State private var showCamera = false
@@ -72,9 +76,65 @@ struct HomeView: View {
 
     private var isListening: Bool { speechService.isRecording }
 
+    private var remainingCalories: Int {
+        goalEngine.dailyCalorieTarget - eatenCalories
+    }
+
     var body: some View {
-        ScrollView {
+        ZStack(alignment: .top) {
+            // Full screen gradient
+            themeManager.current.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // STICKY HEADER BAR
+                HStack {
+                    Text(groqService.appLanguage == "en" ? "Record" : "Kayıt")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+
+                    Spacer()
+
+                    if goalEngine.profile != nil {
+                        HStack(spacing: 4) {
+                            Image(systemName: "flame.fill")
+                                .foregroundStyle(Theme.orange)
+                                .font(.caption)
+                            Text("\(remainingCalories) kcal")
+                                .font(.caption.bold())
+                                .foregroundStyle(.white)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Capsule())
+                    }
+
+                    Button {
+                        withAnimation {
+                            scrollProxy?.scrollTo("top", anchor: .top)
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(themeManager.current.accent)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(
+                    themeManager.current.gradientTop.opacity(0.95)
+                        .ignoresSafeArea(edges: .top)
+                )
+                .overlay(
+                    Divider().opacity(0.2),
+                    alignment: .bottom
+                )
+
+                // SCROLLABLE CONTENT
+                ScrollViewReader { proxy in
+                ScrollView {
             VStack(spacing: 24) {
+                Color.clear.frame(height: 0).id("top")
                 // Weight update banner
                 if showWeightBanner, let banner = goalEngine.weightUpdatedBanner {
                     HStack {
@@ -144,22 +204,13 @@ struct HomeView: View {
                                 .font(.system(size: 36))
                                 .foregroundStyle(.white)
                                 .frame(width: 80, height: 80)
-                                .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
+                                .background(speechService.isRecording ? Theme.red : themeManager.current.cardBackground)
                                 .clipShape(Circle())
                                 .overlay(
-                                    Group {
-                                        if speechService.isRecording {
-                                            Circle()
-                                                .stroke(Theme.red.opacity(0.4), lineWidth: 3)
-                                                .scaleEffect(1.3)
-                                                .opacity(0)
-                                                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: false), value: speechService.isRecording)
-                                        } else {
-                                            Circle()
-                                                .stroke(Theme.cardBorder, lineWidth: 2)
-                                        }
-                                    }
+                                    Circle()
+                                        .stroke(speechService.isRecording ? Theme.red.opacity(0.4) : themeManager.current.cardBorder.opacity(0.6), lineWidth: 2)
                                 )
+                                .shadow(color: speechService.isRecording ? Theme.red.opacity(0.5) : themeManager.current.accent.opacity(0.25), radius: 12, y: 2)
                         }
                         .disabled(isAnalyzing)
                         .sensoryFeedback(.impact, trigger: speechService.isRecording)
@@ -178,12 +229,13 @@ struct HomeView: View {
                                 .font(.system(size: 36))
                                 .foregroundStyle(.white)
                                 .frame(width: 80, height: 80)
-                                .background(Theme.cardBackground)
+                                .background(themeManager.current.cardBackground)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(Theme.cardBorder, lineWidth: 2)
+                                        .stroke(themeManager.current.cardBorder.opacity(0.6), lineWidth: 2)
                                 )
+                                .shadow(color: themeManager.current.accent.opacity(0.25), radius: 12, y: 2)
                         }
                         .disabled(isAnalyzing)
 
@@ -201,12 +253,13 @@ struct HomeView: View {
                                 .font(.system(size: 36))
                                 .foregroundStyle(.white)
                                 .frame(width: 80, height: 80)
-                                .background(Theme.cardBackground)
+                                .background(themeManager.current.cardBackground)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(Theme.cardBorder, lineWidth: 2)
+                                        .stroke(themeManager.current.cardBorder.opacity(0.6), lineWidth: 2)
                                 )
+                                .shadow(color: themeManager.current.accent.opacity(0.25), radius: 12, y: 2)
                         }
                         .disabled(isAnalyzing)
 
@@ -436,8 +489,11 @@ struct HomeView: View {
                 Spacer(minLength: 20)
             }
             .padding()
-        }
-        .background(Theme.background)
+        } // ScrollView
+        .onAppear { scrollProxy = proxy }
+                } // ScrollViewReader
+            } // VStack (sticky header + scroll)
+        } // ZStack
         .task {
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {
@@ -799,132 +855,174 @@ struct HomeView: View {
         let actualDeficit = Int(goalEngine.tdee) - eatenCalories
         let eatingProgress = goalEngine.dailyCalorieTarget > 0
             ? min(Double(eatenCalories) / Double(goalEngine.dailyCalorieTarget), 1.0) : 0
+        let deficitProgress = targetDeficit > 0
+            ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
 
-        return VStack(spacing: 12) {
-            // Header
+        return VStack(spacing: 16) {
+            // Header row: date + activity + buttons
             HStack {
-                let names = goalEngine.todayActivityNames
-                    .compactMap { GoalEngine.activityDisplayNames[$0] }
-                if !names.isEmpty {
-                    Text(names.joined(separator: " \u{00B7} "))
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                    let names = goalEngine.todayActivityNames
+                        .compactMap { GoalEngine.activityDisplayNames[$0] }
+                    if !names.isEmpty {
+                        Text(names.joined(separator: " · "))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Theme.accent)
+                    }
                 }
-
                 Spacer()
-
-                HStack(spacing: 16) {
-                    Button {
-                        Task { await refreshHealthKit() }
-                    } label: {
+                HStack(spacing: 14) {
+                    Button { Task { await refreshHealthKit() } } label: {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Theme.textTertiary)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    Button {
-                        showGoalInfo = true
-                    } label: {
+                    Button { showGoalInfo = true } label: {
                         Image(systemName: "info.circle")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Theme.textTertiary)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    Button {
-                        showSettings = true
-                    } label: {
+                    Button { showSettings = true } label: {
                         Image(systemName: "gearshape")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Theme.textTertiary)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
             }
 
-            // Compact: Ellipse ring LEFT + stats RIGHT
-            HStack(spacing: 16) {
-                // Ellipse calorie ring
-                ZStack {
-                    Ellipse()
-                        .stroke(Theme.trackBackground, lineWidth: 8)
-                    Ellipse()
-                        .trim(from: 0, to: eatingProgress)
-                        .stroke(
-                            remaining < 0 ? Theme.red : Theme.accent,
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                        )
-                        .rotationEffect(.degrees(-90))
-                    VStack(spacing: 0) {
-                        Text("\(eatenCalories)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                        Text("/ \(goalEngine.dailyCalorieTarget)")
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundStyle(Theme.textTertiary)
-                    }
-                }
-                .frame(width: 90, height: 70)
+            // 2x2 Metric ring grid
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                // Eating Goal ring
+                metricRingCard(
+                    title: "eating_goal".localized,
+                    value: "\(eatenCalories)",
+                    subtitle: "/ \(goalEngine.dailyCalorieTarget) kcal",
+                    progress: eatingProgress,
+                    ringColor: remaining < 0 ? Theme.red : themeManager.current.accent
+                )
 
-                // Right side: compact info rows
-                VStack(alignment: .leading, spacing: 6) {
-                    compactInfoRow(
-                        label: "remaining_label".localized,
-                        value: "\(remaining) kcal",
-                        color: remaining < 0 ? Theme.red : Theme.green
-                    )
-                    compactInfoRow(
-                        label: "calorie_deficit_label".localized,
-                        value: "\(actualDeficit) / \(targetDeficit)",
-                        color: actualDeficit < 0 ? Theme.red : Theme.green
-                    )
-                    compactInfoRow(
-                        label: "TDEE",
-                        value: "\(Int(goalEngine.tdee)) kcal",
-                        color: .white
-                    )
-                }
-                .frame(maxWidth: .infinity)
+                // Deficit ring
+                metricRingCard(
+                    title: "calorie_deficit_label".localized,
+                    value: "\(actualDeficit)",
+                    subtitle: "/ \(targetDeficit) kcal",
+                    progress: deficitProgress,
+                    ringColor: actualDeficit < 0 ? Theme.red : Theme.green
+                )
+
+                // Remaining
+                metricStatCard(
+                    title: "remaining_label".localized,
+                    value: "\(remaining)",
+                    unit: "kcal",
+                    color: remaining < 0 ? Theme.red : Theme.green
+                )
+
+                // TDEE
+                metricStatCard(
+                    title: "TDEE",
+                    value: "\(Int(goalEngine.tdee))",
+                    unit: "kcal",
+                    color: .white
+                )
             }
 
-            // Compact macro bars
-            HStack(spacing: 8) {
-                compactMacroBar("P", value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
-                compactMacroBar("K", value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
-                compactMacroBar("Y", value: eatenFat, target: Double(goalEngine.fatTarget), color: Theme.green)
+            // Macro progress rows
+            VStack(spacing: 8) {
+                macroProgressRow(label: "pro_short".localized, value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
+                macroProgressRow(label: "carb_short".localized, value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
+                macroProgressRow(label: "fat_short".localized, value: eatenFat, target: Double(goalEngine.fatTarget), color: Color(hex: "FF6B9D"))
             }
+            .padding(.horizontal, 4)
         }
-        .padding(12)
-        .background(Theme.cardBackground)
+        .padding(16)
+        .background(themeManager.current.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(themeManager.current.cardBorder.opacity(0.5), lineWidth: 1)
+        )
     }
 
-    private func compactInfoRow(label: String, value: String, color: Color) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(Theme.textTertiary)
-            Spacer()
-            Text(value)
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(color)
-        }
-    }
+    private func metricRingCard(title: String, value: String, subtitle: String, progress: Double, ringColor: Color) -> some View {
+        VStack(spacing: 6) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .textCase(.uppercase)
+                .tracking(0.5)
 
-    private func compactMacroBar(_ label: String, value: Double, target: Double, color: Color) -> some View {
-        let progress = target > 0 ? min(value / target, 1.0) : 0
-        return VStack(spacing: 2) {
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Theme.trackBackground)
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(color)
-                        .frame(width: max(geo.size.width * progress, 2))
+            ZStack {
+                Circle()
+                    .stroke(Theme.trackBackground, lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 0) {
+                    Text(value)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
-            .frame(height: 4)
-            Text("\(label): \(Int(value))g / \(Int(target))g")
-                .font(.system(size: 9, weight: .medium, design: .rounded))
-                .foregroundStyle(Theme.textSecondary)
+            .frame(width: 70, height: 70)
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.03))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func metricStatCard(title: String, value: String, unit: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .textCase(.uppercase)
+                .tracking(0.5)
+            Text(value)
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(color)
+            Text(unit)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(Theme.textTertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color.white.opacity(0.03))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func macroProgressRow(label: String, value: Double, target: Double, color: Color) -> some View {
+        let progress = target > 0 ? min(value / target, 1.0) : 0
+        return HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 16, alignment: .leading)
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Theme.trackBackground)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color)
+                        .frame(width: max(geo.size.width * progress, 3))
+                }
+            }
+            .frame(height: 6)
+
+            Text("\(Int(value))/\(Int(target))g")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 60, alignment: .trailing)
+        }
     }
 
     // MARK: - Nutrition Check Sheet
@@ -1538,5 +1636,6 @@ struct HomeView: View {
 #Preview {
     HomeView()
         .environment(GoalEngine())
+        .environmentObject(ThemeManager())
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self], inMemory: true)
 }

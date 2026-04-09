@@ -34,10 +34,16 @@ extension Color {
 // MARK: - Theme Colors
 
 enum Theme {
-    static let background = Color(hex: "000000")
-    static let cardBackground = Color(hex: "1C1C1E")
-    static let cardBorder = Color(hex: "2C2C2E")
+    static let background = Color(hex: "0A0A0F")
+    static let cardBackground = Color(hex: "1A0A2E")
+    static let cardBorder = Color(hex: "2A1A3E")
     static let accent = Color(hex: "6C63FF")
+
+    // Gradient backgrounds
+    static let backgroundGradient = LinearGradient(
+        colors: [Color(hex: "2D0A4E"), Color(hex: "150828"), Color(hex: "0A0A0F")],
+        startPoint: .top, endPoint: .bottom
+    )
     static let green = Color(hex: "34C759")
     static let orange = Color(hex: "FF9F0A")
     static let red = Color(hex: "FF453A")

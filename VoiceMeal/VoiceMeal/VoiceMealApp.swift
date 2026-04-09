@@ -10,6 +10,8 @@ import SwiftUI
 
 @main
 struct VoiceMealApp: App {
+    @StateObject private var themeManager = ThemeManager()
+
     init() {
         _ = WatchConnectivityService.shared
     }
@@ -17,6 +19,7 @@ struct VoiceMealApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(themeManager)
         }
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self])
     }

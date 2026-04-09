@@ -12,6 +12,7 @@ extension Notification.Name {
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var themeManager: ThemeManager
     @Query private var profiles: [UserProfile]
 
     // Profile fields
@@ -255,6 +256,44 @@ struct SettingsView: View {
                                     applyLanguage(newValue)
                                     previousLanguage = newValue
                                 }
+                            }
+                        }
+                    }
+
+                    // Section: App Theme
+                    settingsCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader("app_theme".localized)
+
+                            ForEach(AppTheme.allCases, id: \.self) { theme in
+                                Button {
+                                    themeManager.apply(theme)
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Circle()
+                                            .fill(theme.accent)
+                                            .frame(width: 20, height: 20)
+                                        Text(selectedLanguage == "en"
+                                            ? theme.displayNameEn
+                                            : theme.displayName)
+                                            .font(Theme.bodyFont)
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        if themeManager.current == theme {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(theme.accent)
+                                                .font(.system(size: 22))
+                                        }
+                                    }
+                                    .padding(12)
+                                    .background(
+                                        themeManager.current == theme
+                                            ? theme.accent.opacity(0.1)
+                                            : Color(hex: "2C2C2E").opacity(0.5)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }

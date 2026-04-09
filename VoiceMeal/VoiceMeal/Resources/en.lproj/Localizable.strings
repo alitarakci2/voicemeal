@@ -293,6 +293,7 @@
 "language" = "Language";
 "system_default" = "System";
 "language_restart" = "Restart the app for the language change to take effect.";
+"app_theme" = "App Theme";
 "protein_chicken" = "Chicken";
 "protein_fish" = "Fish/Salmon";
 "protein_beef" = "Beef/Ground";

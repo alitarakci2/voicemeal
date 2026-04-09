@@ -320,6 +320,7 @@
 "language" = "Dil";
 "system_default" = "Sistem";
 "language_restart" = "Dil değişikliğinin uygulanması için uygulamayı yeniden başlatın.";
+"app_theme" = "Uygulama Teması";
 "protein_chicken" = "Tavuk";
 "protein_fish" = "Balık/Somon";
 "protein_beef" = "Dana/Kıyma";
