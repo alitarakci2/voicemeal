@@ -8,6 +8,7 @@ import SwiftUI
 
 struct PlanView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var themeManager: ThemeManager
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
     @Query private var allSnapshots: [DailySnapshot]
@@ -17,6 +18,7 @@ struct PlanView: View {
     @State private var showPastDays = false
     @State private var showFutureDays = false
     @State private var weeklyCardExpanded = false
+    @State private var scrollProxy: ScrollViewProxy?
 
     // Plan settings
     @State private var showPlanSettings = false
@@ -217,14 +219,36 @@ struct PlanView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 8) {
-                        // Title
-                        Text("Plan")
-                            .font(Theme.titleFont)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.top, 4)
+        ZStack {
+            Theme.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Sticky header
+                HStack {
+                    Text("Plan")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Button {
+                        withAnimation { scrollProxy?.scrollTo("top", anchor: .top) }
+                    } label: {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(
+                    Theme.gradientTop.opacity(0.95)
+                        .ignoresSafeArea(edges: .top)
+                )
+                .overlay(Divider().opacity(0.2), alignment: .bottom)
+
+                ScrollViewReader { proxy in
+                ScrollView {
+                LazyVStack(spacing: 10) {
+                        Color.clear.frame(height: 0).id("top")
 
                         // Plan settings (collapsible)
                         planSettingsCard
@@ -236,25 +260,18 @@ struct PlanView: View {
 
                         // Collapsible past section
                         if !pastDays.isEmpty {
-                            DisclosureGroup(isExpanded: $showPastDays) {
+                            sectionHeader(
+                                title: L.previousDays.localized,
+                                dateRange: dateRangeText(pastDays),
+                                isExpanded: $showPastDays
+                            )
+                            if showPastDays {
                                 ForEach(pastDays) { plan in
                                     DayRowView(plan: plan)
                                         .id(plan.date)
                                         .onTapGesture { selectedPlan = plan }
                                 }
-                            } label: {
-                                HStack {
-                                    Text("\u{25B6} \(L.previousDays.localized)")
-                                        .font(Theme.captionFont)
-                                        .foregroundStyle(Theme.textSecondary)
-                                    Spacer()
-                                    Text(dateRangeText(pastDays))
-                                        .font(Theme.microFont)
-                                        .foregroundStyle(Theme.textTertiary)
-                                }
-                                .padding(.vertical, 8)
                             }
-                            .tint(Theme.textSecondary)
                         }
 
                         // Always visible: 3 days before + today + 3 days after
@@ -266,31 +283,25 @@ struct PlanView: View {
 
                         // Collapsible future section
                         if !futureDays.isEmpty {
-                            DisclosureGroup(isExpanded: $showFutureDays) {
+                            sectionHeader(
+                                title: L.nextDays.localized,
+                                dateRange: dateRangeText(futureDays),
+                                isExpanded: $showFutureDays
+                            )
+                            if showFutureDays {
                                 ForEach(futureDays) { plan in
                                     DayRowView(plan: plan)
                                         .id(plan.date)
                                         .onTapGesture { selectedPlan = plan }
                                 }
-                            } label: {
-                                HStack {
-                                    Text("\u{25B6} \(L.nextDays.localized)")
-                                        .font(Theme.captionFont)
-                                        .foregroundStyle(Theme.textSecondary)
-                                    Spacer()
-                                    Text(dateRangeText(futureDays))
-                                        .font(Theme.microFont)
-                                        .foregroundStyle(Theme.textTertiary)
-                                }
-                                .padding(.vertical, 8)
                             }
-                            .tint(Theme.textSecondary)
                         }
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                 }
                 .onAppear {
+                    scrollProxy = proxy
                     loadPlanSettings()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         withAnimation {
@@ -298,14 +309,16 @@ struct PlanView: View {
                         }
                     }
                 }
-                .background(Theme.background)
-            }
+                } // ScrollViewReader
+            } // VStack
+        } // ZStack
         .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
             planService.regeneratePlans()
             loadPlanSettings()
         }
         .sheet(item: $selectedPlan) { plan in
             DayDetailSheetView(plan: plan)
+                .environmentObject(themeManager)
         }
         .overlay(alignment: .bottom) {
             if showSavedToast {
@@ -322,6 +335,32 @@ struct PlanView: View {
             }
         }
         .animation(.easeInOut, value: showSavedToast)
+    }
+
+    // MARK: - Section Header
+
+    private func sectionHeader(title: String, dateRange: String, isExpanded: Binding<Bool>) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.25)) { isExpanded.wrappedValue.toggle() }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: isExpanded.wrappedValue ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(Theme.textTertiary)
+                Text(title)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Theme.textSecondary)
+                    .textCase(.uppercase)
+                    .tracking(0.5)
+                Spacer()
+                Text(dateRange)
+                    .font(Theme.microFont)
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 6)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Plan Settings Card
@@ -427,23 +466,32 @@ struct PlanView: View {
             }
             .padding(.top, 8)
         } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("\u{2699}\u{FE0F} \(L.goal.localized)")
-                        .font(Theme.headlineFont)
-                        .foregroundStyle(Theme.textPrimary)
-                    Text(String(format: "goal_duration".localized, goalDays) + " \u{00B7} \(intensityLabel)")
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
+            HStack(spacing: 12) {
+                Text("\u{2699}\u{FE0F}")
+                    .font(.title2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L.goal.localized)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                    Text("\(String(format: "%.1f", goalWeightKg)) kg \u{00B7} \(String(format: "goal_duration".localized, goalDays)) \u{00B7} \(intensityLabel)")
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
+                Image(systemName: showPlanSettings ? "chevron.up" : "chevron.down")
+                    .font(.caption)
+                    .foregroundStyle(Theme.textTertiary)
             }
             .padding(.vertical, 4)
         }
         .tint(Theme.textSecondary)
-        .padding()
+        .padding(16)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Plan Settings Load / Save
@@ -480,13 +528,43 @@ struct PlanView: View {
     }
 
     private var weeklySummaryCard: some View {
-        DisclosureGroup(isExpanded: $weeklyCardExpanded) {
-            VStack(spacing: 0) {
-                Divider()
-                    .overlay(Theme.cardBorder)
-                    .padding(.vertical, 8)
+        VStack(spacing: 0) {
+            // Header (always visible)
+            Button {
+                withAnimation(.easeInOut(duration: 0.3)) { weeklyCardExpanded.toggle() }
+            } label: {
+                HStack(spacing: 12) {
+                    Text("\u{1F4CA}")
+                        .font(.title2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L.thisWeek.localized)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                        Text(String(format: L.daysWithDataFormat.localized, daysWithData))
+                            .font(.caption)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(String(format: L.kcalDeficitFormat.localized, totalDeficitThisWeek))
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Theme.accent)
+                        Text(trendText)
+                            .font(.caption)
+                            .foregroundStyle(trendColor)
+                    }
+                    Image(systemName: weeklyCardExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .padding(16)
+            }
+            .buttonStyle(.plain)
 
-                // Header row
+            if weeklyCardExpanded {
+                Divider().overlay(Theme.cardBorder.opacity(0.3))
+
+                // Column headers
                 HStack(spacing: 0) {
                     Text("")
                         .frame(width: 40, alignment: .leading)
@@ -503,64 +581,59 @@ struct PlanView: View {
                 }
                 .font(Theme.microFont)
                 .foregroundStyle(Theme.textTertiary)
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
                 .padding(.bottom, 6)
 
-                // Day rows
-                ForEach(thisWeekDays) { day in
-                    VStack(spacing: 0) {
-                        HStack(spacing: 0) {
-                            HStack(spacing: 3) {
-                                Text(statusEmoji(day))
-                                    .font(.system(size: 10))
-                                Text(shortDayName(day.date))
-                                    .font(Theme.microFont)
-                                    .foregroundStyle(day.status == .today ? Theme.accent : Theme.textSecondary)
-                            }
-                            .frame(width: 40, alignment: .leading)
+                // Day rows with alternating backgrounds
+                ForEach(Array(thisWeekDays.enumerated()), id: \.element.id) { index, day in
+                    HStack(spacing: 0) {
+                        HStack(spacing: 3) {
+                            Text(statusEmoji(day))
+                                .font(.system(size: 10))
+                            Text(shortDayName(day.date))
+                                .font(Theme.microFont)
+                                .foregroundStyle(day.status == .today ? Theme.accent : Theme.textSecondary)
+                        }
+                        .frame(width: 40, alignment: .leading)
 
-                            if dayHasData(day) || day.status == .today {
-                                Text("\(day.consumedCalories)")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textPrimary)
-                                let deficit = day.tdee - day.consumedCalories
-                                let targetDeficit = day.tdee - day.targetCalories
-                                Text("\(deficit)")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(deficitColor(actual: deficit, target: targetDeficit))
-                                Text("\(Int(day.consumedProtein))g")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textSecondary)
-                                Text("\(Int(day.consumedCarbs))g")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textSecondary)
-                                Text("\(Int(day.consumedFat))g")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textSecondary)
-                            } else {
-                                Text("\u{2014}")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textTertiary)
-                                Text("\u{2014}")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textTertiary)
-                                Text("\u{2014}")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textTertiary)
-                                Text("\u{2014}")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundStyle(Theme.textTertiary)
+                        if dayHasData(day) || day.status == .today {
+                            Text("\(day.consumedCalories)")
+                                .frame(maxWidth: .infinity)
+                                .foregroundStyle(Theme.textPrimary)
+                            let deficit = day.tdee - day.consumedCalories
+                            let targetDeficit = day.tdee - day.targetCalories
+                            Text("\(deficit)")
+                                .frame(maxWidth: .infinity)
+                                .foregroundStyle(deficitColor(actual: deficit, target: targetDeficit))
+                            Text("\(Int(day.consumedProtein))g")
+                                .frame(maxWidth: .infinity)
+                                .foregroundStyle(Theme.textSecondary)
+                            Text("\(Int(day.consumedCarbs))g")
+                                .frame(maxWidth: .infinity)
+                                .foregroundStyle(Theme.textSecondary)
+                            Text("\(Int(day.consumedFat))g")
+                                .frame(maxWidth: .infinity)
+                                .foregroundStyle(Theme.textSecondary)
+                        } else {
+                            ForEach(0..<5, id: \.self) { _ in
                                 Text("\u{2014}")
                                     .frame(maxWidth: .infinity)
                                     .foregroundStyle(Theme.textTertiary)
                             }
                         }
-                        .font(Theme.captionFont)
-                        .padding(.vertical, 6)
-
-                        Divider()
-                            .overlay(Theme.cardBorder.opacity(0.5))
                     }
+                    .font(Theme.captionFont)
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 16)
+                    .background(
+                        day.status == .today
+                            ? Theme.accent.opacity(0.08)
+                            : (index % 2 == 0 ? Color.clear : Color.white.opacity(0.02))
+                    )
                 }
+
+                Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal, 16)
 
                 // Average row
                 HStack(spacing: 0) {
@@ -589,35 +662,16 @@ struct PlanView: View {
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .font(Theme.captionFont)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 16)
             }
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("\u{1F4CA} \(L.thisWeek.localized)")
-                        .font(Theme.headlineFont)
-                        .foregroundStyle(Theme.textPrimary)
-                    Text(String(format: L.daysWithDataFormat.localized, daysWithData))
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text("\u{1F525} \(String(format: L.kcalDeficitFormat.localized, totalDeficitThisWeek))")
-                        .font(Theme.bodyFont)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Theme.orange)
-                    Text(trendText)
-                        .font(Theme.microFont)
-                        .foregroundStyle(trendColor)
-                }
-            }
-            .padding(.vertical, 4)
         }
-        .tint(Theme.textSecondary)
-        .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 
@@ -628,12 +682,12 @@ struct DayRowView: View {
 
     private var statusIcon: String {
         switch plan.status {
-        case .completed: return "checkmark.circle.fill"
-        case .exceeded: return "xmark.circle.fill"
-        case .underate: return "exclamationmark.triangle.fill"
-        case .missed: return "minus.circle.fill"
-        case .today: return "location.fill"
-        case .planned: return "doc.text"
+        case .completed: return "\u{2705}"
+        case .exceeded: return "\u{26A0}\u{FE0F}"
+        case .underate: return "\u{2B07}\u{FE0F}"
+        case .missed: return "\u{274C}"
+        case .today: return "\u{1F4CD}"
+        case .planned: return "\u{1F4CB}"
         }
     }
 
@@ -643,99 +697,119 @@ struct DayRowView: View {
         case .exceeded: return Theme.red
         case .underate: return Theme.orange
         case .missed: return Theme.textTertiary
-        case .today: return Theme.blue
+        case .today: return Theme.accent
         case .planned: return Theme.textTertiary
         }
     }
 
+    private var isToday: Bool { plan.status == .today }
+
     private var dateLabel: String {
-        if plan.status == .today {
-            return L.today.localized
-        }
+        if isToday { return L.today.localized }
         return plan.date.formatted(.dateTime.day().month(.abbreviated))
     }
 
+    private var dayAbbrev: String {
+        let weekday = Calendar.current.component(.weekday, from: plan.date)
+        let keys = ["", "day_sun_short", "day_mon_short", "day_tue_short", "day_wed_short", "day_thu_short", "day_fri_short", "day_sat_short"]
+        return keys[weekday].localized
+    }
+
+    private var calorieProgress: Double {
+        guard plan.targetCalories > 0 else { return 0 }
+        return min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0)
+    }
+
+    private var deficitText: String {
+        switch plan.status {
+        case .today:
+            return L.ongoing.localized
+        case .planned:
+            let d = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
+            return String(format: L.deficitApproxFormat.localized, d)
+        case .missed:
+            return ""
+        default:
+            let d = plan.tdee - plan.consumedCalories
+            return String(format: L.deficitValueFormat.localized, d)
+        }
+    }
+
+    private var deficitColor: Color {
+        let actual = plan.tdee - plan.consumedCalories
+        let target = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
+        if actual <= 0 { return Theme.red }
+        if target > 0 && actual >= Int(Double(target) * 0.80) { return Theme.green }
+        return Theme.orange
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Image(systemName: statusIcon)
-                    .font(.system(size: 20))
-                    .foregroundStyle(statusColor)
+        HStack(spacing: 12) {
+            // Status circle + day abbreviation
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(statusColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Text(statusIcon)
+                        .font(.system(size: 18))
+                }
+                Text(dayAbbrev)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Theme.textSecondary)
+            }
 
-                Text(dateLabel)
-                    .font(Theme.headlineFont)
-                    .foregroundStyle(Theme.textPrimary)
+            // Main content
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(dateLabel)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    HStack(spacing: 2) {
+                        ForEach(plan.activities, id: \.self) { activity in
+                            Text(activityEmoji(activity))
+                                .font(.caption)
+                        }
+                    }
+                }
 
-                Spacer()
+                // Calorie progress bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.white.opacity(0.08))
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(statusColor)
+                            .frame(width: max(geo.size.width * calorieProgress, 2))
+                    }
+                }
+                .frame(height: 4)
 
-                HStack(spacing: 4) {
-                    ForEach(plan.activities, id: \.self) { activity in
-                        Text(activityEmoji(activity))
-                            .font(Theme.captionFont)
+                // Numbers row
+                HStack {
+                    Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                    Spacer()
+                    if !deficitText.isEmpty {
+                        Text(deficitText)
+                            .font(.caption.bold())
+                            .foregroundStyle(isToday ? Theme.accent : deficitColor)
                     }
                 }
             }
-
-            HStack {
-                switch plan.status {
-                case .today:
-                    Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.textPrimary)
-                    Spacer()
-                    Text(L.ongoing.localized)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.blue)
-
-                case .planned:
-                    Text(String(format: L.targetKcalFormat.localized, plan.targetCalories))
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-                    let plannedDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-                    Text(String(format: L.deficitApproxFormat.localized, plannedDeficit))
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
-
-                case .missed:
-                    Text("0 / \(plan.targetCalories) kcal")
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.textSecondary)
-                    Spacer()
-
-                default:
-                    let actualDeficit = plan.tdee - plan.consumedCalories
-                    let targetDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-                    Text("\(plan.consumedCalories) / \(plan.targetCalories) kcal")
-                        .font(Theme.bodyFont)
-                        .foregroundStyle(Theme.textPrimary)
-                    Spacer()
-                    Text(String(format: L.deficitValueFormat.localized, actualDeficit))
-                        .font(Theme.captionFont)
-                        .fontWeight(.medium)
-                        .foregroundStyle(deficitRowColor(actual: actualDeficit, target: targetDeficit))
-                }
-            }
         }
-        .padding()
-        .frame(minHeight: 72)
-        .background(plan.status == .today ? Theme.accent.opacity(0.1) : Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(14)
+        .background(isToday ? Theme.accent.opacity(0.12) : Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
-            plan.status == .today
-                ? RoundedRectangle(cornerRadius: 20).stroke(Theme.accent.opacity(0.4), lineWidth: 2)
-                : nil
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    isToday ? Theme.accent.opacity(0.5) : Color.white.opacity(0.06),
+                    lineWidth: isToday ? 1.5 : 1
+                )
         )
-    }
-
-    private func deficitRowColor(actual: Int, target: Int) -> Color {
-        if actual <= 0 {
-            return Theme.red
-        } else if target > 0 && actual >= Int(Double(target) * 0.80) {
-            return Theme.green
-        } else {
-            return Theme.orange
-        }
     }
 
     private func activityEmoji(_ activity: String) -> String {
@@ -763,109 +837,76 @@ struct DayDetailSheetView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Date + activities
-                    HStack {
+        ZStack {
+            Theme.backgroundGradient.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Drag indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 10)
+                    .padding(.bottom, 8)
+
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(plan.status == .today ? L.today.localized : plan.date.formatted(.dateTime.day().month(.wide).year()))
                             .font(Theme.titleFont)
-                            .fontWeight(.bold)
-                        Spacer()
-                        ForEach(plan.activities, id: \.self) { activity in
-                            Text(GoalEngine.activityDisplayNames[activity] ?? activity)
-                                .font(Theme.captionFont)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Theme.cardBackground)
-                                .clipShape(Capsule())
-                        }
-                    }
-
-                    // Status banner
-                    statusBanner
-
-                    // Section 1: Eating Target
-                    eatingTargetCard
-
-                    // Section 2: Calorie Deficit
-                    if plan.status != .planned {
-                        deficitCard
-                    }
-
-                    macroSection
-
-                    // Food entries
-                    if plan.status == .planned {
-                        Text("plan_for_today_label".localized)
-                            .font(Theme.headlineFont)
-                            .padding(.top, 4)
-                        Text("\(L.goal.localized): \(plan.targetCalories) kcal")
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(.white)
                         HStack(spacing: 6) {
-                            MacroTotalPill("P", value: plan.targetProtein, color: Theme.blue)
-                            MacroTotalPill("K", value: plan.targetCarbs, color: Theme.orange)
-                            MacroTotalPill("Y", value: plan.targetFat, color: Theme.fatColor)
-                        }
-                    } else if dayEntries.isEmpty {
-                        Text(L.noFoodLog.localized)
-                            .foregroundStyle(Theme.textSecondary)
-                            .padding(.top, 4)
-                    } else {
-                        Text(L.foods.localized)
-                            .font(Theme.headlineFont)
-                            .padding(.top, 4)
-                        ForEach(dayEntries, id: \.id) { entry in
-                            FoodEntryRowView(entry: entry)
-
-                            if entry.id != dayEntries.last?.id {
-                                Divider()
-                                    .overlay(Theme.cardBorder.opacity(0.5))
+                            ForEach(plan.activities, id: \.self) { activity in
+                                Text(GoalEngine.activityDisplayNames[activity] ?? activity)
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(Theme.accent)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Theme.accent.opacity(0.15))
+                                    .clipShape(Capsule())
                             }
                         }
-
-                        // Total row
-                        Divider()
-                            .overlay(Theme.cardBorder)
-                            .padding(.top, 4)
-
-                        HStack {
-                            Text(L.total.localized)
-                                .font(Theme.bodyFont)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Theme.textPrimary)
-                            Spacer()
-                            Text("\(plan.consumedCalories) kcal")
-                                .font(Theme.bodyFont)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Theme.textPrimary)
-                        }
-                        .padding(.top, 2)
-
-                        let totalP = dayEntries.reduce(0.0) { $0 + $1.protein }
-                        let totalC = dayEntries.reduce(0.0) { $0 + $1.carbs }
-                        let totalF = dayEntries.reduce(0.0) { $0 + $1.fat }
-                        HStack(spacing: 6) {
-                            Spacer()
-                            MacroTotalPill("P", value: Int(totalP), color: Theme.blue)
-                            MacroTotalPill("K", value: Int(totalC), color: Theme.orange)
-                            MacroTotalPill("Y", value: Int(totalF), color: Theme.fatColor)
-                        }
+                    }
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
-                .padding()
-            }
-            .background(Theme.background)
-            .navigationTitle(L.dayDetail.localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(L.close.localized) { dismiss() }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Status banner
+                        statusBanner
+
+                        // Rings row: eating goal + deficit
+                        if plan.status != .planned {
+                            ringsCard
+                        }
+
+                        // Eating target card
+                        eatingTargetCard
+
+                        // Deficit card
+                        if plan.status != .planned {
+                            deficitCard
+                        }
+
+                        // Macro section
+                        macroSection
+
+                        // Food entries
+                        foodEntriesCard
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 30)
                 }
             }
         }
         .presentationDetents([.medium, .large])
-        .presentationBackground(Theme.background)
+        .presentationBackground(.clear)
     }
 
     private var isPastOlderThan7Days: Bool {
@@ -906,6 +947,161 @@ struct DayDetailSheetView: View {
             Text("goal_note_old_text".localized)
                 .font(Theme.microFont)
                 .foregroundStyle(Theme.textSecondary)
+        }
+    }
+
+    // MARK: - Rings Card
+
+    private var ringsCard: some View {
+        let eatingProgress = plan.targetCalories > 0 ? min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0) : 0
+        let remaining = plan.targetCalories - plan.consumedCalories
+        let eatingRingColor: Color = remaining < 0 ? Theme.red : Theme.accent
+
+        let actualDeficit = plan.tdee - plan.consumedCalories
+        let targetDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
+        let deficitProgress: Double = targetDeficit > 0 ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
+        let deficitRingColor: Color = actualDeficit <= 0 ? Theme.red : (targetDeficit > 0 && actualDeficit >= Int(Double(targetDeficit) * 0.80) ? Theme.green : Theme.orange)
+
+        return HStack(spacing: 12) {
+            // Eating Goal ring
+            detailRingCard(
+                title: "eating_goal".localized,
+                value: "\(plan.consumedCalories)",
+                subtitle: "/ \(plan.targetCalories) kcal",
+                progress: eatingProgress,
+                ringColor: eatingRingColor
+            )
+
+            // Deficit ring
+            detailRingCard(
+                title: "calorie_deficit_label".localized,
+                value: "\(actualDeficit)",
+                subtitle: "/ \(targetDeficit) kcal",
+                progress: deficitProgress,
+                ringColor: deficitRingColor
+            )
+        }
+    }
+
+    private func detailRingCard(title: String, value: String, subtitle: String, progress: Double, ringColor: Color) -> some View {
+        VStack(spacing: 6) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .textCase(.uppercase)
+                .tracking(0.5)
+
+            ZStack {
+                Circle()
+                    .stroke(Theme.trackBackground, lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 0) {
+                    Text(value)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+            .frame(width: 70, height: 70)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Food Entries Card
+
+    @ViewBuilder
+    private var foodEntriesCard: some View {
+        if plan.status == .planned {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("plan_for_today_label".localized)
+                    .font(Theme.headlineFont)
+                    .foregroundStyle(.white)
+                Text("\(L.goal.localized): \(plan.targetCalories) kcal")
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
+                HStack(spacing: 6) {
+                    MacroTotalPill("P", value: plan.targetProtein, color: Theme.blue)
+                    MacroTotalPill("K", value: plan.targetCarbs, color: Theme.orange)
+                    MacroTotalPill("Y", value: plan.targetFat, color: Theme.fatColor)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+        } else if dayEntries.isEmpty {
+            Text(L.noFoodLog.localized)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Theme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(L.foods.localized)
+                    .font(Theme.headlineFont)
+                    .foregroundStyle(.white)
+
+                ForEach(dayEntries, id: \.id) { entry in
+                    FoodEntryRowView(entry: entry)
+
+                    if entry.id != dayEntries.last?.id {
+                        Divider()
+                            .overlay(Theme.cardBorder.opacity(0.5))
+                    }
+                }
+
+                // Total row
+                Divider()
+                    .overlay(Theme.cardBorder)
+                    .padding(.top, 4)
+
+                HStack {
+                    Text(L.total.localized)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text("\(plan.consumedCalories) kcal")
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.textPrimary)
+                }
+
+                let totalP = dayEntries.reduce(0.0) { $0 + $1.protein }
+                let totalC = dayEntries.reduce(0.0) { $0 + $1.carbs }
+                let totalF = dayEntries.reduce(0.0) { $0 + $1.fat }
+                HStack(spacing: 6) {
+                    Spacer()
+                    MacroTotalPill("P", value: Int(totalP), color: Theme.blue)
+                    MacroTotalPill("K", value: Int(totalC), color: Theme.orange)
+                    MacroTotalPill("Y", value: Int(totalF), color: Theme.fatColor)
+                }
+            }
+            .padding()
+            .background(Theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
         }
     }
 
@@ -971,7 +1167,12 @@ struct DayDetailSheetView: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Kalori Acigi Card
@@ -1033,14 +1234,14 @@ struct DayDetailSheetView: View {
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: 4)
                             .fill(Theme.trackBackground)
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: 4)
                             .fill(deficitColor)
-                            .frame(width: geo.size.width * deficitProgress)
+                            .frame(width: max(geo.size.width * deficitProgress, 3))
                     }
                 }
-                .frame(height: 12)
+                .frame(height: 6)
 
                 if actualDeficit <= 0 {
                     Label(String(format: "no_deficit_surplus".localized, abs(actualDeficit)), systemImage: "exclamationmark.triangle.fill")
@@ -1061,39 +1262,52 @@ struct DayDetailSheetView: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     private var macroSection: some View {
         VStack(spacing: 8) {
-            macroBar("protein_label".localized, eaten: Int(plan.consumedProtein), target: plan.targetProtein, color: .blue)
-            macroBar("carb_label".localized, eaten: Int(plan.consumedCarbs), target: plan.targetCarbs, color: .orange)
-            macroBar("fat_label".localized, eaten: Int(plan.consumedFat), target: plan.targetFat, color: .yellow)
+            detailMacroRow(label: "pro_short".localized, value: Double(plan.consumedProtein), target: Double(plan.targetProtein), color: Theme.blue)
+            detailMacroRow(label: "carb_short".localized, value: Double(plan.consumedCarbs), target: Double(plan.targetCarbs), color: Theme.orange)
+            detailMacroRow(label: "fat_short".localized, value: Double(plan.consumedFat), target: Double(plan.targetFat), color: Theme.fatColor)
         }
+        .padding()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
-    private func macroBar(_ name: String, eaten: Int, target: Int, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Text(name)
-                .font(Theme.captionFont)
-                .frame(width: 50, alignment: .leading)
+    private func detailMacroRow(label: String, value: Double, target: Double, color: Color) -> some View {
+        let progress = target > 0 ? min(value / target, 1.0) : 0
+        return HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 16, alignment: .leading)
 
             GeometryReader { geo in
-                let progress = target > 0 ? min(Double(eaten) / Double(target), 1.0) : 0
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Theme.trackBackground)
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color)
-                        .frame(width: geo.size.width * progress)
+                        .frame(width: max(geo.size.width * progress, 3))
                 }
             }
-            .frame(height: 8)
+            .frame(height: 6)
 
-            Text("\(eaten)g / \(target)g")
-                .font(Theme.captionFont)
+            Text("\(Int(value))/\(Int(target))g")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
                 .foregroundStyle(Theme.textSecondary)
-                .frame(width: 80, alignment: .trailing)
+                .frame(width: 60, alignment: .trailing)
         }
     }
 }
