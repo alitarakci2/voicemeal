@@ -8,6 +8,7 @@ import SwiftUI
 
 struct ActivityChartView: View {
     let stats: [DayStat]
+    @EnvironmentObject private var themeManager: ThemeManager
 
     private var activityCounts: [(activity: String, count: Int, emoji: String, label: String)] {
         var counts: [String: Int] = [:]
@@ -33,9 +34,15 @@ struct ActivityChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("activity_distribution".localized)
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "figure.run")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("activity_distribution".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
 
             if activityCounts.isEmpty {
                 Text("no_data_yet".localized)
@@ -68,6 +75,11 @@ struct ActivityChartView: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }

@@ -8,12 +8,22 @@ import SwiftUI
 
 struct CalorieChartView: View {
     let stats: [DayStat]
+    @EnvironmentObject private var themeManager: ThemeManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("calorie_tracking".localized)
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "chart.bar.fill")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("calorie_tracking".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("kcal")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.textSecondary)
+            }
 
             if stats.isEmpty || stats.allSatisfy({ !$0.hasData }) {
                 Text("no_data_yet".localized)
@@ -58,6 +68,11 @@ struct CalorieChartView: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }

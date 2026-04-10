@@ -11,13 +11,17 @@ struct StatisticsView: View {
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
     @Environment(GoalEngine.self) private var goalEngine
+    @EnvironmentObject private var themeManager: ThemeManager
 
     @State private var statisticsService = StatisticsService()
     @State private var selectedRange = 0 // 0 = weekly, 1 = monthly, 2 = program
     @State private var weeklyInsight: String?
     @State private var insightLoading = false
+    @State private var scrollProxy: ScrollViewProxy?
 
     @Environment(GroqService.self) private var groqService
+
+    private var isEN: Bool { groqService.appLanguage == "en" }
 
     private var monthlyHasEnoughData: Bool {
         statisticsService.monthlyStats.filter { $0.hasData }.count >= 14
@@ -36,82 +40,106 @@ struct StatisticsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Title
-                Text(L.statistics.localized)
-                    .font(Theme.titleFont)
-                    .frame(maxWidth: .infinity, alignment: .center)
+        ZStack {
+            Theme.backgroundGradient
+                .ignoresSafeArea()
 
-                // Segmented control
-                    Picker("range".localized, selection: $selectedRange) {
-                        Text(L.weekly.localized).tag(0)
-                        Text(L.monthly.localized).tag(1)
-                        Text(L.program.localized).tag(2)
-                    }
-                    .pickerStyle(.segmented)
-
-                    if selectedRange == 2 {
-                        // Program view
-                        if let profile = profiles.first {
-                            ProgramSummaryView(
-                                summary: statisticsService.programData(
-                                    profile: profile,
-                                    snapshots: snapshots,
-                                    entries: allEntries
-                                ),
-                                targetProtein: goalEngine.proteinTarget,
-                                targetCarbs: goalEngine.carbTarget,
-                                targetFat: goalEngine.fatTarget,
-                                realWeightDate: goalEngine.latestWeightDate,
-                                coachStyle: profile.coachStyle,
-                                personalContext: profile.personalContext
-                            )
+            VStack(spacing: 0) {
+                // Sticky header
+                HStack {
+                    Text(isEN ? "Statistics" : "İstatistik")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Button {
+                        withAnimation {
+                            scrollProxy?.scrollTo("top", anchor: .top)
                         }
-                    } else {
-                        if selectedRange == 1 && !monthlyHasEnoughData {
-                            Text("monthly_min_data".localized)
-                                .font(Theme.bodyFont)
-                                .foregroundStyle(Theme.textSecondary)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, 4)
-                        }
-
-                        // Summary cards
-                        summaryCards
-
-                        // Charts
-                        CalorieChartView(stats: currentStats)
-
-                        DeficitChartView(
-                            stats: currentStats,
-                            goalDays: profiles.first?.goalDays ?? 90,
-                            totalNeededDeficit: totalNeededDeficit
-                        )
-
-                        MacroChartView(
-                            avgProtein: statisticsService.weeklyAverageProtein,
-                            avgCarbs: statisticsService.weeklyAverageCarbs,
-                            avgFat: statisticsService.weeklyAverageFat,
-                            targetProtein: goalEngine.proteinTarget,
-                            targetCarbs: goalEngine.carbTarget,
-                            targetFat: goalEngine.fatTarget,
-                            todayProtein: todayEntries.reduce(0.0) { $0 + $1.protein },
-                            todayCarbs: todayEntries.reduce(0.0) { $0 + $1.carbs },
-                            todayFat: todayEntries.reduce(0.0) { $0 + $1.fat }
-                        )
-
-                        ActivityChartView(stats: currentStats)
-
-                        // Weekly Groq insight
-                        weeklyInsightCard
+                    } label: {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(Theme.accent)
                     }
-
-                    Spacer(minLength: 20)
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Theme.gradientTop.opacity(0.95))
+                .overlay(Divider().opacity(0.2), alignment: .bottom)
+
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            Color.clear.frame(height: 0).id("top")
+
+                            // Custom segmented picker
+                            customSegmentedPicker
+
+                            if selectedRange == 2 {
+                                // Program view
+                                if let profile = profiles.first {
+                                    ProgramSummaryView(
+                                        summary: statisticsService.programData(
+                                            profile: profile,
+                                            snapshots: snapshots,
+                                            entries: allEntries
+                                        ),
+                                        targetProtein: goalEngine.proteinTarget,
+                                        targetCarbs: goalEngine.carbTarget,
+                                        targetFat: goalEngine.fatTarget,
+                                        realWeightDate: goalEngine.latestWeightDate,
+                                        coachStyle: profile.coachStyle,
+                                        personalContext: profile.personalContext
+                                    )
+                                }
+                            } else {
+                                if selectedRange == 1 && !monthlyHasEnoughData {
+                                    Text("monthly_min_data".localized)
+                                        .font(Theme.bodyFont)
+                                        .foregroundStyle(Theme.textSecondary)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding(.vertical, 4)
+                                }
+
+                                // Summary cards
+                                summaryCards
+
+                                // Charts
+                                CalorieChartView(stats: currentStats)
+
+                                DeficitChartView(
+                                    stats: currentStats,
+                                    goalDays: profiles.first?.goalDays ?? 90,
+                                    totalNeededDeficit: totalNeededDeficit
+                                )
+
+                                MacroChartView(
+                                    avgProtein: statisticsService.weeklyAverageProtein,
+                                    avgCarbs: statisticsService.weeklyAverageCarbs,
+                                    avgFat: statisticsService.weeklyAverageFat,
+                                    targetProtein: goalEngine.proteinTarget,
+                                    targetCarbs: goalEngine.carbTarget,
+                                    targetFat: goalEngine.fatTarget,
+                                    todayProtein: todayEntries.reduce(0.0) { $0 + $1.protein },
+                                    todayCarbs: todayEntries.reduce(0.0) { $0 + $1.carbs },
+                                    todayFat: todayEntries.reduce(0.0) { $0 + $1.fat }
+                                )
+
+                                ActivityChartView(stats: currentStats)
+
+                                // Weekly Groq insight
+                                weeklyInsightCard
+                            }
+
+                            Spacer(minLength: 20)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 12)
+                        .padding(.bottom, 20)
+                    }
+                    .onAppear { scrollProxy = proxy }
+                }
             }
-        .background(Theme.background)
+        }
         .onAppear {
             refreshStats()
         }
@@ -123,11 +151,62 @@ struct StatisticsView: View {
         }
     }
 
+    // MARK: - Custom Segmented Picker
+
+    private var customSegmentedPicker: some View {
+        let labelsEN = ["Weekly", "Monthly", "Program"]
+        let labelsTR = ["Haftalık", "Aylık", "Program"]
+        return HStack(spacing: 0) {
+            ForEach(0..<3, id: \.self) { i in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedRange = i
+                    }
+                } label: {
+                    Text(isEN ? labelsEN[i] : labelsTR[i])
+                        .font(.subheadline.weight(selectedRange == i ? .semibold : .regular))
+                        .foregroundStyle(selectedRange == i ? Color.white : Theme.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(
+                            selectedRange == i
+                                ? AnyView(RoundedRectangle(cornerRadius: 10).fill(Theme.accent))
+                                : AnyView(Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
     private var trendEmoji: String {
         switch statisticsService.trend {
         case .losing: return "\u{1F4C9}"
         case .gaining: return "\u{1F4C8}"
         case .stable: return "\u{2796}"
+        }
+    }
+
+    private var trendIcon: String {
+        switch statisticsService.trend {
+        case .losing: return "arrow.down.right"
+        case .gaining: return "arrow.up.right"
+        case .stable: return "minus"
+        }
+    }
+
+    private var trendColor: Color {
+        switch statisticsService.trend {
+        case .losing: return Theme.green
+        case .gaining: return Theme.orange
+        case .stable: return Theme.textSecondary
         }
     }
 
@@ -150,108 +229,114 @@ struct StatisticsView: View {
         VStack(spacing: 12) {
             // Top row: Streak + Trend side by side
             HStack(spacing: 12) {
-                // Streak
-                VStack(spacing: 8) {
-                    Text("\u{1F525}")
-                        .font(.system(size: 28))
-                    Text("\(statisticsService.currentStreak)")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("current_streak".localized)
-                        .font(Theme.microFont)
-                        .foregroundStyle(Theme.textSecondary)
-                    if statisticsService.bestStreak > 0 {
-                        Text(String(format: "best_streak_days_format".localized, statisticsService.bestStreak))
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textTertiary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Theme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                MetricSummaryCard(
+                    icon: "flame.fill",
+                    iconColor: Theme.orange,
+                    title: isEN ? "Streak" : "Seri",
+                    value: "\(statisticsService.currentStreak)",
+                    subtitle: isEN ? "days" : "gün",
+                    detail: statisticsService.bestStreak > 0
+                        ? (isEN ? "Best: \(statisticsService.bestStreak)" : "En iyi: \(statisticsService.bestStreak)")
+                        : ""
+                )
 
-                // Trend
-                VStack(spacing: 8) {
-                    Text(trendEmoji)
-                        .font(.system(size: 28))
-                    Text(statisticsService.trend.localized)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    let avgDef = statisticsService.last3DaysAvgDeficit
-                    if avgDef != 0 {
-                        Text("\(abs(avgDef)) kcal")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(avgDef > 0 ? Theme.green : Theme.red)
+                let avgDef = statisticsService.last3DaysAvgDeficit
+                MetricSummaryCard(
+                    icon: trendIcon,
+                    iconColor: trendColor,
+                    title: isEN ? "Trend" : "Trend",
+                    value: avgDef != 0 ? "\(abs(avgDef))" : "—",
+                    subtitle: "kcal",
+                    detail: statisticsService.trend.localized + " " + trendEmoji
+                )
+            }
+
+            // Weight estimate card (full width)
+            weightEstimateCard
+        }
+    }
+
+    private var weightEstimateCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "scalemass.fill")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text(isEN ? "Weight Estimate" : "Tahmini Kilo")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
+
+            HStack(spacing: 0) {
+                let weekKg = statisticsService.estimatedWeightLostWeekKg
+                let weekDays = statisticsService.completedDaysThisWeek
+                VStack(spacing: 4) {
+                    Text("weekly".localized)
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg)))")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundStyle(weekKg >= 0 ? Theme.green : Theme.orange)
+                        Text("kg")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    Text("avg_label".localized)
+                    Text(String(format: "%d " + "days_label".localized, weekDays))
                         .font(Theme.microFont)
                         .foregroundStyle(Theme.textTertiary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Theme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-            }
 
-            // Weight estimate card
-            VStack(spacing: 12) {
-                HStack {
-                    Text("\u{2696}\u{FE0F} \("weight_estimate".localized)")
-                        .font(Theme.headlineFont)
-                        .foregroundStyle(.white)
-                    Spacer()
-                }
+                Rectangle()
+                    .fill(Theme.cardBorder)
+                    .frame(width: 1, height: 40)
 
-                HStack(spacing: 0) {
-                    let weekKg = statisticsService.estimatedWeightLostWeekKg
-                    let weekDays = statisticsService.completedDaysThisWeek
-                    VStack(spacing: 4) {
-                        Text("weekly".localized)
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textTertiary)
-                        Text("\(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg))) kg")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(weekKg >= 0 ? Theme.green : Theme.orange)
-                        Text(String(format: "%d " + "days_label".localized, weekDays))
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textTertiary)
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    Rectangle()
-                        .fill(Theme.cardBorder)
-                        .frame(width: 1, height: 40)
-
-                    let monthKg = statisticsService.estimatedWeightLostMonthKg
-                    let monthDays = statisticsService.completedDaysThisMonth
-                    VStack(spacing: 4) {
-                        Text("monthly".localized)
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textTertiary)
-                        Text("\(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg))) kg")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                let monthKg = statisticsService.estimatedWeightLostMonthKg
+                let monthDays = statisticsService.completedDaysThisMonth
+                VStack(spacing: 4) {
+                    Text("monthly".localized)
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg)))")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundStyle(monthKg >= 0 ? Theme.green : Theme.orange)
-                        Text(String(format: "%d " + "days_label".localized, monthDays))
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textTertiary)
+                        Text("kg")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
                     }
-                    .frame(maxWidth: .infinity)
+                    Text(String(format: "%d " + "days_label".localized, monthDays))
+                        .font(Theme.microFont)
+                        .foregroundStyle(Theme.textTertiary)
                 }
+                .frame(maxWidth: .infinity)
             }
-            .padding(20)
-            .background(Theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Weekly Insight
 
     private var weeklyInsightCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("\u{1F9E0} \("weekly_insight".localized)")
-                .font(Theme.headlineFont)
-                .foregroundStyle(.white)
+            HStack(spacing: 6) {
+                Image(systemName: "brain.head.profile")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text(isEN ? "Weekly Insight" : "Haftalık İçgörü")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
 
             if insightLoading {
                 HStack {
@@ -279,9 +364,14 @@ struct StatisticsView: View {
                     .foregroundStyle(Theme.textTertiary)
             }
         }
-        .padding(20)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private var cachedInsightDate: Date? {
@@ -323,6 +413,53 @@ struct StatisticsView: View {
             // Weekly insight error
         }
         insightLoading = false
+    }
+}
+
+// MARK: - Metric Summary Card
+
+struct MetricSummaryCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let value: String
+    let subtitle: String
+    let detail: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .foregroundStyle(iconColor)
+                    .font(.system(size: 14))
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer()
+            }
+
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+
+            Text(detail)
+                .font(.caption2)
+                .foregroundStyle(Theme.textTertiary)
+                .lineLimit(1)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 

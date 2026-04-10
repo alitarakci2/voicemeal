@@ -16,8 +16,11 @@ struct ProgramSummaryView: View {
 
     @State private var insightText: String?
     @State private var insightLoading = false
+    @EnvironmentObject private var themeManager: ThemeManager
 
     @Environment(GroqService.self) private var groqService
+
+    private var isEN: Bool { groqService.appLanguage == "en" }
 
     var body: some View {
         if summary.totalDays < 3 {
@@ -65,34 +68,57 @@ struct ProgramSummaryView: View {
     // MARK: - Program Start
 
     private var programStartCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("📅 \(L.programStartDate.localized)")
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
-
-            Text(String(format: "start_label_format".localized, summary.startDate.formatted(.dateTime.day().month(.wide).year())))
-                .font(Theme.bodyFont)
-                .foregroundStyle(Theme.textSecondary)
-
-            Text(String(format: "day_progress_format".localized, summary.totalDays, summary.totalDays + summary.daysRemaining, programCompletionPercent))
-                .font(Theme.bodyFont)
-                .foregroundStyle(Theme.textSecondary)
-
-            // Progress bar
-            GeometryReader { geo in
-                let progress = min(Double(programCompletionPercent) / 100.0, 1.0)
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Theme.trackBackground)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Theme.accent)
-                        .frame(width: geo.size.width * progress)
+        let completionProgress = min(Double(programCompletionPercent) / 100.0, 1.0)
+        return HStack(spacing: 14) {
+            // Circular progress ring
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.1), lineWidth: 8)
+                Circle()
+                    .trim(from: 0, to: completionProgress)
+                    .stroke(Theme.accent,
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 0) {
+                    Text("\(programCompletionPercent)%")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(isEN ? "done" : "tamam")
+                        .font(.system(size: 9))
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
-            .frame(height: 8)
+            .frame(width: 70, height: 70)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
+                        .foregroundStyle(Theme.accent)
+                        .font(.system(size: 13))
+                    Text(L.programStartDate.localized)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                }
+
+                Text(summary.startDate.formatted(.dateTime.day().month(.wide).year()))
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
+
+                Text(String(format: "day_progress_format".localized, summary.totalDays, summary.totalDays + summary.daysRemaining, programCompletionPercent))
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+
+            Spacer(minLength: 0)
         }
-        .padding()
-        .themeCard()
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     private var comparisonText: String {
@@ -132,9 +158,15 @@ struct ProgramSummaryView: View {
 
     private var weightGoalCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("⚖️ \("weight_goal".localized)")
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "scalemass.fill")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("weight_goal".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
 
             // Weight labels
             HStack {
@@ -229,7 +261,13 @@ struct ProgramSummaryView: View {
             }
         }
         .padding()
-        .themeCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Total Stats Grid
@@ -268,7 +306,13 @@ struct ProgramSummaryView: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .themeCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Best / Worst Day
@@ -299,55 +343,106 @@ struct ProgramSummaryView: View {
     }
 
     private var bestWorstCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "calendar.badge.clock")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text(isEN ? "Highlights" : "Öne Çıkanlar")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
+
             if let best = summary.bestDay {
-                Text(bestDayLabel(date: best.date, value: best.value))
-                    .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.green)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .foregroundStyle(Theme.green)
+                        .font(.system(size: 12))
+                    Text(bestDayLabel(date: best.date, value: best.value))
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.green)
+                }
             }
 
             if let worst = summary.worstDay {
-                Text(worstDayLabel(date: worst.date, value: worst.value))
-                    .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.orange)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundStyle(Theme.orange)
+                        .font(.system(size: 12))
+                    Text(worstDayLabel(date: worst.date, value: worst.value))
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.orange)
+                }
             }
         }
         .padding()
-        .themeCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Streak
 
     private var streakCard: some View {
-        HStack {
+        HStack(spacing: 14) {
+            Image(systemName: "flame.fill")
+                .foregroundStyle(Theme.orange)
+                .font(.system(size: 28))
+                .frame(width: 50, height: 50)
+                .background(Theme.orange.opacity(0.12))
+                .clipShape(Circle())
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(String(format: "current_streak_days".localized, summary.currentStreak))
-                    .font(Theme.headlineFont)
-                    .foregroundStyle(Theme.textPrimary)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
                 Text(String(format: "best_streak_days".localized, summary.bestStreak))
-                    .font(Theme.bodyFont)
+                    .font(Theme.captionFont)
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
         }
         .padding()
-        .themeCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     // MARK: - Macro Averages
 
     private var macroAveragesCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("macro_averages".localized)
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "chart.pie.fill")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("macro_averages".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
 
             macroBar(L.protein.localized, avg: Int(summary.avgDailyProtein), target: targetProtein, color: Theme.blue)
             macroBar(L.carbs.localized, avg: Int(summary.avgDailyCarbs), target: targetCarbs, color: Theme.orange)
-            macroBar(L.fat.localized, avg: Int(summary.avgDailyFat), target: targetFat, color: .yellow)
+            macroBar(L.fat.localized, avg: Int(summary.avgDailyFat), target: targetFat, color: Theme.fatColor)
         }
         .padding()
-        .themeCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     private func macroBar(_ name: String, avg: Int, target: Int, color: Color) -> some View {
@@ -379,21 +474,29 @@ struct ProgramSummaryView: View {
     // MARK: - Program Insight
 
     private var programInsightCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("program_coach".localized)
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "brain.head.profile")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("program_coach".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
 
             if insightLoading {
                 HStack {
                     Spacer()
                     ProgressView()
+                        .tint(Theme.accent)
                     Spacer()
                 }
                 .padding(.vertical, 12)
             } else if let insight = insightText {
                 Text(insight)
-                    .font(Theme.bodyFont)
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineSpacing(4)
             } else {
@@ -402,8 +505,14 @@ struct ProgramSummaryView: View {
                     .foregroundStyle(Theme.textSecondary)
             }
         }
-        .padding()
-        .themeCard()
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private func loadProgramInsight() async {

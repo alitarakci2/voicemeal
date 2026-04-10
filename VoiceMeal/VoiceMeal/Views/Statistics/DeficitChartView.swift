@@ -10,6 +10,7 @@ struct DeficitChartView: View {
     let stats: [DayStat]
     let goalDays: Int
     let totalNeededDeficit: Double
+    @EnvironmentObject private var themeManager: ThemeManager
 
     private var snapshotStats: [(date: Date, cumulativeDeficit: Int)] {
         let filtered = stats.filter { $0.hasData && $0.hasSnapshot }
@@ -33,9 +34,18 @@ struct DeficitChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("cumulative_deficit".localized)
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("cumulative_deficit".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("kcal")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.textSecondary)
+            }
 
             if snapshotStats.isEmpty {
                 Text("no_data_yet".localized)
@@ -80,6 +90,11 @@ struct DeficitChartView: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }

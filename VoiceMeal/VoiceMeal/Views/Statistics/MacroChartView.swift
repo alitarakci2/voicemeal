@@ -16,6 +16,7 @@ struct MacroChartView: View {
     let todayProtein: Double
     let todayCarbs: Double
     let todayFat: Double
+    @EnvironmentObject private var themeManager: ThemeManager
 
     private var todayTotal: Double {
         todayProtein * 4 + todayCarbs * 4 + todayFat * 9
@@ -23,15 +24,21 @@ struct MacroChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("macro_averages_title".localized)
-                .font(Theme.headlineFont)
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "chart.pie.fill")
+                    .foregroundStyle(Theme.accent)
+                    .font(.system(size: 14))
+                Text("macro_averages_title".localized)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Spacer()
+            }
 
             // Weekly average bars
             VStack(spacing: 10) {
                 macroBar("protein_label".localized, avg: avgProtein, target: targetProtein, color: Theme.blue)
                 macroBar("carb_label".localized, avg: avgCarbs, target: targetCarbs, color: Theme.orange)
-                macroBar("fat_label".localized, avg: avgFat, target: targetFat, color: .yellow)
+                macroBar("fat_label".localized, avg: avgFat, target: targetFat, color: Theme.fatColor)
             }
 
             Divider()
@@ -51,7 +58,7 @@ struct MacroChartView: View {
                 HStack(spacing: 0) {
                     macroSegment("P", pct: proteinPct, color: Theme.blue)
                     macroSegment("K", pct: carbPct, color: Theme.orange)
-                    macroSegment("Y", pct: fatPct, color: .yellow)
+                    macroSegment("Y", pct: fatPct, color: Theme.fatColor)
                 }
                 .frame(height: 28)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -61,7 +68,7 @@ struct MacroChartView: View {
                     Spacer()
                     legendDot("\("carb_label".localized) %\(carbPct)", color: Theme.orange)
                     Spacer()
-                    legendDot("\("fat_label".localized) %\(fatPct)", color: .yellow)
+                    legendDot("\("fat_label".localized) %\(fatPct)", color: Theme.fatColor)
                 }
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
@@ -72,7 +79,12 @@ struct MacroChartView: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
     private func macroBar(_ name: String, avg: Double, target: Int, color: Color) -> some View {
