@@ -13,6 +13,7 @@ extension Notification.Name {
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var themeManager: ThemeManager
+    @Environment(GroqService.self) private var groqService
     @Query private var profiles: [UserProfile]
 
     // Profile fields
@@ -49,300 +50,80 @@ struct SettingsView: View {
     @State private var showResetAlert = false
     @State private var healthKitWeight: Double?
     @State private var healthKitWeightDate: Date?
+    @State private var scrollProxy: ScrollViewProxy?
 
     @State private var healthKitService = HealthKitService()
 
+    private var isEN: Bool { groqService.appLanguage == "en" }
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Title
-                Text(L.settings.localized)
-                    .font(Theme.titleFont)
-                    .frame(maxWidth: .infinity, alignment: .center)
+        ZStack {
+            Theme.backgroundGradient
+                .ignoresSafeArea()
 
-                // Section: Profile
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 16) {
-                            sectionHeader(L.profile.localized)
-
-                            VStack(spacing: 12) {
-                                settingsRow(label: L.nameField.localized) {
-                                    TextField(L.nameField.localized, text: $name)
-                                        .multilineTextAlignment(.trailing)
-                                        .foregroundStyle(.white)
-                                }
-
-                                Divider().overlay(Theme.cardBorder)
-
-                                settingsRow(label: L.gender.localized) {
-                                    Picker("", selection: $gender) {
-                                        Text(L.male.localized).tag("male")
-                                        Text(L.female.localized).tag("female")
-                                    }
-                                    .pickerStyle(.segmented)
-                                    .frame(width: 160)
-                                }
-
-                                Divider().overlay(Theme.cardBorder)
-
-                                settingsRow(label: L.age.localized) {
-                                    Stepper("\(age)", value: $age, in: 15...80)
-                                        .frame(width: 130)
-                                }
-
-                                Divider().overlay(Theme.cardBorder)
-
-                                VStack(spacing: 6) {
-                                    settingsRow(label: L.height.localized) {
-                                        Text("\(Int(heightCm)) cm")
-                                            .foregroundStyle(Theme.textSecondary)
-                                    }
-                                    Slider(value: $heightCm, in: 120...220, step: 1)
-                                        .tint(Theme.accent)
-                                }
-
-                                Divider().overlay(Theme.cardBorder)
-
-                                VStack(spacing: 6) {
-                                    settingsRow(label: L.weight.localized) {
-                                        Text("\(String(format: "%.1f", currentWeightKg)) kg")
-                                            .foregroundStyle(Theme.textSecondary)
-                                    }
-                                    Slider(value: $currentWeightKg, in: 40...200, step: 0.1)
-                                        .tint(Theme.accent)
-                                }
-                            }
-                        }
-                    }
-
-                    // Section: Coach Style
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader("coach_style".localized)
-
-                            ForEach(CoachStyle.allCases, id: \.self) { style in
-                                Button {
-                                    selectedCoachStyle = style
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(selectedLanguage == "en"
-                                                ? style.displayNameEn
-                                                : style.displayName)
-                                                .font(Theme.bodyFont)
-                                                .fontWeight(.medium)
-                                                .foregroundStyle(.white)
-                                            Text(selectedLanguage == "en"
-                                                ? style.descriptionEn
-                                                : style.description)
-                                                .font(Theme.captionFont)
-                                                .foregroundStyle(Theme.textSecondary)
-                                        }
-                                        Spacer()
-                                        Image(systemName: selectedCoachStyle == style
-                                            ? "checkmark.circle.fill" : "circle")
-                                            .foregroundStyle(selectedCoachStyle == style
-                                                ? Theme.accent : Theme.textTertiary)
-                                            .font(.system(size: 22))
-                                    }
-                                    .padding(14)
-                                    .background(
-                                        selectedCoachStyle == style
-                                            ? Theme.accent.opacity(0.1)
-                                            : Theme.cardBorder.opacity(0.5)
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-
-                    // Section: Personal Preferences
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader("personal_preferences".localized)
-
-                            Text("tell_coach".localized)
-                                .font(Theme.captionFont)
-                                .foregroundStyle(Theme.textSecondary)
-
-                            TextEditor(text: $personalContext)
-                                .frame(minHeight: 100)
-                                .padding(8)
-                                .scrollContentBackground(.hidden)
-                                .background(Theme.trackBackground)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .font(Theme.bodyFont)
-                                .foregroundStyle(.white)
-
-                            Text("personal_context_example".localized)
-                                .font(.caption2)
-                                .foregroundStyle(Theme.textTertiary)
-                        }
-                    }
-
-                    // Section: Notifications
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader(L.notifications.localized)
-
-                            Toggle("weight_reminder_enabled".localized, isOn: $weightReminderEnabled)
-                                .tint(Theme.accent)
-
-                            if weightReminderEnabled {
-                                Divider().overlay(Theme.cardBorder)
-
-                                settingsRow(label: "weight_reminder_days".localized) {
-                                    Stepper("\(weightReminderDays)", value: $weightReminderDays, in: 1...7)
-                                        .frame(width: 130)
-                                }
-
-                                Divider().overlay(Theme.cardBorder)
-
-                                DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
-                                    .tint(Theme.accent)
-                            }
-                        }
-                    }
-
-                    // Section: Premium
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader("Premium")
-
-                            Toggle(selectedLanguage == "en" ? "Water Tracking" : "Su Takibi", isOn: $isWaterTrackingEnabled)
-                                .tint(Theme.accent)
-
-                            if isWaterTrackingEnabled {
-                                Divider().overlay(Theme.cardBorder)
-
-                                Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
-                                    .tint(Theme.accent)
-                            }
-
-                            if isWaterTrackingEnabled && !waterGoalAuto {
-                                Divider().overlay(Theme.cardBorder)
-
-                                VStack(spacing: 6) {
-                                    settingsRow(label: L.waterGoal.localized) {
-                                        Text("\(Int(waterGoalManualMl)) ml")
-                                            .foregroundStyle(Theme.textSecondary)
-                                    }
-                                    Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
-                                        .tint(Theme.blue)
-                                }
-                            } else if isWaterTrackingEnabled && waterGoalAuto {
-                                Text(L.waterFormula.localized)
-                                    .font(Theme.captionFont)
-                                    .foregroundStyle(Theme.textTertiary)
-                            }
-                        }
-                    }
-
-                    // Section: Language
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader(L.language.localized)
-
-                            Picker(L.language.localized, selection: $selectedLanguage) {
-                                Text(L.systemDefault.localized).tag("")
-                                Text("Turkce").tag("tr")
-                                Text("English").tag("en")
-                            }
-                            .pickerStyle(.segmented)
-                            .onChange(of: selectedLanguage) { _, newValue in
-                                if newValue != previousLanguage {
-                                    applyLanguage(newValue)
-                                    previousLanguage = newValue
-                                }
-                            }
-                        }
-                    }
-
-                    // Section: App Theme
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader("app_theme".localized)
-
-                            ForEach(AppTheme.allCases, id: \.self) { theme in
-                                Button {
-                                    themeManager.apply(theme)
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        Circle()
-                                            .fill(theme.accent)
-                                            .frame(width: 20, height: 20)
-                                        Text(selectedLanguage == "en"
-                                            ? theme.displayNameEn
-                                            : theme.displayName)
-                                            .font(Theme.bodyFont)
-                                            .foregroundStyle(.white)
-                                        Spacer()
-                                        if themeManager.current == theme {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(theme.accent)
-                                                .font(.system(size: 22))
-                                        }
-                                    }
-                                    .padding(12)
-                                    .background(
-                                        themeManager.current == theme
-                                            ? theme.accent.opacity(0.1)
-                                            : Theme.cardBorder.opacity(0.5)
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-
-                    // Save button
+            VStack(spacing: 0) {
+                // Sticky header with Save button
+                HStack {
+                    Text(isEN ? "Settings" : "Ayarlar")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                    Spacer()
                     Button {
                         handleSave()
                     } label: {
                         Text(L.save.localized)
-                            .font(Theme.headlineFont)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Theme.accent)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
-
-                    // Section: App
-                    settingsCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            sectionHeader(L.appSection.localized)
-
-                            settingsRow(label: L.version.localized) {
-                                Text("1.0.0")
-                                    .foregroundStyle(Theme.textTertiary)
-                            }
-
-                            Divider().overlay(Theme.cardBorder)
-
-                            Button {
-                                showResetAlert = true
-                            } label: {
-                                HStack {
-                                    Image(systemName: "arrow.counterclockwise")
-                                    Text(L.resetOnboarding.localized)
-                                }
-                                .foregroundStyle(Theme.red)
-                                .font(Theme.bodyFont)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
                 }
-                .padding()
-                .padding(.bottom, 40)
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Theme.gradientTop.opacity(0.95))
+                .overlay(Divider().opacity(0.2), alignment: .bottom)
+
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 14) {
+                            Color.clear.frame(height: 0).id("top")
+
+                            // Section: Profile
+                            profileSection
+
+                            // Section: Coach Style
+                            coachStyleSection
+
+                            // Section: Personal Preferences
+                            personalPreferencesSection
+
+                            // Section: Notifications
+                            notificationsSection
+
+                            // Section: Premium
+                            premiumSection
+
+                            // Section: Language
+                            languageSection
+
+                            // Section: App Theme
+                            appThemeSection
+
+                            // Section: App
+                            appSection
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 12)
+                        .padding(.bottom, 40)
+                    }
+                    .onAppear { scrollProxy = proxy }
+                    .scrollDismissesKeyboard(.interactively)
+                }
             }
-        .scrollDismissesKeyboard(.interactively)
-        .background(Theme.background)
+        }
         .overlay(alignment: .bottom) {
             if showSavedToast {
                 Text(L.savedToast.localized)
@@ -400,26 +181,444 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Profile Section
+
+    private var profileSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 14) {
+                sectionHeader(L.profile.localized, icon: "person.fill", iconColor: Theme.accent)
+
+                // Name
+                settingsRow(label: L.nameField.localized) {
+                    TextField(L.nameField.localized, text: $name)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(.white)
+                }
+
+                Divider().overlay(Theme.cardBorder)
+
+                // Gender — custom picker
+                genderPicker
+
+                Divider().overlay(Theme.cardBorder)
+
+                // Age
+                settingsRow(label: L.age.localized) {
+                    Stepper("\(age)", value: $age, in: 15...80)
+                        .frame(width: 130)
+                }
+
+                Divider().overlay(Theme.cardBorder)
+
+                // Height
+                VStack(spacing: 8) {
+                    HStack {
+                        Text(L.height.localized)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.textSecondary)
+                        Spacer()
+                        Text("\(Int(heightCm)) cm")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    Slider(value: $heightCm, in: 120...220, step: 1)
+                        .tint(Theme.accent)
+                }
+
+                Divider().overlay(Theme.cardBorder)
+
+                // Weight
+                VStack(spacing: 8) {
+                    HStack {
+                        Text(L.weight.localized)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.textSecondary)
+                        Spacer()
+                        Text("\(String(format: "%.1f", currentWeightKg)) kg")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    Slider(value: $currentWeightKg, in: 40...200, step: 0.1)
+                        .tint(Theme.accent)
+                }
+            }
+        }
+    }
+
+    // MARK: - Gender Picker
+
+    private var genderPicker: some View {
+        HStack(spacing: 0) {
+            genderButton(value: "male", label: isEN ? "Male" : "Erkek", icon: "person.fill")
+            genderButton(value: "female", label: isEN ? "Female" : "Kadın", icon: "person.fill")
+        }
+        .padding(3)
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 11))
+    }
+
+    private func genderButton(value: String, label: String, icon: String) -> some View {
+        Button {
+            gender = value
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 11))
+                Text(label)
+                    .font(.subheadline.weight(gender == value ? .semibold : .regular))
+            }
+            .foregroundStyle(gender == value ? Color.white : Theme.textSecondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                gender == value
+                    ? AnyView(RoundedRectangle(cornerRadius: 8).fill(Theme.accent))
+                    : AnyView(Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Coach Style Section
+
+    private var coachStyleSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("coach_style".localized, icon: "brain.fill", iconColor: .purple)
+
+                ForEach(CoachStyle.allCases, id: \.self) { style in
+                    Button {
+                        selectedCoachStyle = style
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(isEN ? style.displayNameEn : style.displayName)
+                                    .font(Theme.bodyFont)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.white)
+                                Text(isEN ? style.descriptionEn : style.description)
+                                    .font(Theme.captionFont)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            Spacer()
+                            Image(systemName: selectedCoachStyle == style
+                                ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selectedCoachStyle == style
+                                    ? Theme.accent : Theme.textTertiary)
+                                .font(.system(size: 22))
+                        }
+                        .padding(14)
+                        .background(
+                            selectedCoachStyle == style
+                                ? Theme.accent.opacity(0.1)
+                                : Color.white.opacity(0.04)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    // MARK: - Personal Preferences Section
+
+    private var personalPreferencesSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("personal_preferences".localized, icon: "text.bubble.fill", iconColor: Theme.blue)
+
+                Text("tell_coach".localized)
+                    .font(Theme.captionFont)
+                    .foregroundStyle(Theme.textSecondary)
+
+                TextEditor(text: $personalContext)
+                    .frame(minHeight: 100)
+                    .padding(8)
+                    .scrollContentBackground(.hidden)
+                    .background(Theme.trackBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .font(Theme.bodyFont)
+                    .foregroundStyle(.white)
+
+                Text("personal_context_example".localized)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.textTertiary)
+            }
+        }
+    }
+
+    // MARK: - Notifications Section
+
+    private var notificationsSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader(L.notifications.localized, icon: "bell.fill", iconColor: Theme.orange)
+
+                Toggle(isOn: $weightReminderEnabled) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "scalemass.fill")
+                            .foregroundStyle(Theme.orange)
+                            .font(.system(size: 14))
+                        Text("weight_reminder_enabled".localized)
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+                }
+                .tint(Theme.accent)
+
+                if weightReminderEnabled {
+                    Divider().overlay(Theme.cardBorder)
+
+                    settingsRow(label: "weight_reminder_days".localized) {
+                        Stepper("\(weightReminderDays)", value: $weightReminderDays, in: 1...7)
+                            .frame(width: 130)
+                    }
+
+                    Divider().overlay(Theme.cardBorder)
+
+                    DatePicker(L.time.localized, selection: $weightReminderTime, displayedComponents: .hourAndMinute)
+                        .tint(Theme.accent)
+                }
+            }
+        }
+    }
+
+    // MARK: - Premium Section
+
+    private var premiumSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("Premium", icon: "star.fill", iconColor: .yellow)
+
+                Toggle(isOn: $isWaterTrackingEnabled) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "drop.fill")
+                            .foregroundStyle(Theme.blue)
+                            .font(.system(size: 14))
+                        Text(isEN ? "Water Tracking" : "Su Takibi")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+                }
+                .tint(Theme.accent)
+
+                if isWaterTrackingEnabled {
+                    Divider().overlay(Theme.cardBorder)
+
+                    Toggle(L.autoCalculate.localized, isOn: $waterGoalAuto)
+                        .tint(Theme.accent)
+                }
+
+                if isWaterTrackingEnabled && !waterGoalAuto {
+                    Divider().overlay(Theme.cardBorder)
+
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text(L.waterGoal.localized)
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.textSecondary)
+                            Spacer()
+                            Text("\(Int(waterGoalManualMl)) ml")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(Theme.blue.opacity(0.15))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        Slider(value: $waterGoalManualMl, in: 1000...5000, step: 100)
+                            .tint(Theme.blue)
+                    }
+                } else if isWaterTrackingEnabled && waterGoalAuto {
+                    Text(L.waterFormula.localized)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Language Section
+
+    private var languageSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader(L.language.localized, icon: "globe", iconColor: Theme.green)
+
+                languagePicker
+            }
+        }
+    }
+
+    private var languagePicker: some View {
+        let options: [(label: String, value: String)] = [
+            (L.systemDefault.localized, ""),
+            ("Türkçe", "tr"),
+            ("English", "en"),
+        ]
+        return HStack(spacing: 0) {
+            ForEach(options, id: \.value) { option in
+                Button {
+                    selectedLanguage = option.value
+                    if option.value != previousLanguage {
+                        applyLanguage(option.value)
+                        previousLanguage = option.value
+                    }
+                } label: {
+                    Text(option.label)
+                        .font(.subheadline.weight(selectedLanguage == option.value ? .semibold : .regular))
+                        .foregroundStyle(selectedLanguage == option.value ? Color.white : Theme.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            selectedLanguage == option.value
+                                ? AnyView(RoundedRectangle(cornerRadius: 8).fill(Theme.accent))
+                                : AnyView(Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 11))
+    }
+
+    // MARK: - App Theme Section
+
+    private var appThemeSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("app_theme".localized, icon: "paintpalette.fill", iconColor: Theme.accent)
+
+                ForEach(AppTheme.allCases, id: \.self) { theme in
+                    Button {
+                        themeManager.apply(theme)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(theme.accent)
+                                .frame(width: 20, height: 20)
+                            Text(isEN ? theme.displayNameEn : theme.displayName)
+                                .font(Theme.bodyFont)
+                                .foregroundStyle(.white)
+                            Spacer()
+                            if themeManager.current == theme {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(theme.accent)
+                                    .font(.system(size: 22))
+                            }
+                        }
+                        .padding(12)
+                        .background(
+                            themeManager.current == theme
+                                ? theme.accent.opacity(0.1)
+                                : Color.white.opacity(0.04)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    // MARK: - App Section
+
+    private var appSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader(L.appSection.localized, icon: "info.circle.fill", iconColor: .gray)
+
+                HStack {
+                    Text(L.version.localized)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.textSecondary)
+                    Spacer()
+                    Text("1.0.0")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                Button {
+                    showResetAlert = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .foregroundStyle(Theme.red)
+                        Text(L.resetOnboarding.localized)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.red)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Theme.red.opacity(0.5))
+                    }
+                    .padding(14)
+                    .background(Theme.red.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.red.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
     // MARK: - Card Helpers
 
     private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(20)
-            .background(Theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+        VStack(spacing: 0) {
+            content()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(Theme.headlineFont)
-            .foregroundStyle(.white)
+    private func sectionHeader(_ title: String, icon: String, iconColor: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(iconColor)
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+                .background(iconColor.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Text(title)
+                .font(.subheadline.bold())
+                .foregroundStyle(.white)
+
+            Spacer()
+        }
+        .padding(.bottom, 4)
     }
 
     private func settingsRow<Content: View>(label: String, @ViewBuilder trailing: () -> Content) -> some View {
         HStack {
             Text(label)
-                .font(Theme.bodyFont)
-                .foregroundStyle(.white)
+                .font(.subheadline)
+                .foregroundStyle(Theme.textSecondary)
             Spacer()
             trailing()
         }
