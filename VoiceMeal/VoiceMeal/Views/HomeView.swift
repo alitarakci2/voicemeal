@@ -1071,129 +1071,355 @@ struct HomeView: View {
 
     // MARK: - Goal Info Sheet
 
+    // MARK: - Goal Info Sheet (Modern)
+
     private var goalInfoSheet: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    // TDEE source indicator
-                    if goalEngine.isUsingExtrapolatedTDEE {
-                        let pct = Int(healthKitService.dayFraction * 100)
-                        Label(String(format: "extrapolation_active_format".localized, pct), systemImage: "iphone")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.blue)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else if goalEngine.usingHealthKit {
-                        Label("using_apple_health".localized, systemImage: "iphone")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.green)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
-                        Label("early_morning_tdee".localized, systemImage: "function")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else if goalEngine.healthKitBurn > 0 {
-                        Label("healthkit_insufficient".localized, systemImage: "hourglass")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else {
-                        Label(String(format: "calculated_formula_format".localized, Int(goalEngine.tdee)), systemImage: "function")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+        let isEN = groqService.appLanguage == "en"
+        return ZStack {
+            LinearGradient(
+                colors: [Theme.gradientTop, Color(hex: "0A0A0F")],
+                startPoint: .top,
+                endPoint: .center
+            )
+            .ignoresSafeArea()
 
-                    if goalEngine.isCalorieClamped {
-                        Label("min_healthy_calorie".localized, systemImage: "exclamationmark.triangle.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                            .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 0) {
+                // Custom header
+                HStack {
+                    Text(isEN ? "Goal Details" : "Hedef Detayları")
+                        .font(.headline.bold())
+                        .foregroundColor(.white)
+                    Spacer()
+                    Button {
+                        showGoalInfo = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
                     }
-
-                    if goalEngine.isCapped, let reason = goalEngine.capReason {
-                        Label("goal_too_aggressive".localized, systemImage: "exclamationmark.triangle.fill")
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(reason)
-                            .font(Theme.microFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-
-                    Divider()
-
-                    infoRow("tdee_label".localized, value: "\(Int(goalEngine.tdee)) kcal (\("confidence_label".localized): \(goalEngine.tdeeConfidence))")
-                    if goalEngine.usingHealthKit || goalEngine.isUsingExtrapolatedTDEE {
-                        infoRow("calculated_tdee".localized, value: "\(Int(goalEngine.calculatedTDEE)) kcal")
-                    }
-                    if goalEngine.healthKitBurn > 0 && !goalEngine.usingHealthKit && !goalEngine.isUsingExtrapolatedTDEE {
-                        infoRow("healthkit_burn".localized, value: "\(Int(goalEngine.healthKitBurn)) kcal")
-                        infoRow("bmr_threshold".localized, value: "\(Int(goalEngine.bmr)) kcal")
-                    }
-                    if goalEngine.isCapped {
-                        infoRow("raw_deficit".localized, value: "\(Int(goalEngine.rawDailyDeficit)) kcal")
-                        infoRow("applied_deficit".localized, value: "\(Int(goalEngine.cappedDailyDeficit)) kcal")
-                    } else {
-                        infoRow("daily_deficit".localized, value: "\(Int(goalEngine.deficit)) kcal")
-                    }
-                    infoRow("daily_target_label".localized, value: "\(goalEngine.dailyCalorieTarget) kcal")
-                    infoRow(
-                        goalEngine.projectedWeeklyLossKg > 0 ? "estimated_weekly_loss".localized : "estimated_weekly_gain".localized,
-                        value: "\(goalEngine.projectedWeeklyLossKg > 0 ? "-" : "+")\(String(format: "%.2f", abs(goalEngine.projectedWeeklyLossKg))) kg"
-                    )
-
-                    Divider()
-
-                    // VO2Max
-                    if let vo2 = goalEngine.vo2Max {
-                        infoRow("vo2_max".localized, value: "\(String(format: "%.1f", vo2)) ml/kg/min")
-                        infoRow("fitness_label".localized, value: goalEngine.vo2MaxLevel)
-                    } else {
-                        infoRow("vo2_max".localized, value: "no_data".localized)
-                    }
-
-                    // Weight from Health
-                    if let w = goalEngine.latestWeightFromHealth {
-                        let dateStr = goalEngine.latestWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
-                        infoRow("weight_health".localized, value: "\(String(format: "%.1f", w)) kg \u{2014} \(dateStr)")
-                    }
-
-                    Divider()
-
-                    infoRow("bmr_label".localized, value: "\(Int(goalEngine.bmr)) kcal")
-                    infoRow("activity_multiplier".localized, value: "\(String(format: "%.2f", goalEngine.activityMultiplier))x")
-                    if goalEngine.vo2Max != nil {
-                        infoRow("vo2_adjustment".localized, value: "\(String(format: "%+.2f", goalEngine.vo2MaxAdjustment))")
-                    }
-                    infoRow("protein_target".localized, value: "\(goalEngine.proteinTarget)g")
-                    infoRow("carb_target".localized, value: "\(goalEngine.carbTarget)g")
-                    infoRow("fat_target".localized, value: "\(goalEngine.fatTarget)g")
+                    .buttonStyle(.plain)
                 }
                 .padding()
-            }
-            .background(Theme.background)
-            .navigationTitle("goal_details".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(L.close.localized) { showGoalInfo = false }
+                .background(Theme.gradientTop.opacity(0.95))
+                .overlay(Divider().opacity(0.2), alignment: .bottom)
+
+                ScrollView {
+                    VStack(spacing: 14) {
+                        tdeeSourceCard
+
+                        if goalEngine.isCalorieClamped || goalEngine.isCapped {
+                            warningsCard
+                        }
+
+                        // Metric grid
+                        HStack(spacing: 12) {
+                            MetricInfoCard(
+                                icon: "flame.fill",
+                                iconColor: Theme.orange,
+                                label: "TDEE",
+                                value: "\(Int(goalEngine.tdee))",
+                                unit: "kcal"
+                            )
+                            MetricInfoCard(
+                                icon: "arrow.down.circle.fill",
+                                iconColor: Theme.accent,
+                                label: isEN ? "Daily Target" : "Günlük Hedef",
+                                value: "\(goalEngine.dailyCalorieTarget)",
+                                unit: "kcal"
+                            )
+                        }
+
+                        HStack(spacing: 12) {
+                            MetricInfoCard(
+                                icon: "minus.circle.fill",
+                                iconColor: Theme.red,
+                                label: isEN ? "Deficit" : "Açık",
+                                value: "\(Int(goalEngine.cappedDailyDeficit))",
+                                unit: "kcal"
+                            )
+                            MetricInfoCard(
+                                icon: "scalemass.fill",
+                                iconColor: Theme.green,
+                                label: isEN ? "Est. Weekly" : "Tahmini/Hafta",
+                                value: String(format: "%.2f", goalEngine.projectedWeeklyLossKg),
+                                unit: "kg"
+                            )
+                        }
+
+                        healthDataCard
+
+                        formulaBreakdownCard
+                    }
+                    .padding()
                 }
             }
         }
-        .presentationBackground(Theme.background)
         .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
-    private func infoRow(_ label: String, value: String) -> some View {
+    // MARK: - TDEE Source helpers
+
+    private var tdeeSourceIcon: String {
+        if goalEngine.isUsingExtrapolatedTDEE { return "iphone" }
+        if goalEngine.usingHealthKit { return "iphone" }
+        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable { return "function" }
+        if goalEngine.healthKitBurn > 0 { return "hourglass" }
+        return "function"
+    }
+
+    private var tdeeSourceColor: Color {
+        if goalEngine.isUsingExtrapolatedTDEE { return Theme.blue }
+        if goalEngine.usingHealthKit { return Theme.green }
+        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable { return Theme.orange }
+        if goalEngine.healthKitBurn > 0 { return Theme.orange }
+        return Theme.textSecondary
+    }
+
+    private var tdeeSourceTitle: String {
+        let isEN = groqService.appLanguage == "en"
+        if goalEngine.isUsingExtrapolatedTDEE {
+            return isEN ? "Extrapolated TDEE" : "Tahmini TDEE"
+        }
+        if goalEngine.usingHealthKit {
+            return "Apple Health"
+        }
+        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
+            return isEN ? "Early Morning" : "Sabah Erken"
+        }
+        if goalEngine.healthKitBurn > 0 {
+            return isEN ? "HealthKit Insufficient" : "HealthKit Yetersiz"
+        }
+        return isEN ? "Calculated Formula" : "Hesaplanan Formül"
+    }
+
+    private var tdeeSourceSubtitle: String {
+        let isEN = groqService.appLanguage == "en"
+        if goalEngine.isUsingExtrapolatedTDEE {
+            let pct = Int(healthKitService.dayFraction * 100)
+            return isEN ? "\(pct)% of day extrapolated" : "Günün %\(pct)'i tahmin"
+        }
+        if goalEngine.usingHealthKit {
+            return isEN ? "Real-time burn data" : "Gerçek yanma verisi"
+        }
+        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
+            return isEN ? "Waiting for more data" : "Daha fazla veri bekliyor"
+        }
+        if goalEngine.healthKitBurn > 0 {
+            return isEN ? "Using BMR estimate" : "BMR tahmini"
+        }
+        return "\(Int(goalEngine.tdee)) kcal"
+    }
+
+    private var confidenceColor: Color {
+        let conf = goalEngine.tdeeConfidence.lowercased()
+        if conf.contains("yüksek") || conf.contains("high") { return Theme.green }
+        if conf.contains("orta") || conf.contains("med") { return Theme.orange }
+        return Theme.red
+    }
+
+    // MARK: - Goal Info cards
+
+    private var tdeeSourceCard: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: tdeeSourceIcon)
+                    .foregroundColor(tdeeSourceColor)
+                    .font(.system(size: 18))
+                    .frame(width: 36, height: 36)
+                    .background(tdeeSourceColor.opacity(0.15))
+                    .cornerRadius(10)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(tdeeSourceTitle)
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
+                    Text(tdeeSourceSubtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text(goalEngine.tdeeConfidence)
+                    .font(.caption.bold())
+                    .foregroundColor(confidenceColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(confidenceColor.opacity(0.15))
+                    .cornerRadius(8)
+            }
+        }
+        .padding(14)
+        .background(Theme.cardBackground)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(tdeeSourceColor.opacity(0.3), lineWidth: 1)
+        )
+    }
+
+    private var warningsCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if goalEngine.isCalorieClamped {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text("min_healthy_calorie".localized)
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+            }
+            if goalEngine.isCapped {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("goal_too_aggressive".localized)
+                            .font(.caption.bold())
+                            .foregroundColor(.orange)
+                        if let reason = goalEngine.capReason {
+                            Text(reason)
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.orange.opacity(0.08))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    private var healthDataCard: some View {
+        let isEN = groqService.appLanguage == "en"
+        return VStack(spacing: 10) {
+            HStack {
+                Image(systemName: "heart.fill")
+                    .foregroundColor(.red)
+                    .font(.system(size: 13))
+                    .frame(width: 26, height: 26)
+                    .background(Color.red.opacity(0.15))
+                    .cornerRadius(8)
+                Text(isEN ? "Health Data" : "Sağlık Verisi")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Spacer()
+            }
+
+            Divider().opacity(0.2)
+
+            if let vo2 = goalEngine.vo2Max {
+                modernInfoRow(
+                    label: "VO2 Max",
+                    value: "\(String(format: "%.1f", vo2)) ml/kg/min",
+                    valueColor: Theme.green
+                )
+                modernInfoRow(
+                    label: isEN ? "Fitness Level" : "Fitness",
+                    value: goalEngine.vo2MaxLevel,
+                    valueColor: Theme.blue
+                )
+            } else {
+                modernInfoRow(
+                    label: "VO2 Max",
+                    value: "no_data".localized,
+                    valueColor: Theme.textSecondary
+                )
+            }
+
+            if let w = goalEngine.latestWeightFromHealth {
+                let dateStr = goalEngine.latestWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
+                modernInfoRow(
+                    label: isEN ? "Weight (Health)" : "Kilo (Health)",
+                    value: "\(String(format: "%.2f", w)) kg \u{2014} \(dateStr)",
+                    valueColor: .white
+                )
+            }
+        }
+        .padding(14)
+        .background(Theme.cardBackground)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var formulaBreakdownCard: some View {
+        let isEN = groqService.appLanguage == "en"
+        return VStack(spacing: 10) {
+            HStack {
+                Image(systemName: "function")
+                    .foregroundColor(Theme.accent)
+                    .font(.system(size: 13))
+                    .frame(width: 26, height: 26)
+                    .background(Theme.accent.opacity(0.15))
+                    .cornerRadius(8)
+                Text(isEN ? "Formula Breakdown" : "Formül Detayı")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Spacer()
+            }
+
+            Divider().opacity(0.2)
+
+            modernInfoRow(label: "BMR", value: "\(Int(goalEngine.bmr)) kcal")
+            modernInfoRow(
+                label: isEN ? "Activity Multiplier" : "Aktivite Çarpanı",
+                value: String(format: "%.2fx", goalEngine.activityMultiplier)
+            )
+            if goalEngine.vo2Max != nil {
+                modernInfoRow(
+                    label: "VO2 Adj.",
+                    value: String(format: "%+.2f", goalEngine.vo2MaxAdjustment)
+                )
+            }
+
+            Divider().opacity(0.1)
+
+            HStack(spacing: 8) {
+                MacroTargetPill(
+                    label: "P",
+                    value: "\(goalEngine.proteinTarget)g",
+                    color: Color(hex: "5E9FFF")
+                )
+                MacroTargetPill(
+                    label: "K",
+                    value: "\(goalEngine.carbTarget)g",
+                    color: Color(hex: "FF9F43")
+                )
+                MacroTargetPill(
+                    label: "Y",
+                    value: "\(goalEngine.fatTarget)g",
+                    color: Theme.fatColor
+                )
+            }
+        }
+        .padding(14)
+        .background(Theme.cardBackground)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private func modernInfoRow(label: String, value: String, valueColor: Color = .white) -> some View {
         HStack {
             Text(label)
-                .font(Theme.bodyFont)
-                .foregroundStyle(Theme.textSecondary)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(Theme.bodyFont)
-                .fontWeight(.medium)
+                .font(.subheadline.bold())
+                .foregroundColor(valueColor)
         }
     }
 
@@ -1636,4 +1862,69 @@ struct HomeView: View {
     HomeView()
         .environment(GoalEngine())
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self], inMemory: true)
+}
+
+// MARK: - Goal Info Sheet Components
+
+struct MetricInfoCard: View {
+    let icon: String
+    let iconColor: Color
+    let label: String
+    let value: String
+    let unit: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(iconColor)
+                    .font(.system(size: 13))
+                    .frame(width: 26, height: 26)
+                    .background(iconColor.opacity(0.15))
+                    .cornerRadius(8)
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                Text(unit)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+}
+
+struct MacroTargetPill: View {
+    let label: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.caption2.bold())
+                .foregroundColor(color)
+            Text(value)
+                .font(.caption.bold())
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity)
+        .background(color.opacity(0.12))
+        .cornerRadius(8)
+    }
 }
