@@ -98,10 +98,10 @@ class StatisticsService {
         monthlyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 30)
     }
 
-    private func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, days: Int) -> [DayStat] {
+    func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, days: Int, endDate: Date = .now) -> [DayStat] {
         let calendar = Self.localCalendar
-        let today = calendar.startOfDay(for: .now)
-        guard let startDate = calendar.date(byAdding: .day, value: -(days - 1), to: today) else { return [] }
+        let end = calendar.startOfDay(for: endDate)
+        guard let startDate = calendar.date(byAdding: .day, value: -(days - 1), to: end) else { return [] }
 
         let snapshotsByDay = Dictionary(grouping: snapshots) { calendar.startOfDay(for: $0.date) }
         let entriesByDay = Dictionary(grouping: entries) { calendar.startOfDay(for: $0.date) }
@@ -110,7 +110,7 @@ class StatisticsService {
         var cumulative = 0
         var current = startDate
 
-        while current <= today {
+        while current <= end {
             let snapshot = snapshotsByDay[current]?.first
             let dayEntries = entriesByDay[current] ?? []
             let consumed = snapshot?.consumedCalories ?? dayEntries.reduce(0) { $0 + $1.calories }

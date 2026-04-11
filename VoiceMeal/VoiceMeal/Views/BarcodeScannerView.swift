@@ -39,8 +39,11 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
             if !captureSession.isRunning {
-                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                    self?.captureSession.startRunning()
+                // Delay gives UIKit time to fully present the view before camera starts
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        self?.captureSession.startRunning()
+                    }
                 }
             }
         }
@@ -77,8 +80,11 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 
             addOverlay()
 
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                self?.captureSession.startRunning()
+            // Delay gives UIKit time to fully present the view before camera starts
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                DispatchQueue.global(qos: .userInitiated).async {
+                    self?.captureSession.startRunning()
+                }
             }
         }
 

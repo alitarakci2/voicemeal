@@ -39,6 +39,35 @@ struct StatisticsView: View {
         return allEntries.filter { $0.date >= startOfDay }
     }
 
+    /// Entries within the currently selected stats window (7d for weekly, 30d for monthly).
+    /// Mirrors `StatisticsService.buildStats` — a window of `days` days ending today.
+    private var periodEntries: [FoodEntry] {
+        let days = selectedRange == 1 ? 30 : 7
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        guard let start = calendar.date(byAdding: .day, value: -(days - 1), to: today) else {
+            return []
+        }
+        return allEntries.filter { $0.date >= start }
+    }
+
+    /// DayStats for the period immediately preceding the current window (for trend comparison).
+    private var previousPeriodStats: [DayStat] {
+        let days = selectedRange == 1 ? 30 : 7
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        guard let previousEnd = calendar.date(byAdding: .day, value: -days, to: today) else {
+            return []
+        }
+        return statisticsService.buildStats(
+            snapshots: snapshots,
+            entries: allEntries,
+            profile: profiles.first,
+            days: days,
+            endDate: previousEnd
+        )
+    }
+
     var body: some View {
         ZStack {
             Theme.backgroundGradient
@@ -125,6 +154,32 @@ struct StatisticsView: View {
                                 )
 
                                 ActivityChartView(stats: currentStats)
+
+                                MealInsightsCard(
+                                    entries: periodEntries,
+                                    appLanguage: groqService.appLanguage
+                                )
+                                .environmentObject(themeManager)
+
+                                ConsistencyCard(
+                                    stats: currentStats,
+                                    previousStats: previousPeriodStats,
+                                    appLanguage: groqService.appLanguage
+                                )
+                                .environmentObject(themeManager)
+
+                                ProteinTrackingCard(
+                                    stats: currentStats,
+                                    proteinTarget: Double(goalEngine.proteinTarget),
+                                    appLanguage: groqService.appLanguage
+                                )
+                                .environmentObject(themeManager)
+
+                                BestDayCard(
+                                    stats: currentStats,
+                                    appLanguage: groqService.appLanguage
+                                )
+                                .environmentObject(themeManager)
 
                                 // Weekly Groq insight
                                 weeklyInsightCard

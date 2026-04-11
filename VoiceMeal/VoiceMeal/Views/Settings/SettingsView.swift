@@ -348,6 +348,18 @@ struct SettingsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .font(Theme.bodyFont)
                     .foregroundStyle(.white)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button(isEN ? "Done" : "Tamam") {
+                                UIApplication.shared.sendAction(
+                                    #selector(UIResponder.resignFirstResponder),
+                                    to: nil, from: nil, for: nil)
+                            }
+                            .foregroundColor(themeManager.current.accent)
+                            .fontWeight(.semibold)
+                        }
+                    }
 
                 Text("personal_context_example".localized)
                     .font(.caption2)

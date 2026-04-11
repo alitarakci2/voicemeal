@@ -47,6 +47,7 @@ struct HomeView: View {
     @State private var capturedImage: UIImage?
     @State private var capturedImageData: Data?
     @State private var showPhotoAnalysis = false
+    @State private var showPhotoLoading = false
     @State private var pendingPhotoAnalysis = false
     @State private var showCameraPermissionDenied = false
     @State private var showNutritionCheck = false
@@ -307,19 +308,37 @@ struct HomeView: View {
 
                 // Error
                 if let error = errorMessage {
-                    VStack(spacing: 4) {
-                        Text("\u{26A0}\u{FE0F} Hata")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(Theme.red)
-                        Text(error)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
+                    let isEN = groqService.appLanguage == "en"
+                    VStack(spacing: 6) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            Text(isEN ? "Error" : "Hata")
+                                .font(.subheadline.bold())
+                                .foregroundColor(.orange)
+                        }
+                        Text(error.isEmpty
+                             ? (isEN ? "Could not process. Try again." : "Yanıt işlenemedi. Tekrar deneyin.")
+                             : error)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
+
+                        Text(isEN ? "Tap mic to try again" : "Tekrar denemek için mikrofona bas")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .opacity(0.7)
                     }
-                    .padding()
+                    .padding(14)
                     .frame(maxWidth: .infinity)
-                    .background(Theme.red.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(Color.orange.opacity(0.08))
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+                    )
+                    .padding(.horizontal)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
                 // Today's meal list
@@ -492,6 +511,42 @@ struct HomeView: View {
         .onAppear { scrollProxy = proxy }
                 } // ScrollViewReader
             } // VStack (sticky header + scroll)
+
+            // Intermediate loading overlay — bridges camera dismiss → PhotoAnalysisView render
+            if showPhotoLoading {
+                ZStack {
+                    Color(hex: "0A0A0F")
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 20) {
+                        if let image = capturedImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 120, height: 120)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
+                        }
+
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.3)
+
+                        VStack(spacing: 6) {
+                            Text(groqService.appLanguage == "en" ? "Analyzing your meal..." : "Yemeğin analiz ediliyor...")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+
+                            Text(groqService.appLanguage == "en" ? "This may take a few seconds" : "Birkaç saniye sürebilir")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(100)
+            }
         } // ZStack
         .task {
             permissionGranted = await speechService.requestPermissions()
@@ -561,9 +616,12 @@ struct HomeView: View {
             }
         }
         .fullScreenCover(isPresented: $showCamera, onDismiss: {
-            if capturedImageData != nil {
+            if capturedImageData != nil || capturedImage != nil {
+                // Show loading overlay immediately so user never sees a black gap
+                showPhotoLoading = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     showPhotoAnalysis = true
+                    showPhotoLoading = false
                 }
             } else {
                 pendingPhotoAnalysis = true
@@ -578,8 +636,10 @@ struct HomeView: View {
                             capturedImageData = data
                             if pendingPhotoAnalysis {
                                 pendingPhotoAnalysis = false
+                                showPhotoLoading = true
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     showPhotoAnalysis = true
+                                    showPhotoLoading = false
                                 }
                             }
                         } else {
@@ -603,6 +663,7 @@ struct HomeView: View {
                         showCamera = true
                     }
                 )
+                .presentationBackground(Color(hex: "0A0A0F"))
             }
         }
         .alert("Kamera \u{0130}zni Gerekli", isPresented: $showCameraPermissionDenied) {
@@ -860,16 +921,24 @@ struct HomeView: View {
         return VStack(spacing: 16) {
             // Header row: date + activity + buttons
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     let names = goalEngine.todayActivityNames
                         .compactMap { GoalEngine.activityDisplayNames[$0] }
+                    let emojis = goalEngine.todayActivityNames
+                        .compactMap { activityEmoji(for: $0) }
+                        .joined(separator: " ")
                     if !names.isEmpty {
-                        Text(names.joined(separator: " · "))
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Theme.accent)
+                        HStack(spacing: 4) {
+                            if !emojis.isEmpty {
+                                Text(emojis)
+                            }
+                            Text(names.joined(separator: " · "))
+                                .font(.subheadline.bold())
+                                .foregroundColor(.white)
+                        }
                     }
                 }
                 Spacer()
@@ -938,16 +1007,47 @@ struct HomeView: View {
             .padding(.horizontal, 4)
         }
         .padding(16)
-        .background(Theme.cardBackground)
+        .background(
+            LinearGradient(
+                colors: [
+                    Theme.gradientTop.opacity(0.7),
+                    Color(hex: "0D0D1A").opacity(0.8),
+                    Color(hex: "0A0A0F").opacity(0.6)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Theme.cardBorder.opacity(0.5), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.03)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
         )
     }
 
+    private func activityEmoji(for activity: String) -> String? {
+        switch activity {
+        case "weights": return "\u{1F3CB}\u{FE0F}"
+        case "running": return "\u{1F3C3}"
+        case "cycling": return "\u{1F6B4}"
+        case "walking": return "\u{1F6B6}"
+        case "rest": return "\u{1F4A4}"
+        default: return nil
+        }
+    }
+
     private func metricRingCard(title: String, value: String, subtitle: String, progress: Double, ringColor: Color) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Text(title)
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(Theme.textSecondary)
@@ -955,26 +1055,45 @@ struct HomeView: View {
                 .tracking(0.5)
 
             ZStack {
+                // Subtle glow behind the ring
                 Circle()
-                    .stroke(Theme.trackBackground, lineWidth: 6)
+                    .fill(ringColor.opacity(0.08))
+                    .frame(width: 105, height: 105)
+                    .blur(radius: 8)
+
+                Circle()
+                    .stroke(Theme.trackBackground, lineWidth: 7)
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: 0) {
                     Text(value)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                     Text(subtitle)
-                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .font(.system(size: 9, weight: .medium, design: .rounded))
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
-            .frame(width: 70, height: 70)
+            .frame(width: 95, height: 95)
+
+            // Bottom gradient accent line
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [ringColor, ringColor.opacity(0)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 2)
+                .cornerRadius(1)
+                .padding(.horizontal, 12)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(Color.white.opacity(0.03))
+        .padding(.vertical, 12)
+        .background(Theme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
@@ -1000,28 +1119,39 @@ struct HomeView: View {
 
     private func macroProgressRow(label: String, value: Double, target: Double, color: Color) -> some View {
         let progress = target > 0 ? min(value / target, 1.0) : 0
-        return HStack(spacing: 8) {
-            Text(label)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(color)
-                .frame(width: 16, alignment: .leading)
+        return HStack(spacing: 6) {
+            Text(String(label.prefix(3)))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.secondary)
+                .frame(width: 28, alignment: .leading)
+                .lineLimit(1)
+                .fixedSize()
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Theme.trackBackground)
+                        .fill(Color.white.opacity(0.08))
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color)
-                        .frame(width: max(geo.size.width * progress, 3))
+                        .frame(width: geo.size.width * progress)
+                        .animation(.easeInOut(duration: 0.6), value: progress)
                 }
             }
-            .frame(height: 6)
+            .frame(height: 8)
 
-            Text("\(Int(value))/\(Int(target))g")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 60, alignment: .trailing)
+            Text("\(Int(value))g")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 34, alignment: .trailing)
+                .lineLimit(1)
+
+            Text("/\(Int(target))g")
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+                .frame(width: 36, alignment: .leading)
+                .lineLimit(1)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Nutrition Check Sheet
@@ -1575,6 +1705,7 @@ struct HomeView: View {
     // MARK: - Actions
 
     private func handleCameraTap() {
+        print("📷 [Camera] Button tapped, setting showCamera=true")
         #if targetEnvironment(simulator)
         errorMessage = "camera_simulator_error".localized
         #else
@@ -1762,6 +1893,15 @@ struct HomeView: View {
             } catch {
                 print("❌ [HomeView] Groq error: \(error)")
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? "Bir hata olu\u{015F}tu, tekrar deneyin"
+                // Reset meal-entry state so UI is interactive again
+                clarificationQuestion = ""
+                reviewMeals = []
+                showReviewCard = false
+                originalSpeechText = ""
+                // Auto-clear error after 4 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                    errorMessage = nil
+                }
             }
             isAnalyzing = false
         }

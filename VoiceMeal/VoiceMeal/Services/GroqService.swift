@@ -268,6 +268,10 @@ class GroqService {
 
             JSON format must be exactly as follows, write nothing else:
             \(jsonFormat)
+
+            CRITICAL: Your response must be ONLY valid JSON.
+            Do NOT write any text, explanation, or commentary before or after the JSON.
+            Start your response directly with { and end with }
             """
         } else {
             return """
@@ -352,6 +356,10 @@ class GroqService {
 
             JSON formatı kesinlikle şu şekilde olmalı, başka hiçbir şey yazma:
             \(jsonFormat)
+
+            KRİTİK: Yanıtın SADECE geçerli JSON olmalı.
+            JSON öncesinde veya sonrasında HİÇBİR metin, açıklama veya yorum yazma.
+            Yanıta doğrudan { ile başla ve } ile bitir.
             """
         }
     }
@@ -363,6 +371,19 @@ class GroqService {
             cleaned = regex.stringByReplacingMatches(in: cleaned, range: range, withTemplate: ": $1")
         }
         return cleaned
+    }
+
+    /// Extracts a JSON object from a possibly noisy response. Groq sometimes
+    /// prefixes/suffixes the JSON block with prose; this pulls out the outer `{...}`.
+    private func extractJSON(_ raw: String) -> String {
+        if raw.trimmingCharacters(in: .whitespaces).hasPrefix("{") {
+            return raw
+        }
+        if let start = raw.firstIndex(of: "{"),
+           let end = raw.lastIndex(of: "}") {
+            return String(raw[start...end])
+        }
+        return raw
     }
 
     func parseMeals(transcript: String, personalContext: String = "") async throws -> MealParseResponse {
@@ -419,9 +440,10 @@ class GroqService {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         let cleanedJSON = cleanGroqJSON(jsonString)
+        let extractedJSON = extractJSON(cleanedJSON)
 
-        guard let jsonData = cleanedJSON.data(using: .utf8) else {
-            print("❌ [GroqService] Invalid JSON string: \(cleanedJSON)")
+        guard let jsonData = extractedJSON.data(using: .utf8) else {
+            print("❌ [GroqService] Invalid JSON string: \(extractedJSON)")
             throw GroqError.invalidJSON
         }
 
@@ -993,6 +1015,10 @@ class GroqService {
             If the photo doesn't contain food, return detected: false.
             Recognize foods from all cuisines. List each food on the plate separately.
             Write name and description in English.
+
+            CRITICAL: Your response must be ONLY valid JSON.
+            Do NOT write any text, explanation, or commentary before or after the JSON.
+            Start your response directly with { and end with }
             """
         } else {
             return """
@@ -1007,6 +1033,10 @@ class GroqService {
             Fotoğraf yemek içermiyorsa detected: false döndür.
             Türk yemeklerini iyi tanı. Tabaktaki her yemeği ayrı listele.
             name ve description alanlarını Türkçe yaz.
+
+            KRİTİK: Yanıtın SADECE geçerli JSON olmalı.
+            JSON öncesinde veya sonrasında HİÇBİR metin, açıklama veya yorum yazma.
+            Yanıta doğrudan { ile başla ve } ile bitir.
             """
         }
     }
@@ -1077,7 +1107,9 @@ class GroqService {
             .replacingOccurrences(of: "```", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard let jsonData = jsonString.data(using: .utf8) else {
+        let extractedJSON = extractJSON(cleanGroqJSON(jsonString))
+
+        guard let jsonData = extractedJSON.data(using: .utf8) else {
             print("📷 [ERROR] Could not convert JSON string to data")
             throw GroqError.invalidJSON
         }
@@ -1085,7 +1117,7 @@ class GroqService {
         do {
             return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
         } catch {
-            print("📷 [ERROR] JSON decode failed: \(error)")
+            print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")
             throw GroqError.invalidJSON
         }
     }
@@ -1172,7 +1204,9 @@ class GroqService {
             .replacingOccurrences(of: "```", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard let jsonData = jsonString.data(using: .utf8) else {
+        let extractedJSON = extractJSON(cleanGroqJSON(jsonString))
+
+        guard let jsonData = extractedJSON.data(using: .utf8) else {
             print("📷 [ERROR] Could not convert JSON to data")
             throw GroqError.invalidJSON
         }
@@ -1180,7 +1214,7 @@ class GroqService {
         do {
             return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
         } catch {
-            print("📷 [ERROR] JSON decode failed: \(error)")
+            print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")
             throw GroqError.invalidJSON
         }
     }

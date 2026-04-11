@@ -20,6 +20,7 @@ struct PhotoAnalysisView: View {
     @State private var showTextField = false
     @State private var clarificationText = ""
     @State private var analysisTask: Task<Void, Never>?
+    @State private var capturedUIImage: UIImage?
 
     @Environment(GroqService.self) private var groqService
 
@@ -31,43 +32,89 @@ struct PhotoAnalysisView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        photoSection
+        ZStack {
+            // Explicit background — first thing rendered, no white/black flash
+            LinearGradient(
+                colors: [
+                    Theme.gradientTop,
+                    Color(hex: "0A0A0F")
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                        switch analysisState {
-                        case .analyzing:
-                            EmptyView()
-                        case .clarificationNeeded:
-                            clarificationCard
-                        case .confirmed:
-                            confirmedCard
-                        case .error(let message):
-                            errorCard(message)
+            NavigationStack {
+                ZStack(alignment: .bottom) {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            photoSection
+
+                            switch analysisState {
+                            case .analyzing:
+                                EmptyView()
+                            case .clarificationNeeded:
+                                clarificationCard
+                            case .confirmed:
+                                confirmedCard
+                            case .error(let message):
+                                errorCard(message)
+                            }
                         }
+                        .padding(.horizontal)
+                        .padding(.bottom, 120)
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 120)
-                }
 
-                bottomActions
-            }
-            .background(Theme.background)
-            .navigationTitle(L.photoAnalysis.localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Theme.cardBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(L.cancel.localized) { dismiss() }
-                        .foregroundStyle(Theme.textSecondary)
+                    bottomActions
+
+                    // Top-level loading overlay — independent of photo render
+                    if analysisState.isAnalyzing {
+                        let isEN = groqService.appLanguage == "en"
+                        VStack(spacing: 16) {
+                            Spacer()
+
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(1.3)
+
+                                Text(isEN ? "Analyzing..." : "Analiz ediliyor...")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+
+                                Text(isEN ? "This may take 5-15 seconds" : "5-15 saniye sürebilir")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(20)
+                            .background(Color(hex: "1A1A2E"))
+                            .cornerRadius(16)
+
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(hex: "0A0A0F").opacity(0.85))
+                        .transition(.opacity)
+                    }
+                }
+                .navigationTitle(L.photoAnalysis.localized)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(Theme.cardBackground, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(L.cancel.localized) { dismiss() }
+                            .foregroundStyle(Theme.textSecondary)
+                    }
                 }
             }
         }
+        .ignoresSafeArea()
         .presentationDetents([.large])
-        .onAppear {
+        .task {
+            // Defer image assignment so loading state paints first
+            capturedUIImage = image
+
             guard analysisTask == nil else { return }
             analysisTask = Task {
                 await analyzePhoto()
@@ -81,37 +128,28 @@ struct PhotoAnalysisView: View {
 
     // MARK: - Photo Section
 
+    @ViewBuilder
     private var photoSection: some View {
-        ZStack {
-            Image(uiImage: image)
+        if let loadedImage = capturedUIImage {
+            Image(uiImage: loadedImage)
                 .resizable()
                 .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: 300)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .frame(maxHeight: 300)
+                .clipped()
+                .cornerRadius(12)
                 .shadow(color: .black.opacity(0.3), radius: 12, y: 6)
-
-            if analysisState.isAnalyzing {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.black.opacity(0.5))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 300)
-
-                VStack(spacing: 12) {
+                .padding(.top, 4)
+        } else {
+            // Placeholder while image loads
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(hex: "1C1C24"))
+                .frame(height: 200)
+                .overlay(
                     ProgressView()
-                        .controlSize(.large)
                         .tint(.white)
-                    Text(L.analyzing.localized)
-                        .font(Theme.bodyFont)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white)
-                    Text("analyzing_subtitle".localized)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-            }
+                )
+                .padding(.top, 4)
         }
-        .padding(.top, 4)
     }
 
     // MARK: - Confirmed Card
