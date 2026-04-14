@@ -439,6 +439,8 @@ struct PhotoAnalysisView: View {
 
     private func analyzePhoto() async {
         analysisState = .analyzing
+        FeedbackService.shared.addLog("Photo analysis started")
+        FeedbackService.shared.lastAction = "Photo analysis"
 
         do {
             let result = try await groqService.analyzeFood(imageData: imageData)

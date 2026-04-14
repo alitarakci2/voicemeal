@@ -116,6 +116,8 @@ struct BarcodeResultView: View {
                     BarcodeScannerView { code in
                         scannedCode = code
                         phase = .loading
+                        FeedbackService.shared.addLog("Barcode scanned: \(code)")
+                        FeedbackService.shared.lastAction = "Barcode scan"
                         Task { await lookupProduct(code) }
                     }
                     .ignoresSafeArea()

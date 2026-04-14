@@ -13,6 +13,8 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var goalEngine = GoalEngine()
     @State private var groqService = GroqService()
+    @State private var showFeedback = false
+    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.scenePhase) private var scenePhase
     @State private var backgroundedAt: Date?
     private let watchService = WatchConnectivityService.shared
@@ -154,6 +156,22 @@ struct ContentView: View {
                 }
                 .onChange(of: allEntries.count) {
                     syncToWatch()
+                }
+                .onChange(of: selectedTab) { _, newTab in
+                    let tabNames = ["Record", "Plan", "Statistics", "Settings"]
+                    FeedbackService.shared.currentTab =
+                        (0..<tabNames.count).contains(newTab) ? tabNames[newTab] : "Unknown"
+                }
+                .onShake {
+                    showFeedback = true
+                    FeedbackService.shared.addLog("Shake detected - feedback opened")
+                }
+                .sheet(isPresented: $showFeedback) {
+                    FeedbackSheet(
+                        isPresented: $showFeedback,
+                        appLanguage: groqService.appLanguage
+                    )
+                    .environmentObject(themeManager)
                 }
             } else {
                 OnboardingContainerView(onboardingComplete: $onboardingComplete)

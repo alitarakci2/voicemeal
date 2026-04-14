@@ -29,6 +29,14 @@ struct SettingsView: View {
     // Personal Context
     @State private var personalContext = ""
 
+    // Food Habits
+    @State private var cookingLocation: CookingLocation = .mostly_home
+    @State private var portionSize: PortionSize = .medium
+    @State private var oilUsage: OilUsage = .moderate
+    @State private var proteinSource: ProteinSource = .mixed
+    @State private var cuisinePreference: CuisinePreference = .turkish_home
+    @State private var mealFrequency: MealFrequency = .two_meals
+
     // Notifications
     @State private var weightReminderEnabled = true
     @State private var weightReminderDays: Int = 1
@@ -96,6 +104,9 @@ struct SettingsView: View {
 
                             // Section: Coach Style
                             coachStyleSection
+
+                            // Section: Food Profile
+                            foodProfileSection
 
                             // Section: Personal Preferences
                             personalPreferencesSection
@@ -327,6 +338,115 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Food Profile Section
+
+    private var foodProfileSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader(isEN ? "Food Profile" : "Yemek Profili", icon: "fork.knife", iconColor: Theme.orange)
+
+                foodHabitRow(
+                    label: isEN ? "Cooking" : "Yemek Yeri",
+                    emoji: cookingLocation.emoji,
+                    value: cookingLocation.label(isEN ? "en" : "tr"),
+                    options: CookingLocation.allCases,
+                    selected: $cookingLocation,
+                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    emojiFn: { $0.emoji }
+                )
+                foodHabitRow(
+                    label: isEN ? "Portion" : "Porsiyon",
+                    emoji: portionSize.emoji,
+                    value: portionSize.label(isEN ? "en" : "tr"),
+                    options: PortionSize.allCases,
+                    selected: $portionSize,
+                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    emojiFn: { $0.emoji }
+                )
+                foodHabitRow(
+                    label: isEN ? "Oil Usage" : "Yağ",
+                    emoji: oilUsage.emoji,
+                    value: oilUsage.label(isEN ? "en" : "tr"),
+                    options: OilUsage.allCases,
+                    selected: $oilUsage,
+                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    emojiFn: { $0.emoji }
+                )
+                foodHabitRow(
+                    label: isEN ? "Protein" : "Protein",
+                    emoji: proteinSource.emoji,
+                    value: proteinSource.label(isEN ? "en" : "tr"),
+                    options: ProteinSource.allCases,
+                    selected: $proteinSource,
+                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    emojiFn: { $0.emoji }
+                )
+                foodHabitRow(
+                    label: isEN ? "Cuisine" : "Mutfak",
+                    emoji: cuisinePreference.emoji,
+                    value: cuisinePreference.label(isEN ? "en" : "tr"),
+                    options: CuisinePreference.allCases,
+                    selected: $cuisinePreference,
+                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    emojiFn: { $0.emoji }
+                )
+                foodHabitRow(
+                    label: isEN ? "Meals/Day" : "Öğün",
+                    emoji: mealFrequency.emoji,
+                    value: mealFrequency.label(isEN ? "en" : "tr"),
+                    options: MealFrequency.allCases,
+                    selected: $mealFrequency,
+                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    emojiFn: { $0.emoji }
+                )
+            }
+        }
+    }
+
+    private func foodHabitRow<T: RawRepresentable & Hashable>(
+        label: String,
+        emoji: String,
+        value: String,
+        options: [T],
+        selected: Binding<T>,
+        labelFn: @escaping (T) -> String,
+        emojiFn: @escaping (T) -> String
+    ) -> some View where T.RawValue == String {
+        HStack {
+            Text(emoji)
+                .font(.body)
+                .frame(width: 28)
+            Text(label)
+                .font(Theme.bodyFont)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            Menu {
+                ForEach(options, id: \.rawValue) { option in
+                    Button {
+                        selected.wrappedValue = option
+                    } label: {
+                        HStack {
+                            Text("\(emojiFn(option)) \(labelFn(option))")
+                            if selected.wrappedValue == option {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(value)
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.accent)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+        }
+        .padding(.vertical, 4)
     }
 
     // MARK: - Personal Preferences Section
@@ -673,6 +793,12 @@ struct SettingsView: View {
         weightReminderTime = Calendar.current.date(from: DateComponents(hour: p.weightReminderHour, minute: 0)) ?? .now
         selectedCoachStyle = p.coachStyle
         personalContext = p.personalContext
+        cookingLocation = p.cookingLocation
+        portionSize = p.portionSize
+        oilUsage = p.oilUsage
+        proteinSource = p.proteinSource
+        cuisinePreference = p.cuisinePreference
+        mealFrequency = p.mealFrequency
     }
 
     private func handleSave() {
@@ -707,6 +833,12 @@ struct SettingsView: View {
         p.waterGoalOverrideMl = waterGoalAuto ? nil : Int(waterGoalManualMl)
         p.coachStyle = selectedCoachStyle
         p.personalContext = personalContext
+        p.cookingLocation = cookingLocation
+        p.portionSize = portionSize
+        p.oilUsage = oilUsage
+        p.proteinSource = proteinSource
+        p.cuisinePreference = cuisinePreference
+        p.mealFrequency = mealFrequency
         p.preferredLanguage = selectedLanguage
         p.updatedAt = .now
 

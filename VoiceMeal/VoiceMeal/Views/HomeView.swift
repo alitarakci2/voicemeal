@@ -484,7 +484,7 @@ struct HomeView: View {
                         waterMl: isWaterTrackingEnabled ? todayWaterMl : 0,
                         waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
                         coachStyle: profiles.first?.coachStyle ?? .supportive,
-                        personalContext: profiles.first?.personalContext ?? ""
+                        personalContext: profiles.first?.fullAIContext ?? ""
                     )
 
                     if isWaterTrackingEnabled {
@@ -1747,6 +1747,8 @@ struct HomeView: View {
             }
             do {
                 try speechService.startListening()
+                FeedbackService.shared.addLog("Voice recording started")
+                FeedbackService.shared.lastAction = "Meal entry"
             } catch {
                 errorMessage = speechService.lastError ?? "mic_error".localized
                 print("❌ [HomeView] Mic start error: \(error)")
@@ -1788,7 +1790,7 @@ struct HomeView: View {
 
             Task {
                 do {
-                    let response = try await groqService.parseMeals(transcript: fixTranscript, personalContext: profiles.first?.personalContext ?? "")
+                    let response = try await groqService.parseMeals(transcript: fixTranscript, personalContext: profiles.first?.fullAIContext ?? "")
                     if let updatedMeal = response.meals.first {
                         reviewMeals[mealIndex] = updatedMeal
                     }
@@ -1827,7 +1829,7 @@ struct HomeView: View {
 
             Task {
                 do {
-                    let response = try await groqService.parseMeals(transcript: correctionTranscript, personalContext: profiles.first?.personalContext ?? "")
+                    let response = try await groqService.parseMeals(transcript: correctionTranscript, personalContext: profiles.first?.fullAIContext ?? "")
                     applyCorrection(to: entry, from: response)
                     entryToCorrect = nil
                 } catch {
@@ -1854,7 +1856,7 @@ struct HomeView: View {
 
         Task {
             do {
-                let response = try await groqService.parseMeals(transcript: transcript, personalContext: profiles.first?.personalContext ?? "")
+                let response = try await groqService.parseMeals(transcript: transcript, personalContext: profiles.first?.fullAIContext ?? "")
 
                 // Handle water if detected and water tracking is enabled
                 if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
@@ -1988,6 +1990,7 @@ struct HomeView: View {
                 fat: meal.fat ?? 0
             )
             modelContext.insert(entry)
+            FeedbackService.shared.addLog("Meal saved: \(meal.name)")
         }
         saveTodaySnapshot()
         showSavedConfirmation = true

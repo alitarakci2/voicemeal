@@ -11,7 +11,7 @@ struct OnboardingContainerView: View {
     @Binding var onboardingComplete: Bool
 
     @State private var step = 0 // 0 = HealthKit intro
-    private let totalSteps = 7
+    private let totalSteps = 8
 
     // Step 1 (Welcome)
     @State private var name = ""
@@ -29,6 +29,13 @@ struct OnboardingContainerView: View {
     @State private var weeklySchedule: [[String]] = [["walking"], ["rest"], ["walking"], ["rest"], ["walking"], ["rest"], ["rest"]]
     // Step 6 (Coach Style)
     @State private var selectedCoachStyle: CoachStyle = .supportive
+    // Step 7 (Food Habits)
+    @State private var cookingLocation: CookingLocation = .mostly_home
+    @State private var portionSize: PortionSize = .medium
+    @State private var oilUsage: OilUsage = .moderate
+    @State private var proteinSource: ProteinSource = .mixed
+    @State private var cuisinePreference: CuisinePreference = .turkish_home
+    @State private var mealFrequency: MealFrequency = .two_meals
 
     // HealthKit
     @State private var healthKitService = HealthKitService()
@@ -104,6 +111,16 @@ struct OnboardingContainerView: View {
                 case 6:
                     coachStyleView
                 case 7:
+                    Step7FoodHabitsView(
+                        cookingLocation: $cookingLocation,
+                        portionSize: $portionSize,
+                        oilUsage: $oilUsage,
+                        proteinSource: $proteinSource,
+                        cuisinePreference: $cuisinePreference,
+                        mealFrequency: $mealFrequency,
+                        appLanguage: UserDefaults.standard.string(forKey: "appLanguage") ?? "tr"
+                    )
+                case 8:
                     Step6SummaryView(
                         name: name, gender: gender, age: age, heightCm: heightCm,
                         currentWeightKg: currentWeightKg, goalWeightKg: goalWeightKg,
@@ -320,6 +337,12 @@ struct OnboardingContainerView: View {
         )
         profile.programStartWeightKg = currentWeightKg
         profile.coachStyleRaw = selectedCoachStyle.rawValue
+        profile.cookingLocation = cookingLocation
+        profile.portionSize = portionSize
+        profile.oilUsage = oilUsage
+        profile.proteinSource = proteinSource
+        profile.cuisinePreference = cuisinePreference
+        profile.mealFrequency = mealFrequency
         modelContext.insert(profile)
         onboardingComplete = true
     }
