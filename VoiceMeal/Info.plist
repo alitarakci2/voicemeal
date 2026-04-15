@@ -12,8 +12,10 @@
 	<string>$(EMAILJS_PUBLIC_KEY)</string>
 	<key>EMAILJS_PRIVATE_KEY</key>
 	<string>$(EMAILJS_PRIVATE_KEY)</string>
-	<key>SENTRY_DSN</key>
-	<string>$(SENTRY_DSN)</string>
+	<key>SENTRY_HOST</key>
+	<string>$(SENTRY_HOST)</string>
+	<key>SENTRY_PROJECT</key>
+	<string>$(SENTRY_PROJECT)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>VoiceMeal yemeğinizi tanımak için kamerayı kullanır</string>
 	<key>NSHealthShareUsageDescription</key>

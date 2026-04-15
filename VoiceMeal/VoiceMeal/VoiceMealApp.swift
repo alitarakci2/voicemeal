@@ -12,11 +12,13 @@ import SwiftUI
 @main
 struct VoiceMealApp: App {
     init() {
+        print("🔍 [Sentry] DSN length: \(Config.sentryDSN.count)")
+        print("🔍 [Sentry] DSN preview: \(Config.sentryDSN.prefix(30))...")
         SentrySDK.start { options in
-            options.dsn = Config.sentryDSN
-            options.debug = false
+            options.dsn = "https://fdd7f717c68cc04d76091364e7552586@o4511222363455488.ingest.de.sentry.io/4511222378856528"
+            options.debug = true
             options.tracesSampleRate = 0.2
-            options.attachScreenshot = true
+            options.attachScreenshot = false
             options.enableAppHangTracking = true
             options.appHangTimeoutInterval = 3.0
             options.enableAutoBreadcrumbTracking = true

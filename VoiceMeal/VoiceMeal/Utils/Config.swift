@@ -27,6 +27,11 @@ enum Config {
     }
 
     static var sentryDSN: String {
-        Bundle.main.object(forInfoDictionaryKey: "SENTRY_DSN") as? String ?? ""
+        let host = Bundle.main.infoDictionary?["SENTRY_HOST"] as? String ?? ""
+        let project = Bundle.main.infoDictionary?["SENTRY_PROJECT"] as? String ?? ""
+        guard !host.isEmpty, !project.isEmpty, !host.hasPrefix("$(") else {
+            return ""
+        }
+        return "https://\(host)/\(project)"
     }
 }
