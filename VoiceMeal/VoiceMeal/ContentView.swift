@@ -181,11 +181,13 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
                 backgroundedAt = Date()
+                FeedbackService.shared.addLog("App backgrounded")
             } else if newPhase == .active, let bgDate = backgroundedAt {
                 if Date().timeIntervalSince(bgDate) > 300 {
                     selectedTab = 0
                 }
                 backgroundedAt = nil
+                FeedbackService.shared.addLog("App foregrounded")
             }
         }
     }

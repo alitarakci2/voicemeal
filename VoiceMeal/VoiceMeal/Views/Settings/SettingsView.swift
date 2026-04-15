@@ -3,6 +3,7 @@
 //  VoiceMeal
 //
 
+import Sentry
 import SwiftData
 import SwiftUI
 
@@ -54,6 +55,7 @@ struct SettingsView: View {
 
     // UI state
     @State private var showSavedToast = false
+    @State private var debugToast: String = ""
     @State private var showWeightConflictAlert = false
     @State private var showResetAlert = false
     @State private var healthKitWeight: Double?
@@ -125,6 +127,10 @@ struct SettingsView: View {
 
                             // Section: App
                             appSection
+
+                            #if DEBUG
+                            debugSection
+                            #endif
                         }
                         .padding(.horizontal)
                         .padding(.top, 12)
@@ -147,9 +153,28 @@ struct SettingsView: View {
                     .clipShape(Capsule())
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .padding(.bottom, 20)
+            } else if !debugToast.isEmpty {
+                Text(debugToast)
+                    .font(Theme.bodyFont)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(themeManager.current.accent)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 20)
             }
         }
         .animation(.easeInOut, value: showSavedToast)
+        .animation(.easeInOut, value: debugToast)
+        .onChange(of: debugToast) { _, new in
+            guard !new.isEmpty else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                debugToast = ""
+            }
+        }
         .alert(L.weightConflict.localized, isPresented: $showWeightConflictAlert) {
             Button("\("manual_weight".localized) (\(String(format: "%.2f", currentWeightKg)) kg)") {
                 performSave()
@@ -663,6 +688,74 @@ struct SettingsView: View {
             }
         }
     }
+
+    // MARK: - Debug Section
+
+    #if DEBUG
+    private var debugSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("🛠️ Debug", icon: "hammer.fill", iconColor: .orange)
+
+                Button {
+                    let sid = FeedbackService.shared.sessionID
+                    SentrySDK.capture(message: "🧪 Test Event [\(sid)]")
+                    debugToast = "Sentry event gönderildi: \(sid)"
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "ant.fill")
+                            .foregroundColor(.orange)
+                        Text("Test Sentry Event")
+                            .font(Theme.bodyFont)
+                            .foregroundColor(.orange)
+                        Spacer()
+                    }
+                    .padding(14)
+                    .background(Color.orange.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    SentrySDK.crash()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.octagon.fill")
+                            .foregroundColor(.red)
+                        Text("Test Crash (kills app)")
+                            .font(Theme.bodyFont)
+                            .foregroundColor(.red)
+                        Spacer()
+                    }
+                    .padding(14)
+                    .background(Theme.red.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+
+                HStack {
+                    Text("Session ID")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.textSecondary)
+                    Spacer()
+                    Text(FeedbackService.shared.sessionID)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.white)
+                    Button {
+                        UIPasteboard.general.string = FeedbackService.shared.sessionID
+                        debugToast = "Kopyalandı!"
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.caption)
+                            .foregroundColor(themeManager.current.accent)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+    }
+    #endif
 
     // MARK: - App Section
 

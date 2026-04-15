@@ -130,6 +130,7 @@ class HealthKitService {
 
         let total = await active + basal
         todayTotalBurn = total
+        FeedbackService.shared.addLog("HealthKit refresh: \(Int(total)) kcal")
         return total
     }
 

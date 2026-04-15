@@ -55,6 +55,7 @@ struct SnapshotService {
             snapshot.waterGoalMl = waterGoalMl
             modelContext.insert(snapshot)
         }
+        FeedbackService.shared.addLog("Snapshot saved: \(consumedCalories) kcal")
     }
 
     static func fetchSnapshot(for date: Date, modelContext: ModelContext) -> DailySnapshot? {

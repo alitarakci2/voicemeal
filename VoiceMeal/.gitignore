@@ -5,6 +5,7 @@ DerivedData/
 *.xcuserdatad/
 
 # API Keys - NEVER commit
+*.xcconfig
 Config.xcconfig
 
 # macOS

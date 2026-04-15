@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Sentry
 import UIKit
 
 struct ParsedMeal: Codable, Identifiable {
@@ -424,6 +425,7 @@ class GroqService {
             let code = httpResponse?.statusCode ?? -1
             let body = String(data: data, encoding: .utf8) ?? ""
             print("❌ [GroqService] HTTP \(code): \(body)")
+            SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
@@ -458,6 +460,7 @@ class GroqService {
             }
             return result
         } catch {
+            SentrySDK.capture(error: error)
             print("❌ [GroqService] JSON decode error: \(error) — raw: \(jsonString)")
             throw GroqError.invalidJSON
         }
@@ -689,6 +692,7 @@ class GroqService {
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
@@ -824,6 +828,7 @@ class GroqService {
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
@@ -968,6 +973,7 @@ class GroqService {
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
@@ -1093,6 +1099,7 @@ class GroqService {
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
@@ -1117,6 +1124,7 @@ class GroqService {
         do {
             return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
         } catch {
+            SentrySDK.capture(error: error)
             print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")
             throw GroqError.invalidJSON
         }
@@ -1190,6 +1198,7 @@ class GroqService {
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
@@ -1214,6 +1223,7 @@ class GroqService {
         do {
             return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
         } catch {
+            SentrySDK.capture(error: error)
             print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")
             throw GroqError.invalidJSON
         }

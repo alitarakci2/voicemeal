@@ -215,6 +215,7 @@ class GoalEngine {
         // Force @Observable notification by clearing and re-setting
         self.profile = nil
         self.profile = profile
+        FeedbackService.shared.addLog("TDEE updated: \(Int(tdee)) kcal")
     }
 
     func updateHealthKitBurn(_ burn: Double) {
