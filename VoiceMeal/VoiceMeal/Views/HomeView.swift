@@ -1617,10 +1617,11 @@ struct HomeView: View {
     }
 
     private func updateWidgetData() {
+        let remaining = goalEngine.dailyCalorieTarget - eatenCalories
         let data = WidgetData(
             consumedCalories: eatenCalories,
             targetCalories: goalEngine.dailyCalorieTarget,
-            remainingCalories: goalEngine.dailyCalorieTarget - eatenCalories,
+            remainingCalories: remaining,
             targetDeficit: Int(goalEngine.cappedDailyDeficit),
             actualDeficit: Int(goalEngine.tdee) - eatenCalories,
             waterConsumed: isWaterTrackingEnabled ? todayWaterMl : 0,
@@ -1628,6 +1629,7 @@ struct HomeView: View {
             lastUpdated: Date()
         )
         WidgetDataStore.shared.save(data)
+        FeedbackService.shared.addLog("Widget updated: \(eatenCalories)kcal eaten, \(remaining)kcal left")
     }
 
     private func saveYesterdaySnapshot() {
@@ -1882,6 +1884,7 @@ struct HomeView: View {
                     reviewMeals = response.meals
                     clarificationQuestion = response.clarification_question ?? ""
                     showReviewCard = true
+                    FeedbackService.shared.addLog("Clarification needed: \(clarificationQuestion)")
                     print("🏠 [HomeView] reviewMeals count after: \(reviewMeals.count)")
                 } else if !response.meals.isEmpty {
                     print("🏠 [HomeView] → branch: confirmation card")
@@ -1896,6 +1899,7 @@ struct HomeView: View {
                 }
             } catch {
                 print("❌ [HomeView] Groq error: \(error)")
+                FeedbackService.shared.addErrorLog(error.localizedDescription)
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? "Bir hata olu\u{015F}tu, tekrar deneyin"
                 // Reset meal-entry state so UI is interactive again
                 clarificationQuestion = ""
@@ -1992,8 +1996,10 @@ struct HomeView: View {
                 fat: meal.fat ?? 0
             )
             modelContext.insert(entry)
-            FeedbackService.shared.addLog("Meal saved: \(meal.name)")
+            FeedbackService.shared.addLog("Meal saved: \(meal.name) - \(Int(meal.calories ?? 0))kcal")
         }
+        let totalCal = meals.reduce(0) { $0 + Int($1.calories ?? 0) }
+        FeedbackService.shared.addLog("Meal confirmed: \(meals.count) items, \(totalCal)kcal total")
         saveTodaySnapshot()
         showSavedConfirmation = true
         Task {

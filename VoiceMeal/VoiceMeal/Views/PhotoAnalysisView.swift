@@ -457,6 +457,7 @@ struct PhotoAnalysisView: View {
             }
         } catch {
             if Task.isCancelled { return }
+            FeedbackService.shared.addErrorLog("PhotoAnalysis: \(error.localizedDescription)")
             print("\u{1F4F7} [ERROR] \(type(of: error)): \(error)")
             analysisState = .error("\(L.analysisError.localized) \(error.localizedDescription)")
         }
@@ -480,6 +481,7 @@ struct PhotoAnalysisView: View {
                 analysisState = .confirmed
             }
         } catch {
+            FeedbackService.shared.addErrorLog("PhotoClarification: \(error.localizedDescription)")
             print("\u{1F4F7} [ERROR] Clarification failed: \(type(of: error)): \(error)")
             analysisState = .error("\(L.clarificationError.localized) \(error.localizedDescription)")
         }

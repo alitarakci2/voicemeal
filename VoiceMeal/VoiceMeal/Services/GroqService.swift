@@ -388,6 +388,7 @@ class GroqService {
     }
 
     func parseMeals(transcript: String, personalContext: String = "") async throws -> MealParseResponse {
+        let startTime = Date()
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
             throw GroqError.missingAPIKey
@@ -451,6 +452,8 @@ class GroqService {
 
         do {
             let result = try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
+            let elapsed = Date().timeIntervalSince(startTime)
+            FeedbackService.shared.addLog("Groq parseMeals: \(String(format: "%.1f", elapsed))s")
             print("🤖 [Groq] Raw response: \(jsonString)")
             print("🤖 [Groq] clarification_needed: \(result.clarification_needed)")
             print("🤖 [Groq] clarification_question: \(result.clarification_question ?? "nil")")
@@ -565,6 +568,7 @@ class GroqService {
         coachStyle: CoachStyle = .supportive,
         personalContext: String = ""
     ) async throws -> String {
+        let startTime = Date()
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
 
@@ -701,6 +705,8 @@ class GroqService {
             throw GroqError.emptyResponse
         }
 
+        let elapsed = Date().timeIntervalSince(startTime)
+        FeedbackService.shared.addLog("Groq dailyInsight: \(String(format: "%.1f", elapsed))s")
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -750,6 +756,7 @@ class GroqService {
         coachStyle: CoachStyle = .supportive,
         personalContext: String = ""
     ) async throws -> String {
+        let startTime = Date()
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
 
@@ -837,6 +844,8 @@ class GroqService {
             throw GroqError.emptyResponse
         }
 
+        let elapsed = Date().timeIntervalSince(startTime)
+        FeedbackService.shared.addLog("Groq weeklyInsight: \(String(format: "%.1f", elapsed))s")
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     // MARK: - Program Insight
@@ -1049,6 +1058,7 @@ class GroqService {
 
     // meta-llama/llama-4-scout-17b-16e-instruct supports vision (multimodal) on Groq
     func analyzeFood(imageData: Data) async throws -> PhotoAnalysisResponse {
+        let startTime = Date()
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
             print("📷 [ERROR] Missing API key")
@@ -1122,7 +1132,10 @@ class GroqService {
         }
 
         do {
-            return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+            let result = try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
+            let elapsed = Date().timeIntervalSince(startTime)
+            FeedbackService.shared.addLog("Groq analyzePhoto: \(String(format: "%.1f", elapsed))s")
+            return result
         } catch {
             SentrySDK.capture(error: error)
             print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")

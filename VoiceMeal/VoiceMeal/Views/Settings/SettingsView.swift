@@ -333,6 +333,7 @@ struct SettingsView: View {
                 ForEach(CoachStyle.allCases, id: \.self) { style in
                     Button {
                         selectedCoachStyle = style
+                        FeedbackService.shared.addLog("Coach style changed: \(style.rawValue)")
                     } label: {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
@@ -626,6 +627,7 @@ struct SettingsView: View {
             ForEach(options, id: \.value) { option in
                 Button {
                     selectedLanguage = option.value
+                    FeedbackService.shared.addLog("Language changed: \(option.value.isEmpty ? "system" : option.value)")
                     if option.value != previousLanguage {
                         applyLanguage(option.value)
                         previousLanguage = option.value
@@ -938,6 +940,8 @@ struct SettingsView: View {
         try? modelContext.save()
         NotificationService.shared.reschedule(profile: p)
         NotificationCenter.default.post(name: .profileUpdated, object: nil)
+
+        FeedbackService.shared.addLog("Settings saved: theme=\(themeManager.current.rawValue) lang=\(selectedLanguage)")
 
         showSavedToast = true
         Task {

@@ -218,7 +218,7 @@ struct DailyInsightCard: View {
                 snapshot.hrvStatus = hrvStatus.rawValue
             }
         } catch {
-            // Daily insight error
+            FeedbackService.shared.addErrorLog("DailyInsight: \(error.localizedDescription)")
             if insightText == nil {
                 insightText = L.insightFallback.localized
             }

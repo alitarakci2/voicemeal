@@ -301,6 +301,7 @@ struct PlanView: View {
                     .padding(.vertical, 8)
                 }
                 .onAppear {
+                    FeedbackService.shared.addLog("Plan tab opened")
                     scrollProxy = proxy
                     loadPlanSettings()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -907,6 +908,9 @@ struct DayDetailSheetView: View {
         }
         .presentationDetents([.medium, .large])
         .presentationBackground(.clear)
+        .onAppear {
+            FeedbackService.shared.addLog("Day detail opened: \(plan.date.formatted())")
+        }
     }
 
     private var isPastOlderThan7Days: Bool {

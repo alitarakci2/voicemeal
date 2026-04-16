@@ -534,7 +534,7 @@ struct ProgramSummaryView: View {
             insightText = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)
         } catch {
-            // Program insight error
+            FeedbackService.shared.addErrorLog("ProgramInsight: \(error.localizedDescription)")
             insightText = "assessment_failed".localized
         }
         insightLoading = false

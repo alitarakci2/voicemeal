@@ -196,6 +196,8 @@ struct StatisticsView: View {
             }
         }
         .onAppear {
+            let rangeLabel = selectedRange == 0 ? "weekly" : selectedRange == 1 ? "monthly" : "program"
+            FeedbackService.shared.addLog("Statistics tab opened: \(rangeLabel)")
             refreshStats()
         }
         .onChange(of: snapshots.count) {
@@ -465,7 +467,7 @@ struct StatisticsView: View {
             UserDefaults.standard.set(insight, forKey: cacheKey)
             UserDefaults.standard.set(Date.now, forKey: "weeklyInsightDate")
         } catch {
-            // Weekly insight error
+            FeedbackService.shared.addErrorLog("WeeklyInsight: \(error.localizedDescription)")
         }
         insightLoading = false
     }

@@ -159,8 +159,9 @@ struct ContentView: View {
                 }
                 .onChange(of: selectedTab) { _, newTab in
                     let tabNames = ["Record", "Plan", "Statistics", "Settings"]
-                    FeedbackService.shared.currentTab =
-                        (0..<tabNames.count).contains(newTab) ? tabNames[newTab] : "Unknown"
+                    let tabName = (0..<tabNames.count).contains(newTab) ? tabNames[newTab] : "Unknown"
+                    FeedbackService.shared.currentTab = tabName
+                    FeedbackService.shared.addLog("Tab changed: \(tabName)")
                 }
                 .onShake {
                     showFeedback = true

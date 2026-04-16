@@ -54,6 +54,24 @@ class FeedbackService: ObservableObject {
         SentrySDK.addBreadcrumb(crumb)
     }
 
+    func addErrorLog(_ message: String) {
+        let timestamp = DateFormatter.localizedString(
+            from: Date(),
+            dateStyle: .none,
+            timeStyle: .medium
+        )
+        recentLogs.append("[\(timestamp)] ERROR: \(message)")
+        if recentLogs.count > 20 {
+            recentLogs.removeFirst()
+        }
+
+        let crumb = Breadcrumb()
+        crumb.level = .error
+        crumb.category = "error"
+        crumb.message = message
+        SentrySDK.addBreadcrumb(crumb)
+    }
+
     func sendReport(userMessage: String) async throws {
         print("📧 [EmailJS] Sending report...")
         print("📧 [EmailJS] ServiceID: \(serviceID)")

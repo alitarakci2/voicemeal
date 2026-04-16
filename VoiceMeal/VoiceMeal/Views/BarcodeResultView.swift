@@ -412,6 +412,7 @@ struct BarcodeResultView: View {
                 phase = .notFound
             }
         } catch {
+            FeedbackService.shared.addErrorLog("Barcode lookup: \(error.localizedDescription)")
             errorMessage = "\("connection_error".localized): \(error.localizedDescription)"
             phase = .notFound
         }
