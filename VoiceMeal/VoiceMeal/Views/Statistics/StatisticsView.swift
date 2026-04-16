@@ -18,6 +18,7 @@ struct StatisticsView: View {
     @State private var weeklyInsight: String?
     @State private var insightLoading = false
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var hasAppeared = false
 
     @Environment(GroqService.self) private var groqService
 
@@ -196,8 +197,11 @@ struct StatisticsView: View {
             }
         }
         .onAppear {
-            let rangeLabel = selectedRange == 0 ? "weekly" : selectedRange == 1 ? "monthly" : "program"
-            FeedbackService.shared.addLog("Statistics tab opened: \(rangeLabel)")
+            if !hasAppeared {
+                hasAppeared = true
+                let rangeLabel = selectedRange == 0 ? "weekly" : selectedRange == 1 ? "monthly" : "program"
+                FeedbackService.shared.addLog("Statistics tab opened: \(rangeLabel)")
+            }
             refreshStats()
         }
         .onChange(of: snapshots.count) {

@@ -19,6 +19,7 @@ struct PlanView: View {
     @State private var showFutureDays = false
     @State private var weeklyCardExpanded = false
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var hasAppeared = false
 
     // Plan settings
     @State private var showPlanSettings = false
@@ -301,7 +302,10 @@ struct PlanView: View {
                     .padding(.vertical, 8)
                 }
                 .onAppear {
-                    FeedbackService.shared.addLog("Plan tab opened")
+                    if !hasAppeared {
+                        hasAppeared = true
+                        FeedbackService.shared.addLog("Plan tab opened")
+                    }
                     scrollProxy = proxy
                     loadPlanSettings()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
