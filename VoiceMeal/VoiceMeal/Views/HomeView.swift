@@ -40,7 +40,7 @@ struct HomeView: View {
     @State private var correctionQuestion = ""
 
     // Scroll state
-    @State private var scrollProxy: ScrollViewProxy?
+    @State private var scrollToTopTrigger = false
 
     // Camera state
     @State private var showCamera = false
@@ -110,9 +110,7 @@ struct HomeView: View {
                     }
 
                     Button {
-                        withAnimation {
-                            scrollProxy?.scrollTo("top", anchor: .top)
-                        }
+                        scrollToTopTrigger.toggle()
                     } label: {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.system(size: 22))
@@ -508,7 +506,11 @@ struct HomeView: View {
             }
             .padding()
         } // ScrollView
-        .onAppear { scrollProxy = proxy }
+        .onChange(of: scrollToTopTrigger) { _, _ in
+            withAnimation {
+                proxy.scrollTo("top", anchor: .top)
+            }
+        }
                 } // ScrollViewReader
             } // VStack (sticky header + scroll)
 
