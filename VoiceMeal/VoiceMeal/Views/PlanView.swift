@@ -41,21 +41,33 @@ struct PlanView: View {
         Calendar.current.startOfDay(for: .now)
     }
 
-    private var pastDays: [DayPlan] {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -3, to: todayID)!
-        return dayPlans.filter { $0.date < cutoff }
-    }
-
-    private var visibleDays: [DayPlan] {
+    private var yesterdayPlan: DayPlan? {
         let calendar = Calendar.current
-        let start = calendar.date(byAdding: .day, value: -3, to: todayID)!
-        let end = calendar.date(byAdding: .day, value: 3, to: todayID)!
-        return dayPlans.filter { $0.date >= start && $0.date <= end }
+        guard let date = calendar.date(byAdding: .day, value: -1, to: todayID) else { return nil }
+        return dayPlans.first { calendar.isDate($0.date, inSameDayAs: date) }
     }
 
-    private var futureDays: [DayPlan] {
-        let cutoff = Calendar.current.date(byAdding: .day, value: 3, to: todayID)!
-        return dayPlans.filter { $0.date > cutoff }
+    private var todayPlan: DayPlan? {
+        let calendar = Calendar.current
+        return dayPlans.first { calendar.isDate($0.date, inSameDayAs: Date()) }
+    }
+
+    private var tomorrowPlan: DayPlan? {
+        let calendar = Calendar.current
+        guard let date = calendar.date(byAdding: .day, value: 1, to: todayID) else { return nil }
+        return dayPlans.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    private var previousDays: [DayPlan] {
+        let calendar = Calendar.current
+        let cutoff = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -1, to: Date())!)
+        return dayPlans.filter { $0.date < cutoff }.sorted { $0.date > $1.date }
+    }
+
+    private var upcomingDays: [DayPlan] {
+        let calendar = Calendar.current
+        let cutoff = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 2, to: todayID)!)
+        return dayPlans.filter { $0.date >= cutoff }.sorted { $0.date < $1.date }
     }
 
     private func dateRangeText(_ days: [DayPlan]) -> String {
@@ -259,42 +271,62 @@ struct PlanView: View {
                             .id("weeklyCard")
                             .padding(.bottom, 4)
 
-                        // Collapsible past section
-                        if !pastDays.isEmpty {
+                        // Collapsible previous days section
+                        if !previousDays.isEmpty {
                             sectionHeader(
-                                title: L.previousDays.localized,
-                                dateRange: dateRangeText(pastDays),
+                                title: L.previousDays.localized + " (\(previousDays.count))",
+                                dateRange: dateRangeText(previousDays.sorted { $0.date < $1.date }),
                                 isExpanded: $showPastDays
                             )
                             if showPastDays {
-                                ForEach(pastDays) { plan in
+                                ForEach(previousDays) { plan in
                                     DayRowView(plan: plan)
                                         .id(plan.date)
                                         .onTapGesture { selectedPlan = plan }
                                 }
+                                .transition(.move(edge: .top).combined(with: .opacity))
                             }
                         }
 
-                        // Always visible: 3 days before + today + 3 days after
-                        ForEach(visibleDays) { plan in
-                            DayRowView(plan: plan)
-                                .id(plan.date)
-                                .onTapGesture { selectedPlan = plan }
+                        // Yesterday
+                        if let yesterday = yesterdayPlan {
+                            DayRowView(plan: yesterday)
+                                .id(yesterday.date)
+                                .onTapGesture { selectedPlan = yesterday }
                         }
 
-                        // Collapsible future section
-                        if !futureDays.isEmpty {
+                        // Today — highlighted
+                        if let today = todayPlan {
+                            DayRowView(plan: today)
+                                .id(today.date)
+                                .onTapGesture { selectedPlan = today }
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Theme.accent, lineWidth: 1.5)
+                                )
+                        }
+
+                        // Tomorrow
+                        if let tomorrow = tomorrowPlan {
+                            DayRowView(plan: tomorrow)
+                                .id(tomorrow.date)
+                                .onTapGesture { selectedPlan = tomorrow }
+                        }
+
+                        // Collapsible upcoming days section
+                        if !upcomingDays.isEmpty {
                             sectionHeader(
-                                title: L.nextDays.localized,
-                                dateRange: dateRangeText(futureDays),
+                                title: L.nextDays.localized + " (\(upcomingDays.count))",
+                                dateRange: dateRangeText(upcomingDays),
                                 isExpanded: $showFutureDays
                             )
                             if showFutureDays {
-                                ForEach(futureDays) { plan in
+                                ForEach(upcomingDays) { plan in
                                     DayRowView(plan: plan)
                                         .id(plan.date)
                                         .onTapGesture { selectedPlan = plan }
                                 }
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
                         }
                     }
