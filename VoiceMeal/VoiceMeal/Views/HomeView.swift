@@ -482,7 +482,8 @@ struct HomeView: View {
                         waterMl: isWaterTrackingEnabled ? todayWaterMl : 0,
                         waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
                         coachStyle: profiles.first?.coachStyle ?? .supportive,
-                        personalContext: profiles.first?.fullAIContext ?? ""
+                        personalContext: profiles.first?.fullAIContext ?? "",
+                        completedWorkouts: goalEngine.completedWorkouts
                     )
 
                     if isWaterTrackingEnabled {
@@ -1584,6 +1585,7 @@ struct HomeView: View {
         _ = await healthKitService.fetchHRVBaseline()
         _ = await healthKitService.fetchLastNightSleep()
         _ = await healthKitService.fetchLatestWeight()
+        goalEngine.completedWorkouts = await healthKitService.fetchTodayWorkouts()
         goalEngine.syncWeight(
             healthWeight: healthKitService.latestWeight,
             healthWeightDate: healthKitService.latestWeightDate,

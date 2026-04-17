@@ -566,7 +566,8 @@ class GroqService {
         waterMl: Int = 0,
         waterGoalMl: Int = 0,
         coachStyle: CoachStyle = .supportive,
-        personalContext: String = ""
+        personalContext: String = "",
+        completedWorkouts: [(type: String, duration: Int, calories: Int)] = []
     ) async throws -> String {
         let startTime = Date()
         let apiKey = Config.groqAPIKey
@@ -598,6 +599,20 @@ class GroqService {
             .compactMap { GoalEngine.activityDisplayNames[$0] }
             .joined(separator: ", ")
 
+        let completedSummary: String
+        if completedWorkouts.isEmpty {
+            completedSummary = lang == "en"
+                ? "No workouts completed yet today (per HealthKit)"
+                : "Bugün henüz tamamlanan antrenman yok (HealthKit'e göre)"
+        } else {
+            let parts = completedWorkouts.map { w in
+                lang == "en"
+                    ? "\(w.type) \(w.duration)min \(w.calories)kcal"
+                    : "\(w.type) \(w.duration)dk \(w.calories)kcal"
+            }
+            completedSummary = parts.joined(separator: ", ")
+        }
+
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
         let timeStr = timeFormatter.string(from: .now)
@@ -605,17 +620,18 @@ class GroqService {
 
         let isRestDay = todayActivities.isEmpty || todayActivities == ["rest"]
         let activityLine: String
-        if isRestDay {
-            activityLine = lang == "en"
-                ? "Activities: No workouts planned for today (rest day)"
-                : "Aktiviteler: Bugün antrenman planlanmamış (dinlenme günü)"
+        if lang == "en" {
+            let completedLine = "Completed workouts today (HealthKit): \(completedSummary)"
+            let plannedLine = isRestDay
+                ? "Planned for today (schedule): No workouts planned (rest day)"
+                : "Planned for today (schedule): \(activityNames) (PLANNED, not confirmed as completed)"
+            activityLine = "\(completedLine)\n                \(plannedLine)"
         } else {
-            let tense = lang == "en"
-                ? (hour < 18 ? "planned for today (not yet done)" : "planned for today (may or may not be done)")
-                : (hour < 18 ? "bugün için planlanmış (henüz yapılmadı)" : "bugün için planlanmış (yapılmış olabilir veya olmayabilir)")
-            activityLine = lang == "en"
-                ? "Activities \(tense): \(activityNames) (these are PLANNED from the user's schedule, NOT confirmed as completed. Do NOT say the user did these activities. Say 'you have planned' or 'scheduled for today'.)"
-                : "Aktiviteler \(tense): \(activityNames) (bunlar kullanıcının takviminden PLANLANMIŞ aktiviteler, tamamlandığı DOĞRULANMAMIŞ. Kullanıcının bunları yaptığını SÖYLEME. 'Planında var' veya 'bugün için planlanmış' de.)"
+            let completedLine = "Bugün tamamlanan antrenmanlar (HealthKit): \(completedSummary)"
+            let plannedLine = isRestDay
+                ? "Bugün planlanan (program): Antrenman planlanmamış (dinlenme günü)"
+                : "Bugün planlanan (program): \(activityNames) (PLANLANMIŞ, tamamlandığı doğrulanmamış)"
+            activityLine = "\(completedLine)\n                \(plannedLine)"
         }
 
         var contextFlags: [String] = []

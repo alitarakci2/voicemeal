@@ -16,6 +16,7 @@ class GoalEngine {
     var isUsingExtrapolatedTDEE: Bool = false
     var isEarlyMorning: Bool = false
     var weightUpdatedBanner: String?
+    var completedWorkouts: [(type: String, duration: Int, calories: Int)] = []
 
     var healthKitSufficient: Bool {
         healthKitBurn > bmr && bmr > 0

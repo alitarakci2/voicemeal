@@ -403,6 +403,63 @@ class HealthKitService {
         return result
     }
 
+    func fetchTodayWorkouts() async -> [(type: String, duration: Int, calories: Int)] {
+        guard let store else { return [] }
+
+        let workoutType = HKObjectType.workoutType()
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: .now, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: workoutType,
+                predicate: predicate,
+                limit: 10,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                guard let workouts = samples as? [HKWorkout], error == nil else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                let result = workouts.map { workout in
+                    let duration = Int(workout.duration / 60)
+                    let calories = Int(
+                        workout.statistics(for: HKQuantityType(.activeEnergyBurned))?
+                            .sumQuantity()?
+                            .doubleValue(for: .kilocalorie()) ?? 0
+                    )
+                    let type = Self.workoutTypeName(workout.workoutActivityType)
+                    return (type: type, duration: duration, calories: calories)
+                }
+                continuation.resume(returning: result)
+            }
+            store.execute(query)
+        }
+    }
+
+    static func workoutTypeName(_ type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .running: return "Koşu"
+        case .walking: return "Yürüyüş"
+        case .cycling: return "Bisiklet"
+        case .traditionalStrengthTraining, .functionalStrengthTraining: return "Ağırlık"
+        case .swimming: return "Yüzme"
+        case .yoga: return "Yoga"
+        case .hiking: return "Doğa yürüyüşü"
+        case .soccer: return "Futbol"
+        case .basketball: return "Basketbol"
+        case .tennis: return "Tenis"
+        case .rowing: return "Kürek"
+        case .elliptical: return "Eliptik"
+        case .stairClimbing: return "Merdiven"
+        case .crossTraining: return "Çapraz antrenman"
+        case .dance: return "Dans"
+        case .pilates: return "Pilates"
+        default: return "Antrenman"
+        }
+    }
+
     private func fetchSum(store: HKHealthStore, type: HKQuantityType, predicate: NSPredicate) async -> Double {
         await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in

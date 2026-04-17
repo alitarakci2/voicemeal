@@ -26,6 +26,7 @@ struct DailyInsightCard: View {
     let waterGoalMl: Int
     var coachStyle: CoachStyle = .supportive
     var personalContext: String = ""
+    var completedWorkouts: [(type: String, duration: Int, calories: Int)] = []
     @Environment(\.modelContext) private var modelContext
 
     @State private var insightText: String?
@@ -199,7 +200,8 @@ struct DailyInsightCard: View {
                 waterMl: waterMl,
                 waterGoalMl: waterGoalMl,
                 coachStyle: coachStyle,
-                personalContext: personalContext
+                personalContext: personalContext,
+                completedWorkouts: completedWorkouts
             )
             insightText = text
             generatedAt = .now
