@@ -87,21 +87,40 @@ class StatisticsService {
     private static var localCalendar: Calendar {
         var cal = Calendar.current
         cal.timeZone = TimeZone.current
+        cal.firstWeekday = 2 // Monday
         return cal
     }
 
     private(set) var weeklyStats: [DayStat] = []
     private(set) var monthlyStats: [DayStat] = []
+    private(set) var previousWeekStats: [DayStat] = []
 
     func refresh(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?) {
-        weeklyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 7)
-        monthlyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: 30)
+        let calendar = Self.localCalendar
+        let today = calendar.startOfDay(for: Date())
+
+        // This week: Monday to Sunday (calendar week), capped at today
+        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)
+        components.weekday = 2 // Monday
+        let thisMonday = calendar.date(from: components) ?? today
+
+        weeklyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, startDate: thisMonday, endDate: today)
+
+        // Monthly: last 30 days rolling
+        if let monthStart = calendar.date(byAdding: .day, value: -29, to: today) {
+            monthlyStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, startDate: monthStart, endDate: today)
+        }
+
+        // Previous week: last Monday to last Sunday
+        if let lastMonday = calendar.date(byAdding: .day, value: -7, to: thisMonday),
+           let lastSunday = calendar.date(byAdding: .day, value: -1, to: thisMonday) {
+            previousWeekStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, startDate: lastMonday, endDate: lastSunday)
+        }
     }
 
-    func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, days: Int, endDate: Date = .now) -> [DayStat] {
+    func buildStats(snapshots: [DailySnapshot], entries: [FoodEntry], profile: UserProfile?, startDate: Date, endDate: Date = .now) -> [DayStat] {
         let calendar = Self.localCalendar
         let end = calendar.startOfDay(for: endDate)
-        guard let startDate = calendar.date(byAdding: .day, value: -(days - 1), to: end) else { return [] }
 
         let snapshotsByDay = Dictionary(grouping: snapshots) { calendar.startOfDay(for: $0.date) }
         let entriesByDay = Dictionary(grouping: entries) { calendar.startOfDay(for: $0.date) }
@@ -306,6 +325,22 @@ class StatisticsService {
         return completed.reduce(0.0) { $0 + $1.fat } / Double(completed.count)
     }
 
+    // MARK: - Previous Week Summary
+
+    var previousWeekAvgCalories: Int {
+        let completed = previousWeekStats.filter { $0.hasData }
+        guard !completed.isEmpty else { return 0 }
+        return completed.reduce(0) { $0 + $1.consumedCalories } / completed.count
+    }
+
+    var previousWeekTotalDeficit: Int {
+        previousWeekStats.filter { $0.hasData }.reduce(0) { $0 + $1.deficit }
+    }
+
+    var previousWeekDaysWithData: Int {
+        previousWeekStats.filter { $0.hasData }.count
+    }
+
     // MARK: - Program Data
 
     static func goalDirection(profile: UserProfile) -> GoalDirection {
@@ -344,7 +379,7 @@ class StatisticsService {
         }
 
         // Build all stats from program start
-        let allStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, days: totalDays)
+        let allStats = buildStats(snapshots: snapshots, entries: entries, profile: profile, startDate: startDate, endDate: today)
         // Exclude today from totals/averages (partial day)
         let completedDays = excludingToday(allStats)
         let allWithData = allStats.filter { $0.hasData }

@@ -779,8 +779,10 @@ class GroqService {
             \(expertBase)
 
             You are also a personal fitness coach. \
-            Analyze the user's weekly statistics and write \
-            ONLY a 2-3 sentence short, friendly weekly assessment in English. \
+            Analyze the user's weekly statistics including the day-by-day breakdown. \
+            Write a 3-4 sentence weekly assessment in English. \
+            Include: highlight the best/worst days and why, compare to previous week if data exists, \
+            identify patterns (e.g. weekends vs weekdays), and give ONE actionable tip for next week. \
             Use scientific but conversational language. \
             You may use emojis. Never make lists, write plain text. \
             Respond ONLY in English. Do not use Turkish words.
@@ -790,9 +792,11 @@ class GroqService {
             \(expertBase)
 
             Aynı zamanda kişisel bir fitness koçusun. \
-            Kullanıcının haftalık istatistiklerini analiz edip \
-            SADECE 2-3 cümlelik kısa, samimi, Türkçe bir haftalık \
-            değerlendirme yaz. Bilimsel ama sohbet dili kullan. \
+            Kullanıcının haftalık istatistiklerini gün gün analiz et. \
+            3-4 cümlelik bir haftalık değerlendirme yaz. \
+            Şunları dahil et: en iyi/en kötü günleri ve nedenlerini belirt, önceki haftayla karşılaştır (veri varsa), \
+            kalıpları belirle (hafta içi vs hafta sonu), ve gelecek hafta için BİR somut ipucu ver. \
+            Bilimsel ama sohbet dili kullan. \
             Emoji kullanabilirsin. Asla liste yapma, düz metin yaz. \
             SADECE Türkçe yanıt ver.
             """
@@ -806,8 +810,12 @@ class GroqService {
         avgCalories: Int,
         avgProtein: Double,
         totalDeficit: Int,
+        targetDeficit: Int = 0,
         currentWeight: Double,
         goalWeight: Double,
+        previousWeekAvgCalories: Int = 0,
+        previousWeekTotalDeficit: Int = 0,
+        previousWeekDaysWithData: Int = 0,
         coachStyle: CoachStyle = .supportive,
         personalContext: String = ""
     ) async throws -> String {
@@ -826,6 +834,43 @@ class GroqService {
         ).map { "\(GoalEngine.activityDisplayNames[$0.key] ?? $0.key): \($0.value) \(dayWord)" }
         .joined(separator: ", ")
 
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "EEE"
+        dateFormatter.locale = Locale(identifier: lang == "en" ? "en_US" : "tr_TR")
+
+        let dayBreakdown = stats.map { day in
+            let dayName = dateFormatter.string(from: day.date)
+            if day.hasData {
+                return "\(dayName): \(day.consumedCalories) kcal, \(Int(day.protein))g protein, deficit \(day.deficit) kcal"
+            } else {
+                return "\(dayName): \(lang == "en" ? "no data" : "veri yok")"
+            }
+        }.joined(separator: "\n                ")
+
+        var previousWeekLine = ""
+        if previousWeekDaysWithData >= 3 {
+            let prevEstKg = String(format: "%.2f", Double(previousWeekTotalDeficit) / 7700.0)
+            if lang == "en" {
+                previousWeekLine = """
+
+                    Previous week comparison:
+                    Previous week avg calories: \(previousWeekAvgCalories) kcal (this week: \(avgCalories) kcal)
+                    Previous week total deficit: \(previousWeekTotalDeficit) kcal (this week: \(totalDeficit) kcal)
+                    Previous week estimated change: \(prevEstKg) kg (this week: \(estimatedKg) kg)
+                    Previous week days with data: \(previousWeekDaysWithData)/7
+                    """
+            } else {
+                previousWeekLine = """
+
+                    Önceki hafta karşılaştırması:
+                    Önceki hafta ort. kalori: \(previousWeekAvgCalories) kcal (bu hafta: \(avgCalories) kcal)
+                    Önceki hafta toplam açık: \(previousWeekTotalDeficit) kcal (bu hafta: \(totalDeficit) kcal)
+                    Önceki hafta tahmini değişim: \(prevEstKg) kg (bu hafta: \(estimatedKg) kg)
+                    Önceki hafta veri olan gün: \(previousWeekDaysWithData)/7
+                    """
+            }
+        }
+
         let userPrompt: String
         if lang == "en" {
             userPrompt = """
@@ -833,7 +878,7 @@ class GroqService {
                 Days with data: \(daysWithData)/7
                 Average calories: \(avgCalories) kcal
                 Average protein: \(Int(avgProtein))g
-                Total deficit: \(totalDeficit) kcal
+                Total deficit: \(totalDeficit) kcal (target: \(targetDeficit * 7) kcal/week)
                 Estimated change: \(estimatedKg) kg
                 Streak: \(streak) days on target
                 Trend: \(trend.rawValue)
@@ -841,7 +886,10 @@ class GroqService {
                 Goal weight: \(String(format: "%.1f", goalWeight)) kg
                 Activities: \(activitySummary)
 
-                Write a short weekly assessment based on this data.
+                Day-by-day breakdown:
+                \(dayBreakdown)
+                \(previousWeekLine)
+                Write a weekly assessment based on this data.
                 """
         } else {
             userPrompt = """
@@ -849,7 +897,7 @@ class GroqService {
                 Veri olan gün sayısı: \(daysWithData)/7
                 Ortalama kalori: \(avgCalories) kcal
                 Ortalama protein: \(Int(avgProtein))g
-                Toplam açık: \(totalDeficit) kcal
+                Toplam açık: \(totalDeficit) kcal (hedef: \(targetDeficit * 7) kcal/hafta)
                 Tahmini değişim: \(estimatedKg) kg
                 Seri: \(streak) gün hedefe ulaştı
                 Trend: \(trend.rawValue)
@@ -857,7 +905,10 @@ class GroqService {
                 Hedef kilo: \(String(format: "%.1f", goalWeight)) kg
                 Aktiviteler: \(activitySummary)
 
-                Bu verilere göre kısa bir haftalık değerlendirme yap.
+                Gün gün detay:
+                \(dayBreakdown)
+                \(previousWeekLine)
+                Bu verilere göre haftalık değerlendirme yap.
                 """
         }
 
@@ -868,7 +919,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
-            "max_tokens": 200
+            "max_tokens": 300
         ]
 
         var request = URLRequest(url: endpoint)

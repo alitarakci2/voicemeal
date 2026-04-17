@@ -40,32 +40,39 @@ struct StatisticsView: View {
         return allEntries.filter { $0.date >= startOfDay }
     }
 
-    /// Entries within the currently selected stats window (7d for weekly, 30d for monthly).
-    /// Mirrors `StatisticsService.buildStats` — a window of `days` days ending today.
+    /// Entries within the currently selected stats window.
+    /// Weekly uses calendar week (Mon-Sun), monthly uses rolling 30 days.
     private var periodEntries: [FoodEntry] {
-        let days = selectedRange == 1 ? 30 : 7
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        guard let start = calendar.date(byAdding: .day, value: -(days - 1), to: today) else {
-            return []
+        let start: Date
+        if selectedRange == 0 {
+            var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)
+            components.weekday = 2 // Monday
+            start = calendar.date(from: components) ?? today
+        } else {
+            start = calendar.date(byAdding: .day, value: -29, to: today) ?? today
         }
         return allEntries.filter { $0.date >= start }
     }
 
     /// DayStats for the period immediately preceding the current window (for trend comparison).
     private var previousPeriodStats: [DayStat] {
-        let days = selectedRange == 1 ? 30 : 7
+        if selectedRange == 0 {
+            return statisticsService.previousWeekStats
+        }
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        guard let previousEnd = calendar.date(byAdding: .day, value: -days, to: today) else {
+        guard let prevEnd = calendar.date(byAdding: .day, value: -30, to: today),
+              let prevStart = calendar.date(byAdding: .day, value: -29, to: prevEnd) else {
             return []
         }
         return statisticsService.buildStats(
             snapshots: snapshots,
             entries: allEntries,
             profile: profiles.first,
-            days: days,
-            endDate: previousEnd
+            startDate: prevStart,
+            endDate: prevEnd
         )
     }
 
@@ -443,15 +450,17 @@ struct StatisticsView: View {
         let calendar = Calendar.current
         let weekOfYear = calendar.component(.weekOfYear, from: .now)
         let year = calendar.component(.yearForWeekOfYear, from: .now)
-        let cacheKey = "weeklyInsight_\(year)_\(weekOfYear)_\(groqService.appLanguage)"
+
+        let withData = statisticsService.weeklyStats.filter { $0.hasData }
+        guard withData.count >= 3 else { return }
+
+        let fingerprint = "\(withData.count)_\(statisticsService.totalDeficitThisWeek)_\(statisticsService.averageCaloriesThisWeek)"
+        let cacheKey = "weeklyInsight_\(year)_\(weekOfYear)_\(groqService.appLanguage)_\(fingerprint)"
 
         if let cached = UserDefaults.standard.string(forKey: cacheKey) {
             weeklyInsight = cached
             return
         }
-
-        let withData = statisticsService.weeklyStats.filter { $0.hasData }
-        guard withData.count >= 3 else { return }
 
         insightLoading = true
         do {
@@ -462,8 +471,12 @@ struct StatisticsView: View {
                 avgCalories: statisticsService.averageCaloriesThisWeek,
                 avgProtein: statisticsService.averageProteinThisWeek,
                 totalDeficit: statisticsService.totalDeficitThisWeek,
+                targetDeficit: Int(goalEngine.deficit),
                 currentWeight: profiles.first?.currentWeightKg ?? 0,
                 goalWeight: profiles.first?.goalWeightKg ?? 0,
+                previousWeekAvgCalories: statisticsService.previousWeekAvgCalories,
+                previousWeekTotalDeficit: statisticsService.previousWeekTotalDeficit,
+                previousWeekDaysWithData: statisticsService.previousWeekDaysWithData,
                 coachStyle: profiles.first?.coachStyle ?? .supportive,
                 personalContext: profiles.first?.fullAIContext ?? ""
             )
