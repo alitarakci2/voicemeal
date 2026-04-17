@@ -20,5 +20,7 @@
 	<string>VoiceMeal yemeğinizi tanımak için kamerayı kullanır</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>VoiceMeal günlük kalori hedefini hesaplamak için yakım verinizi kullanır</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>VoiceMeal updates your health data to track nutrition and calorie goals.</string>
 </dict>
 </plist>

@@ -601,6 +601,45 @@ class GroqService {
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
         let timeStr = timeFormatter.string(from: .now)
+        let hour = Calendar.current.component(.hour, from: .now)
+
+        let isRestDay = todayActivities.isEmpty || todayActivities == ["rest"]
+        let activityLine: String
+        if isRestDay {
+            activityLine = lang == "en"
+                ? "Activities: No workouts planned for today (rest day)"
+                : "Aktiviteler: Bugün antrenman planlanmamış (dinlenme günü)"
+        } else {
+            let tense = lang == "en"
+                ? (hour < 18 ? "planned for today (not yet done)" : "planned for today (may or may not be done)")
+                : (hour < 18 ? "bugün için planlanmış (henüz yapılmadı)" : "bugün için planlanmış (yapılmış olabilir veya olmayabilir)")
+            activityLine = lang == "en"
+                ? "Activities \(tense): \(activityNames) (these are PLANNED from the user's schedule, NOT confirmed as completed. Do NOT say the user did these activities. Say 'you have planned' or 'scheduled for today'.)"
+                : "Aktiviteler \(tense): \(activityNames) (bunlar kullanıcının takviminden PLANLANMIŞ aktiviteler, tamamlandığı DOĞRULANMAMIŞ. Kullanıcının bunları yaptığını SÖYLEME. 'Planında var' veya 'bugün için planlanmış' de.)"
+        }
+
+        var contextFlags: [String] = []
+        if consumed == 0 {
+            contextFlags.append(lang == "en"
+                ? "⚠️ IMPORTANT: User has logged ZERO calories today. They have NOT used the app yet today. Do NOT say \"great job\" or \"you're on track\". Acknowledge they haven't logged anything. Encourage them to log their meals. Do NOT assume they ate nothing — they may have eaten but not logged it."
+                : "⚠️ ÖNEMLİ: Kullanıcı bugün HİÇ kalori kaydetmemiş. Uygulamayı henüz kullanmamış. \"Harika gidiyorsun\" veya \"yolundasın\" DEME. Henüz kayıt yapmadığını belirt. Yemeklerini kaydetmesi için teşvik et. Hiç yemediğini VARSAYMA — yemiş ama kaydetmemiş olabilir.")
+        }
+        if consumed > 0 && proteinConsumed == 0 {
+            contextFlags.append(lang == "en"
+                ? "⚠️ User has eaten but logged 0g protein — protein data may be incomplete."
+                : "⚠️ Kullanıcı yemek yemiş ama 0g protein kayıtlı — protein verisi eksik olabilir.")
+        }
+        if consumed > tdee && tdee > 0 {
+            contextFlags.append(lang == "en"
+                ? "⚠️ User has consumed more than their TDEE (\(tdee) kcal) today."
+                : "⚠️ Kullanıcı bugün TDEE'sini (\(tdee) kcal) aşmış durumda.")
+        }
+        if hour >= 17 && consumed > 0 && consumed < 300 {
+            contextFlags.append(lang == "en"
+                ? "⚠️ It's evening and user has eaten very little today (<300 kcal) — may not have logged or may be fasting."
+                : "⚠️ Akşam oldu ve kullanıcı bugün çok az yemiş (<300 kcal) — kaydetmemiş veya oruç tutuyor olabilir.")
+        }
+        let contextNote = contextFlags.isEmpty ? "" : "\n\n" + contextFlags.joined(separator: "\n")
 
         let userPrompt: String
         if lang == "en" {
@@ -613,7 +652,7 @@ class GroqService {
                 Time: \(timeStr) (\(timeOfDay.rawValue))
                 HRV: \(hrvText)
                 Sleep: \(sleepText)
-                Today's activity: \(activityNames)
+                \(activityLine)
 
                 --- NUTRITION STATUS ---
                 Eating target: \(dailyCalorieTarget) kcal
@@ -632,7 +671,7 @@ class GroqService {
 
                 --- WATER STATUS ---
                 Water consumed: \(waterMl) ml / \(waterGoalMl) ml target
-                """ : "")
+                """ : "")\(contextNote)
                 """
         } else {
             let remainingStatus = remainingCalories < 0 ? "hedefi aştı" : "hedef içinde"
@@ -644,7 +683,7 @@ class GroqService {
                 Saat: \(timeStr) (\(timeOfDay.rawValue))
                 HRV: \(hrvText)
                 Uyku: \(sleepText)
-                Bugünkü aktivite: \(activityNames)
+                \(activityLine)
 
                 --- BESLENME DURUMU ---
                 Yeme hedefi: \(dailyCalorieTarget) kcal
@@ -663,7 +702,7 @@ class GroqService {
 
                 --- SU DURUMU ---
                 İçilen su: \(waterMl) ml / \(waterGoalMl) ml hedef
-                """ : "")
+                """ : "")\(contextNote)
                 """
         }
 

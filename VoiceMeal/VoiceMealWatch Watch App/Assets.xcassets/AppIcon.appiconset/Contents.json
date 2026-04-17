@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "voicemeal_icon.svg.png",
       "idiom" : "universal",
       "platform" : "watchos",
       "size" : "1024x1024"

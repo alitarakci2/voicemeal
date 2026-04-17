@@ -1,0 +1,46 @@
+<svg width='1024' height='1024' viewBox='0 0 680 680' xmlns='http://www.w3.org/2000/svg'>
+  <defs>
+    <clipPath id='cc5'>
+      <circle cx='340' cy='340' r='300'/>
+    </clipPath>
+    <linearGradient id='bg5' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0%' stop-color='#2D0A4E'/>
+      <stop offset='100%' stop-color='#0A0A1F'/>
+    </linearGradient>
+    <linearGradient id='mic5' x1='0' y1='0' x2='0' y2='1'>
+      <stop offset='0%' stop-color='#9D95FF'/>
+      <stop offset='100%' stop-color='#6C63FF'/>
+    </linearGradient>
+  </defs>
+  <circle cx='340' cy='340' r='300' fill='url(#bg5)'/>
+  <g clip-path='url(#cc5)'>
+    <circle cx='340' cy='340' r='270' fill='none' stroke='#6C63FF' stroke-width='1' opacity='0.18'/>
+    <rect x='302' y='100' width='76' height='118' rx='38' fill='url(#mic5)'/>
+    <rect x='313' y='112' width='12' height='46' rx='6' fill='white' opacity='0.22'/>
+    <line x1='304' y1='155' x2='376' y2='155' stroke='white' stroke-width='2' opacity='0.25'/>
+    <line x1='304' y1='171' x2='376' y2='171' stroke='white' stroke-width='2' opacity='0.25'/>
+    <line x1='304' y1='187' x2='376' y2='187' stroke='white' stroke-width='2' opacity='0.25'/>
+    <path d='M264 238 Q264 310 340 310 Q416 310 416 238' fill='none' stroke='#8B83FF' stroke-width='8' stroke-linecap='round'/>
+    <line x1='340' y1='310' x2='340' y2='342' stroke='#8B83FF' stroke-width='8' stroke-linecap='round'/>
+    <line x1='308' y1='342' x2='372' y2='342' stroke='#8B83FF' stroke-width='8' stroke-linecap='round'/>
+    <path d='M228 182 Q210 210 228 238' fill='none' stroke='#9D95FF' stroke-width='6.5' stroke-linecap='round' opacity='0.85'/>
+    <path d='M196 164 Q170 208 196 252' fill='none' stroke='#9D95FF' stroke-width='5.5' stroke-linecap='round' opacity='0.55'/>
+    <path d='M164 146 Q126 206 164 266' fill='none' stroke='#9D95FF' stroke-width='4.5' stroke-linecap='round' opacity='0.28'/>
+    <path d='M452 182 Q470 210 452 238' fill='none' stroke='#9D95FF' stroke-width='6.5' stroke-linecap='round' opacity='0.85'/>
+    <path d='M484 164 Q510 208 484 252' fill='none' stroke='#9D95FF' stroke-width='5.5' stroke-linecap='round' opacity='0.55'/>
+    <path d='M516 146 Q554 206 516 266' fill='none' stroke='#9D95FF' stroke-width='4.5' stroke-linecap='round' opacity='0.28'/>
+    <line x1='130' y1='368' x2='550' y2='368' stroke='white' stroke-width='1' opacity='0.12'/>
+    <line x1='430' y1='385' x2='430' y2='510' stroke='#FF9F43' stroke-width='8.5' stroke-linecap='round'/>
+    <line x1='412' y1='385' x2='412' y2='428' stroke='#FF9F43' stroke-width='6' stroke-linecap='round'/>
+    <line x1='423' y1='385' x2='423' y2='428' stroke='#FF9F43' stroke-width='6' stroke-linecap='round'/>
+    <line x1='437' y1='385' x2='437' y2='428' stroke='#FF9F43' stroke-width='6' stroke-linecap='round'/>
+    <line x1='448' y1='385' x2='448' y2='428' stroke='#FF9F43' stroke-width='6' stroke-linecap='round'/>
+    <path d='M412 428 Q412 448 430 448 Q448 448 448 428' fill='none' stroke='#FF9F43' stroke-width='6'/>
+    <line x1='250' y1='385' x2='250' y2='510' stroke='#FF9F43' stroke-width='8.5' stroke-linecap='round'/>
+    <path d='M250 385 Q272 405 272 430 Q272 446 250 450' fill='none' stroke='#FF9F43' stroke-width='7' stroke-linecap='round'/>
+    <text x='340' y='556' text-anchor='middle' font-family='system-ui,-apple-system,Helvetica Neue,sans-serif' font-size='58' letter-spacing='-1'>
+      <tspan font-weight='800' fill='#FF9F43'>Voice</tspan><tspan font-weight='200' fill='rgba(255,255,255,0.88)'>Meal</tspan>
+    </text>
+  </g>
+  <circle cx='340' cy='340' r='300' fill='none' stroke='#6C63FF' stroke-width='2.5' opacity='0.3'/>
+</svg>
