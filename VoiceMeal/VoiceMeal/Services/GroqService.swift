@@ -518,6 +518,7 @@ class GroqService {
             - But if real deficit is greater than target deficit (lots of exercise), \
             evaluate this positively
             - Never show TDEE as the eating target
+            Write maximum 3-4 complete sentences. Never cut off mid-sentence. Always end with a complete sentence.
             Never make lists, write plain text. Respond ONLY in English.
             """
         } else {
@@ -541,6 +542,7 @@ class GroqService {
             - Ama gerçek açık hedef açıktan büyükse (çok spor yaptı) \
             bunu olumlu değerlendir
             - Asla TDEE'yi yeme hedefi olarak gösterme
+            Maksimum 3-4 tam cümle yaz. Asla cümleyi yarıda kesme. Her zaman tam cümleyle bitir.
             Asla liste yapma, düz metin yaz. SADECE Türkçe yanıt ver.
             """
         }
@@ -729,7 +731,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
-            "max_tokens": 200
+            "max_tokens": 350
         ]
 
         var request = URLRequest(url: endpoint)
@@ -919,7 +921,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
-            "max_tokens": 300
+            "max_tokens": 400
         ]
 
         var request = URLRequest(url: endpoint)
@@ -1066,7 +1068,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
-            "max_tokens": 250
+            "max_tokens": 350
         ]
 
         var request = URLRequest(url: endpoint)
