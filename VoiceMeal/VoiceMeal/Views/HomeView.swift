@@ -8,81 +8,75 @@ import SwiftData
 import SwiftUI
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var speechService = SpeechService()
-    @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
-    @Query(sort: \WaterEntry.date, order: .reverse) private var allWaterEntries: [WaterEntry]
-    @Query private var profiles: [UserProfile]
-    @State private var permissionGranted = false
-    @State private var isAnalyzing = false
-    @State private var errorMessage: String?
-    @State private var showSavedConfirmation = false
-    @State private var clarificationQuestion = ""
-    @State private var reviewMeals: [ParsedMeal] = []
-    @State private var showReviewCard = false
-    @State private var originalSpeechText = ""
-    @State private var fixingMealName: String?
-    @State private var showGoalInfo = false
-    @State private var showWeightBanner = false
-    @State private var showSettings = false
-    @State private var entryToEdit: FoodEntry?
-    @State private var entryToDelete: FoodEntry?
-    @State private var showDeleteAlert = false
-    @State private var showCorrected = false
-    @State private var correctionPickerEntries: [FoodEntry]?
-    @Environment(GoalEngine.self) private var goalEngine
-    @State private var healthKitService = HealthKitService()
-    @State private var waterGoalService = WaterGoalService()
-    @State private var tdeeWarningDismissed = false
-    @State private var showGoalUpdatedToast = false
-    @State private var entryToCorrect: FoodEntry?
-    @State private var correctionQuestion = ""
+    @Environment(\.modelContext) var modelContext
+    @Environment(\.scenePhase) var scenePhase
+    @StateObject var speechService = SpeechService()
+    @Query(sort: \FoodEntry.date, order: .reverse) var allEntries: [FoodEntry]
+    @Query(sort: \WaterEntry.date, order: .reverse) var allWaterEntries: [WaterEntry]
+    @Query var profiles: [UserProfile]
+    @State var permissionGranted = false
+    @State var isAnalyzing = false
+    @State var errorMessage: String?
+    @State var showSavedConfirmation = false
+    @State var clarificationQuestion = ""
+    @State var reviewMeals: [ParsedMeal] = []
+    @State var showReviewCard = false
+    @State var originalSpeechText = ""
+    @State var fixingMealName: String?
+    @State var showGoalInfo = false
+    @State var showWeightBanner = false
+    @State var showSettings = false
+    @State var entryToEdit: FoodEntry?
+    @State var entryToDelete: FoodEntry?
+    @State var showDeleteAlert = false
+    @State var showCorrected = false
+    @State var correctionPickerEntries: [FoodEntry]?
+    @Environment(GoalEngine.self) var goalEngine
+    @State var healthKitService = HealthKitService()
+    @State var waterGoalService = WaterGoalService()
+    @State var tdeeWarningDismissed = false
+    @State var showGoalUpdatedToast = false
+    @State var entryToCorrect: FoodEntry?
+    @State var correctionQuestion = ""
 
-    // Scroll state
-    @State private var scrollToTopTrigger = false
+    @State var scrollToTopTrigger = false
 
-    // Camera state
-    @State private var showCamera = false
-    @State private var capturedImage: UIImage?
-    @State private var capturedImageData: Data?
-    @State private var showPhotoAnalysis = false
-    @State private var showPhotoLoading = false
-    @State private var pendingPhotoAnalysis = false
-    @State private var showCameraPermissionDenied = false
-    @State private var showNutritionCheck = false
-    @State private var showBarcodeScanner = false
+    @State var showCamera = false
+    @State var capturedImage: UIImage?
+    @State var capturedImageData: Data?
+    @State var showPhotoAnalysis = false
+    @State var showPhotoLoading = false
+    @State var pendingPhotoAnalysis = false
+    @State var showCameraPermissionDenied = false
+    @State var showNutritionCheck = false
+    @State var showBarcodeScanner = false
 
-    @Environment(GroqService.self) private var groqService
+    @Environment(GroqService.self) var groqService
 
-    private var todayEntries: [FoodEntry] {
+    var todayEntries: [FoodEntry] {
         let startOfDay = Calendar.current.startOfDay(for: .now)
         return allEntries.filter { $0.date >= startOfDay }
     }
 
-    private var todayWaterEntries: [WaterEntry] {
+    var todayWaterEntries: [WaterEntry] {
         let startOfDay = Calendar.current.startOfDay(for: .now)
         return allWaterEntries.filter { $0.date >= startOfDay }
     }
 
-    private var todayWaterMl: Int { todayWaterEntries.reduce(0) { $0 + $1.amountMl } }
+    var todayWaterMl: Int { todayWaterEntries.reduce(0) { $0 + $1.amountMl } }
+    var isWaterTrackingEnabled: Bool { profiles.first?.isWaterTrackingEnabled ?? false }
+    var eatenCalories: Int { todayEntries.reduce(0) { $0 + $1.calories } }
+    var eatenProtein: Double { todayEntries.reduce(0.0) { $0 + $1.protein } }
+    var eatenCarbs: Double { todayEntries.reduce(0.0) { $0 + $1.carbs } }
+    var eatenFat: Double { todayEntries.reduce(0.0) { $0 + $1.fat } }
+    var isListening: Bool { speechService.isRecording }
 
-    private var isWaterTrackingEnabled: Bool { profiles.first?.isWaterTrackingEnabled ?? false }
-
-    private var eatenCalories: Int { todayEntries.reduce(0) { $0 + $1.calories } }
-    private var eatenProtein: Double { todayEntries.reduce(0.0) { $0 + $1.protein } }
-    private var eatenCarbs: Double { todayEntries.reduce(0.0) { $0 + $1.carbs } }
-    private var eatenFat: Double { todayEntries.reduce(0.0) { $0 + $1.fat } }
-
-    private var isListening: Bool { speechService.isRecording }
-
-    private var remainingCalories: Int {
+    var remainingCalories: Int {
         goalEngine.dailyCalorieTarget - eatenCalories
     }
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Full screen gradient
             Theme.backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -133,7 +127,7 @@ struct HomeView: View {
                 ScrollView {
             VStack(spacing: 24) {
                 Color.clear.frame(height: 0).id("top")
-                // Weight update banner
+
                 if showWeightBanner, let banner = goalEngine.weightUpdatedBanner {
                     HStack {
                         Text(banner)
@@ -152,22 +146,16 @@ struct HomeView: View {
                     .themeCard()
                 }
 
-                // Daily goal card
                 if goalEngine.profile != nil {
                     dailyGoalCard
 
-                    // TDEE evening banner
                     if shouldShowTdeeBanner {
                         TDEEWarningBanner(
                             hasWorkout: goalEngine.hasWorkoutToday,
                             currentGoal: goalEngine.dailyCalorieTarget,
                             updatedGoal: goalEngine.updatedEatingGoalIfAccepted,
-                            onAccept: {
-                                applyTDEEUpdate()
-                            },
-                            onDismiss: {
-                                dismissTdeeWarning()
-                            }
+                            onAccept: { applyTDEEUpdate() },
+                            onDismiss: { dismissTdeeWarning() }
                         )
                     }
 
@@ -183,284 +171,18 @@ struct HomeView: View {
                         .themeCard()
                         .transition(.opacity)
                     }
-
                 }
 
-                // Input label
-                Text(L.whatDidYouEat.localized)
-                    .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.textSecondary)
+                mealEntrySection
 
-                // Dual buttons: Mic + Camera
-                HStack(spacing: 24) {
-                    // Mic button
-                    VStack(spacing: 8) {
-                        Button {
-                            handleMicTap()
-                        } label: {
-                            Image(systemName: speechService.isRecording ? "mic.fill" : "mic")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.white)
-                                .frame(width: 80, height: 80)
-                                .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(speechService.isRecording ? Theme.red.opacity(0.4) : Theme.cardBorder.opacity(0.6), lineWidth: 2)
-                                )
-                                .shadow(color: speechService.isRecording ? Theme.red.opacity(0.5) : Theme.accent.opacity(0.25), radius: 12, y: 2)
-                        }
-                        .disabled(isAnalyzing)
-                        .sensoryFeedback(.impact, trigger: speechService.isRecording)
-
-                        Text("voice_record".localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-
-                    // Camera button
-                    VStack(spacing: 8) {
-                        Button {
-                            handleCameraTap()
-                        } label: {
-                            Image(systemName: "camera")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.white)
-                                .frame(width: 80, height: 80)
-                                .background(Theme.cardBackground)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(Theme.cardBorder.opacity(0.6), lineWidth: 2)
-                                )
-                                .shadow(color: Theme.accent.opacity(0.25), radius: 12, y: 2)
-                        }
-                        .disabled(isAnalyzing)
-
-                        Text("photo_record".localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-
-                    // Barcode button
-                    VStack(spacing: 8) {
-                        Button {
-                            showBarcodeScanner = true
-                        } label: {
-                            Image(systemName: "barcode.viewfinder")
-                                .font(.system(size: 36))
-                                .foregroundStyle(.white)
-                                .frame(width: 80, height: 80)
-                                .background(Theme.cardBackground)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(Theme.cardBorder.opacity(0.6), lineWidth: 2)
-                                )
-                                .shadow(color: Theme.accent.opacity(0.25), radius: 12, y: 2)
-                        }
-                        .disabled(isAnalyzing)
-
-                        Text("barcode_record".localized)
-                            .font(Theme.captionFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-
-                // Status label
-                if isAnalyzing {
-                    ProgressView(L.analyzing.localized)
-                } else if showCorrected {
-                    Text("corrected_confirmation".localized)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Theme.blue)
-                } else if showSavedConfirmation {
-                    Text("saved_confirmation".localized)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Theme.green)
-                } else {
-                    Text(speechService.isRecording ? "listening".localized : L.ready.localized)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
-                }
-
-                // Per-item correction prompt (for saved entries)
-                if !correctionQuestion.isEmpty {
-                    HStack(alignment: .top, spacing: 8) {
-                        Text("\u{270F}\u{FE0F}")
-                        Text(correctionQuestion)
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textPrimary)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.accent.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-
-                // Review card — shows parsed meals for review/fix/save
                 if showReviewCard && !reviewMeals.isEmpty {
                     mealReviewCard
                 }
 
-                // Error
-                if let error = errorMessage {
-                    VStack(spacing: 6) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            Text(L.error.localized)
-                                .font(.subheadline.bold())
-                                .foregroundColor(.orange)
-                        }
-                        Text(error.isEmpty
-                             ? L.couldNotProcess.localized
-                             : error)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
+                errorSection
 
-                        Text(L.tapMicRetry.localized)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .opacity(0.7)
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.orange.opacity(0.08))
-                    .cornerRadius(14)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.orange.opacity(0.2), lineWidth: 1)
-                    )
-                    .padding(.horizontal)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+                mealListSection
 
-                // Today's meal list
-                if !todayEntries.isEmpty {
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack {
-                            Text("today_foods".localized)
-                                .font(Theme.headlineFont)
-                                .foregroundStyle(Theme.textPrimary)
-                            Spacer()
-                            Button {
-                                showNutritionCheck = true
-                            } label: {
-                                Image(systemName: "checkmark.circle")
-                                    .font(Theme.bodyFont)
-                                    .foregroundStyle(Theme.accent)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal)
-                        .padding(.top)
-                        .padding(.bottom, 8)
-
-                        ForEach(todayEntries, id: \.id) { entry in
-                            HStack(alignment: .center, spacing: 4) {
-                                FoodEntryRowView(entry: entry)
-
-                                Button {
-                                    startVoiceCorrection(for: entry)
-                                } label: {
-                                    Text("fix_entry".localized)
-                                        .font(.caption)
-                                        .foregroundStyle(Theme.accent)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Theme.accent.opacity(0.15))
-                                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                                }
-                                .buttonStyle(.plain)
-                                Button {
-                                    entryToEdit = entry
-                                } label: {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(Theme.accent)
-                                        .frame(width: 28, height: 28)
-                                }
-                                .buttonStyle(.plain)
-                                Button {
-                                    entryToDelete = entry
-                                    showDeleteAlert = true
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(Theme.red)
-                                        .frame(width: 28, height: 28)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.horizontal)
-                            if entry.id != todayEntries.last?.id {
-                                Divider()
-                                    .overlay(Theme.cardBorder.opacity(0.5))
-                                    .padding(.leading)
-                            }
-                        }
-
-                        // Total row
-                        Divider()
-                            .overlay(Theme.cardBorder)
-                            .padding(.horizontal)
-
-                        HStack {
-                            Text(L.total.localized)
-                                .font(Theme.bodyFont)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Theme.textPrimary)
-                            Spacer()
-                            Text("\(eatenCalories) kcal")
-                                .font(Theme.bodyFont)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Theme.textPrimary)
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 4)
-
-                        HStack(spacing: 6) {
-                            Spacer()
-                            MacroTotalPill("P", value: Int(eatenProtein), color: Theme.blue)
-                            MacroTotalPill("K", value: Int(eatenCarbs), color: Theme.orange)
-                            MacroTotalPill("Y", value: Int(eatenFat), color: Theme.fatColor)
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 8)
-                    }
-                    .themeCard()
-                }
-
-                // Correction picker
-                if let entries = correctionPickerEntries {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("which_entry_correct".localized)
-                            .font(Theme.bodyFont)
-                            .fontWeight(.medium)
-                            .foregroundStyle(Theme.orange)
-                        ForEach(entries, id: \.id) { entry in
-                            Button {
-                                entryToEdit = entry
-                                correctionPickerEntries = nil
-                            } label: {
-                                HStack {
-                                    Text(entry.name)
-                                    Spacer()
-                                    Text("\(entry.calories) kcal")
-                                        .foregroundStyle(Theme.textSecondary)
-                                }
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(Theme.orange.opacity(0.1))
-                    .themeCard()
-                }
-
-                // Daily insight card
                 if goalEngine.profile != nil {
                     DailyInsightCard(
                         hrvStatus: healthKitService.hrvStatus,
@@ -505,51 +227,19 @@ struct HomeView: View {
                 Spacer(minLength: 20)
             }
             .padding()
-        } // ScrollView
+        }
         .onChange(of: scrollToTopTrigger) { _, _ in
             withAnimation {
                 proxy.scrollTo("top", anchor: .top)
             }
         }
-                } // ScrollViewReader
-            } // VStack (sticky header + scroll)
-
-            // Intermediate loading overlay — bridges camera dismiss → PhotoAnalysisView render
-            if showPhotoLoading {
-                ZStack {
-                    Color(hex: "0A0A0F")
-                        .ignoresSafeArea()
-
-                    VStack(spacing: 20) {
-                        if let image = capturedImage {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 120, height: 120)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
-                        }
-
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(1.3)
-
-                        VStack(spacing: 6) {
-                            Text(L.analyzingMeal.localized)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-
-                            Text(L.mayTakeSeconds.localized)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.6))
-                        }
-                    }
                 }
-                .transition(.opacity)
-                .zIndex(100)
             }
-        } // ZStack
+
+            if showPhotoLoading {
+                photoLoadingOverlay
+            }
+        }
         .task {
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {
@@ -619,7 +309,6 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showCamera, onDismiss: {
             if capturedImageData != nil || capturedImage != nil {
-                // Show loading overlay immediately so user never sees a black gap
                 showPhotoLoading = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     showPhotoAnalysis = true
@@ -684,873 +373,11 @@ struct HomeView: View {
         .sheet(isPresented: $showBarcodeScanner) {
             BarcodeResultView()
         }
-
-
-    }
-
-    // MARK: - Meal Review Card
-
-    private var mealReviewCard: some View {
-        return VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text(L.reviewMeals.localized)
-                    .font(Theme.bodyFont)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Button { resetVoiceState() } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(Theme.textTertiary)
-                        .opacity(isListening ? 0.4 : 1.0)
-                }
-                .buttonStyle(.plain)
-                .disabled(isListening)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 8)
-
-            Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
-
-            // Meal list
-            ForEach(Array(reviewMeals.enumerated()), id: \.offset) { index, meal in
-                VStack(spacing: 0) {
-                    HStack(alignment: .top, spacing: 10) {
-                        Text(mealEmoji(for: meal.name))
-                            .font(.title3)
-                            .frame(width: 32)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(meal.name.capitalized)
-                                .font(Theme.bodyFont)
-                                .fontWeight(.medium)
-                                .foregroundStyle(Theme.textPrimary)
-
-                            if !meal.amount.isEmpty {
-                                Text(meal.amount)
-                                    .font(Theme.captionFont)
-                                    .foregroundStyle(Theme.textSecondary)
-                            }
-
-                            HStack(spacing: 6) {
-                                Text("\(Int(meal.calories ?? 0)) kcal")
-                                    .font(Theme.captionFont)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                Text("P:\(Int(meal.protein ?? 0))g")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Theme.blue.opacity(0.8))
-                                Text("K:\(Int(meal.carbs ?? 0))g")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Theme.orange.opacity(0.8))
-                                Text("Y:\(Int(meal.fat ?? 0))g")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Theme.green.opacity(0.8))
-                            }
-                        }
-
-                        Spacer()
-
-                        // Fix button
-                        Button { startFixingReviewMeal(meal) } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "mic.fill")
-                                    .font(.system(size: 10))
-                                Text(L.fixMeal.localized)
-                                    .font(.caption)
-                            }
-                            .foregroundStyle(Theme.accent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Theme.accent.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .opacity(isListening ? 0.4 : 1.0)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isListening)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-
-                    if index < reviewMeals.count - 1 {
-                        Divider().overlay(Theme.cardBorder.opacity(0.2)).padding(.horizontal, 16)
-                    }
-                }
-            }
-
-            // Clarification inside review card
-            if !clarificationQuestion.isEmpty {
-                Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
-                HStack(alignment: .top, spacing: 8) {
-                    Text("\u{1F916}")
-                    Text(clarificationQuestion)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textPrimary)
-                }
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Theme.accent.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-
-                Text(L.tapMicAnswer.localized)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.textTertiary)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 4)
-            }
-
-            // Fix-mode prompt
-            if let fixing = fixingMealName {
-                Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
-                HStack(alignment: .top, spacing: 8) {
-                    Text("\u{270F}\u{FE0F}")
-                    Text(String(format: L.tellAboutFormat.localized, fixing))
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textPrimary)
-                }
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Theme.accent.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-            }
-
-            // Listening indicator
-            if isListening {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(Theme.red)
-                        .frame(width: 8, height: 8)
-                    Text(L.listening.localized)
-                        .font(.caption)
-                        .foregroundStyle(Theme.red)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
-            }
-
-            Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
-
-            // Total + Save
-            VStack(spacing: 8) {
-                HStack {
-                    Text(L.total.localized)
-                        .font(Theme.bodyFont)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Theme.textPrimary)
-                    Spacer()
-                    Text("\(reviewMeals.reduce(0) { $0 + Int($1.calories ?? 0) }) kcal")
-                        .font(Theme.bodyFont)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Theme.accent)
-                }
-
-                Button {
-                    saveEntries(from: reviewMeals)
-                    resetVoiceState()
-                } label: {
-                    Label(L.saveAll.localized, systemImage: "checkmark")
-                        .font(Theme.bodyFont)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(isListening ? Theme.accent.opacity(0.4) : Theme.accent)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .buttonStyle(.plain)
-                .disabled(isListening)
-            }
-            .padding(16)
-        }
-        .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func startVoiceCorrection(for entry: FoodEntry) {
-        resetVoiceState()
-        entryToCorrect = entry
-        correctionQuestion = String(format: "what_to_change".localized, entry.name)
-        errorMessage = nil
-        showSavedConfirmation = false
-        do {
-            try speechService.startListening()
-        } catch {
-            errorMessage = speechService.lastError ?? "mic_error".localized
-        }
-    }
-
-    private func startFixingReviewMeal(_ meal: ParsedMeal) {
-        fixingMealName = meal.name
-        errorMessage = nil
-        do {
-            try speechService.startListening()
-        } catch {
-            errorMessage = speechService.lastError ?? "mic_error".localized
-            fixingMealName = nil
-        }
-    }
-
-    private func resetVoiceState() {
-        clarificationQuestion = ""
-        correctionQuestion = ""
-        entryToCorrect = nil
-        fixingMealName = nil
-        reviewMeals = []
-        showReviewCard = false
-        originalSpeechText = ""
-    }
-
-    // MARK: - Daily Goal Card
-
-    private var dailyGoalCard: some View {
-        let remaining = goalEngine.dailyCalorieTarget - eatenCalories
-        let targetDeficit = Int(goalEngine.cappedDailyDeficit)
-        let actualDeficit = Int(goalEngine.tdee) - eatenCalories
-        let eatingProgress = goalEngine.dailyCalorieTarget > 0
-            ? min(Double(eatenCalories) / Double(goalEngine.dailyCalorieTarget), 1.0) : 0
-        let deficitProgress = targetDeficit > 0
-            ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
-
-        return VStack(spacing: 16) {
-            // Header row: date + activity + buttons
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    let names = goalEngine.todayActivityNames
-                        .compactMap { GoalEngine.activityDisplayNames[$0] }
-                    let emojis = goalEngine.todayActivityNames
-                        .compactMap { activityEmoji(for: $0) }
-                        .joined(separator: " ")
-                    if !names.isEmpty {
-                        HStack(spacing: 4) {
-                            if !emojis.isEmpty {
-                                Text(emojis)
-                            }
-                            Text(names.joined(separator: " · "))
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-                Spacer()
-                HStack(spacing: 14) {
-                    Button { Task { await refreshHealthKit() } } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    Button { showGoalInfo = true } label: {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    Button { showSettings = true } label: {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-            }
-
-            // 2x2 Metric ring grid
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                // Eating Goal ring
-                metricRingCard(
-                    title: "eating_goal".localized,
-                    value: "\(eatenCalories)",
-                    subtitle: "/ \(goalEngine.dailyCalorieTarget) kcal",
-                    progress: eatingProgress,
-                    ringColor: remaining < 0 ? Theme.red : Theme.accent
-                )
-
-                // Deficit ring
-                metricRingCard(
-                    title: "calorie_deficit_label".localized,
-                    value: "\(actualDeficit)",
-                    subtitle: "/ \(targetDeficit) kcal",
-                    progress: deficitProgress,
-                    ringColor: actualDeficit < 0 ? Theme.red : Theme.green
-                )
-
-                // Remaining
-                metricStatCard(
-                    title: "remaining_label".localized,
-                    value: "\(remaining)",
-                    unit: "kcal",
-                    color: remaining < 0 ? Theme.red : Theme.green
-                )
-
-                // TDEE
-                metricStatCard(
-                    title: "TDEE",
-                    value: "\(Int(goalEngine.tdee))",
-                    unit: "kcal",
-                    color: .white
-                )
-            }
-
-            // Macro progress rows
-            VStack(spacing: 8) {
-                macroProgressRow(label: "pro_short".localized, value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
-                macroProgressRow(label: "carb_short".localized, value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
-                macroProgressRow(label: "fat_short".localized, value: eatenFat, target: Double(goalEngine.fatTarget), color: Theme.fatColor)
-            }
-            .padding(.horizontal, 4)
-        }
-        .padding(16)
-        .background(
-            LinearGradient(
-                colors: [
-                    Theme.gradientTop.opacity(0.7),
-                    Color(hex: "0D0D1A").opacity(0.8),
-                    Color(hex: "0A0A0F").opacity(0.6)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.15),
-                            Color.white.opacity(0.03)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
-    }
-
-    private func activityEmoji(for activity: String) -> String? {
-        switch activity {
-        case "weights": return "\u{1F3CB}\u{FE0F}"
-        case "running": return "\u{1F3C3}"
-        case "cycling": return "\u{1F6B4}"
-        case "walking": return "\u{1F6B6}"
-        case "rest": return "\u{1F4A4}"
-        default: return nil
-        }
-    }
-
-    private func metricRingCard(title: String, value: String, subtitle: String, progress: Double, ringColor: Color) -> some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
-
-            ZStack {
-                // Subtle glow behind the ring
-                Circle()
-                    .fill(ringColor.opacity(0.08))
-                    .frame(width: 105, height: 105)
-                    .blur(radius: 8)
-
-                Circle()
-                    .stroke(Theme.trackBackground, lineWidth: 7)
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                VStack(spacing: 0) {
-                    Text(value)
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text(subtitle)
-                        .font(.system(size: 9, weight: .medium, design: .rounded))
-                        .foregroundStyle(Theme.textTertiary)
-                }
-            }
-            .frame(width: 95, height: 95)
-
-            // Bottom gradient accent line
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [ringColor, ringColor.opacity(0)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(height: 2)
-                .cornerRadius(1)
-                .padding(.horizontal, 12)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func metricStatCard(title: String, value: String, unit: String, color: Color) -> some View {
-        VStack(spacing: 4) {
-            Text(title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
-            Text(value)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(color)
-            Text(unit)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(Theme.textTertiary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(Color.white.opacity(0.03))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    private func macroProgressRow(label: String, value: Double, target: Double, color: Color) -> some View {
-        let progress = target > 0 ? min(value / target, 1.0) : 0
-        return HStack(spacing: 6) {
-            Text(String(label.prefix(3)))
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.secondary)
-                .frame(width: 28, alignment: .leading)
-                .lineLimit(1)
-                .fixedSize()
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.08))
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(color)
-                        .frame(width: geo.size.width * progress)
-                        .animation(.easeInOut(duration: 0.6), value: progress)
-                }
-            }
-            .frame(height: 8)
-
-            Text("\(Int(value))g")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 34, alignment: .trailing)
-                .lineLimit(1)
-
-            Text("/\(Int(target))g")
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
-                .frame(width: 36, alignment: .leading)
-                .lineLimit(1)
-        }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    // MARK: - Nutrition Check Sheet
-
-    private func generateNutritionCheckText(entries: [FoodEntry]) -> String {
-        var lines: [String] = []
-        for entry in entries {
-            if !entry.amount.isEmpty {
-                lines.append("\(entry.amount) \(entry.name)")
-            } else {
-                lines.append(entry.name)
-            }
-        }
-        let foodList = lines.joined(separator: ", ")
-        return String(format: "nutrition_check_prompt".localized, foodList)
-    }
-
-    private var nutritionCheckSheet: some View {
-        let text = generateNutritionCheckText(entries: todayEntries)
-        return NavigationStack {
-            ScrollView {
-                Text(text)
-                    .font(Theme.bodyFont)
-                    .foregroundStyle(Theme.textPrimary)
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Theme.background)
-            .navigationTitle("nutrition_check".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(L.close.localized) {
-                        showNutritionCheck = false
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        UIPasteboard.general.string = text
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Goal Info Sheet
-
-    // MARK: - Goal Info Sheet (Modern)
-
-    private var goalInfoSheet: some View {
-        let isEN = groqService.appLanguage == "en"
-        return ZStack {
-            LinearGradient(
-                colors: [Theme.gradientTop, Color(hex: "0A0A0F")],
-                startPoint: .top,
-                endPoint: .center
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // Custom header
-                HStack {
-                    Text(L.goalDetails.localized)
-                        .font(.headline.bold())
-                        .foregroundColor(.white)
-                    Spacer()
-                    Button {
-                        showGoalInfo = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding()
-                .background(Theme.gradientTop.opacity(0.95))
-                .overlay(Divider().opacity(0.2), alignment: .bottom)
-
-                ScrollView {
-                    VStack(spacing: 14) {
-                        tdeeSourceCard
-
-                        if goalEngine.isCalorieClamped || goalEngine.isCapped {
-                            warningsCard
-                        }
-
-                        // Metric grid
-                        HStack(spacing: 12) {
-                            MetricInfoCard(
-                                icon: "flame.fill",
-                                iconColor: Theme.orange,
-                                label: "TDEE",
-                                value: "\(Int(goalEngine.tdee))",
-                                unit: "kcal"
-                            )
-                            MetricInfoCard(
-                                icon: "arrow.down.circle.fill",
-                                iconColor: Theme.accent,
-                                label: L.dailyTarget.localized,
-                                value: "\(goalEngine.dailyCalorieTarget)",
-                                unit: "kcal"
-                            )
-                        }
-
-                        HStack(spacing: 12) {
-                            MetricInfoCard(
-                                icon: "minus.circle.fill",
-                                iconColor: Theme.red,
-                                label: L.deficit.localized,
-                                value: "\(Int(goalEngine.cappedDailyDeficit))",
-                                unit: "kcal"
-                            )
-                            MetricInfoCard(
-                                icon: "scalemass.fill",
-                                iconColor: Theme.green,
-                                label: L.estWeekly.localized,
-                                value: String(format: "%.2f", goalEngine.projectedWeeklyLossKg),
-                                unit: "kg"
-                            )
-                        }
-
-                        healthDataCard
-
-                        formulaBreakdownCard
-                    }
-                    .padding()
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-    }
-
-    // MARK: - TDEE Source helpers
-
-    private var tdeeSourceIcon: String {
-        if goalEngine.isUsingExtrapolatedTDEE { return "iphone" }
-        if goalEngine.usingHealthKit { return "iphone" }
-        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable { return "function" }
-        if goalEngine.healthKitBurn > 0 { return "hourglass" }
-        return "function"
-    }
-
-    private var tdeeSourceColor: Color {
-        if goalEngine.isUsingExtrapolatedTDEE { return Theme.blue }
-        if goalEngine.usingHealthKit { return Theme.green }
-        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable { return Theme.orange }
-        if goalEngine.healthKitBurn > 0 { return Theme.orange }
-        return Theme.textSecondary
-    }
-
-    private var tdeeSourceTitle: String {
-        if goalEngine.isUsingExtrapolatedTDEE {
-            return L.extrapolatedTdee.localized
-        }
-        if goalEngine.usingHealthKit {
-            return "Apple Health"
-        }
-        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
-            return L.earlyMorning.localized
-        }
-        if goalEngine.healthKitBurn > 0 {
-            return L.healthkitInsufficient.localized
-        }
-        return L.calculatedFormula.localized
-    }
-
-    private var tdeeSourceSubtitle: String {
-        if goalEngine.isUsingExtrapolatedTDEE {
-            let pct = Int(healthKitService.dayFraction * 100)
-            return String(format: L.dayExtrapolatedFormat.localized, pct)
-        }
-        if goalEngine.usingHealthKit {
-            return L.realtimeBurn.localized
-        }
-        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
-            return L.waitingData.localized
-        }
-        if goalEngine.healthKitBurn > 0 {
-            return L.bmrEstimate.localized
-        }
-        return "\(Int(goalEngine.tdee)) kcal"
-    }
-
-    private var confidenceColor: Color {
-        let conf = goalEngine.tdeeConfidence.lowercased()
-        if conf.contains("yüksek") || conf.contains("high") { return Theme.green }
-        if conf.contains("orta") || conf.contains("med") { return Theme.orange }
-        return Theme.red
-    }
-
-    // MARK: - Goal Info cards
-
-    private var tdeeSourceCard: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Image(systemName: tdeeSourceIcon)
-                    .foregroundColor(tdeeSourceColor)
-                    .font(.system(size: 18))
-                    .frame(width: 36, height: 36)
-                    .background(tdeeSourceColor.opacity(0.15))
-                    .cornerRadius(10)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(tdeeSourceTitle)
-                        .font(.subheadline.bold())
-                        .foregroundColor(.white)
-                    Text(tdeeSourceSubtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Text(goalEngine.tdeeConfidence)
-                    .font(.caption.bold())
-                    .foregroundColor(confidenceColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(confidenceColor.opacity(0.15))
-                    .cornerRadius(8)
-            }
-        }
-        .padding(14)
-        .background(Theme.cardBackground)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(tdeeSourceColor.opacity(0.3), lineWidth: 1)
-        )
-    }
-
-    private var warningsCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if goalEngine.isCalorieClamped {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    Text("min_healthy_calorie".localized)
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                }
-            }
-            if goalEngine.isCapped {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("goal_too_aggressive".localized)
-                            .font(.caption.bold())
-                            .foregroundColor(.orange)
-                        if let reason = goalEngine.capReason {
-                            Text(reason)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Color.orange.opacity(0.08))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
-        )
-    }
-
-    private var healthDataCard: some View {
-        return VStack(spacing: 10) {
-            HStack {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(.red)
-                    .font(.system(size: 13))
-                    .frame(width: 26, height: 26)
-                    .background(Color.red.opacity(0.15))
-                    .cornerRadius(8)
-                Text(L.healthData.localized)
-                    .font(.subheadline.bold())
-                    .foregroundColor(.white)
-                Spacer()
-            }
-
-            Divider().opacity(0.2)
-
-            if let vo2 = goalEngine.vo2Max {
-                modernInfoRow(
-                    label: "VO2 Max",
-                    value: "\(String(format: "%.1f", vo2)) ml/kg/min",
-                    valueColor: Theme.green
-                )
-                modernInfoRow(
-                    label: L.fitnessLevel.localized,
-                    value: goalEngine.vo2MaxLevel,
-                    valueColor: Theme.blue
-                )
-            } else {
-                modernInfoRow(
-                    label: "VO2 Max",
-                    value: "no_data".localized,
-                    valueColor: Theme.textSecondary
-                )
-            }
-
-            if let w = goalEngine.latestWeightFromHealth {
-                let dateStr = goalEngine.latestWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
-                modernInfoRow(
-                    label: L.weightHealth.localized,
-                    value: "\(String(format: "%.2f", w)) kg \u{2014} \(dateStr)",
-                    valueColor: .white
-                )
-            }
-        }
-        .padding(14)
-        .background(Theme.cardBackground)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
-    }
-
-    private var formulaBreakdownCard: some View {
-        return VStack(spacing: 10) {
-            HStack {
-                Image(systemName: "function")
-                    .foregroundColor(Theme.accent)
-                    .font(.system(size: 13))
-                    .frame(width: 26, height: 26)
-                    .background(Theme.accent.opacity(0.15))
-                    .cornerRadius(8)
-                Text(L.formulaBreakdown.localized)
-                    .font(.subheadline.bold())
-                    .foregroundColor(.white)
-                Spacer()
-            }
-
-            Divider().opacity(0.2)
-
-            modernInfoRow(label: "BMR", value: "\(Int(goalEngine.bmr)) kcal")
-            modernInfoRow(
-                label: L.activityMultiplier.localized,
-                value: String(format: "%.2fx", goalEngine.activityMultiplier)
-            )
-            if goalEngine.vo2Max != nil {
-                modernInfoRow(
-                    label: "VO2 Adj.",
-                    value: String(format: "%+.2f", goalEngine.vo2MaxAdjustment)
-                )
-            }
-
-            Divider().opacity(0.1)
-
-            HStack(spacing: 8) {
-                MacroTargetPill(
-                    label: "P",
-                    value: "\(goalEngine.proteinTarget)g",
-                    color: Color(hex: "5E9FFF")
-                )
-                MacroTargetPill(
-                    label: "K",
-                    value: "\(goalEngine.carbTarget)g",
-                    color: Color(hex: "FF9F43")
-                )
-                MacroTargetPill(
-                    label: "Y",
-                    value: "\(goalEngine.fatTarget)g",
-                    color: Theme.fatColor
-                )
-            }
-        }
-        .padding(14)
-        .background(Theme.cardBackground)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
-    }
-
-    private func modernInfoRow(label: String, value: String, valueColor: Color = .white) -> some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(value)
-                .font(.subheadline.bold())
-                .foregroundColor(valueColor)
-        }
     }
 
     // MARK: - HealthKit
 
-    private func refreshHealthKit() async {
+    func refreshHealthKit() async {
         guard healthKitService.isAvailable else { return }
 
         let extrapolated = await healthKitService.fetchTodayBurnExtrapolated(bmr: goalEngine.bmr, calculatedTDEE: goalEngine.calculatedTDEE)
@@ -1595,7 +422,7 @@ struct HomeView: View {
 
     // MARK: - Snapshots
 
-    private func saveTodaySnapshot() {
+    func saveTodaySnapshot() {
         SnapshotService.saveSnapshot(
             date: .now,
             goalEngine: goalEngine,
@@ -1610,7 +437,7 @@ struct HomeView: View {
         updateWidgetData()
     }
 
-    private func updateWidgetData() {
+    func updateWidgetData() {
         let remaining = goalEngine.dailyCalorieTarget - eatenCalories
         let data = WidgetData(
             consumedCalories: eatenCalories,
@@ -1626,7 +453,7 @@ struct HomeView: View {
         FeedbackService.shared.addLog("Widget updated: \(eatenCalories)kcal eaten, \(remaining)kcal left")
     }
 
-    private func saveYesterdaySnapshot() {
+    func saveYesterdaySnapshot() {
         guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) else { return }
         let startOfYesterday = Calendar.current.startOfDay(for: yesterday)
         let startOfToday = Calendar.current.startOfDay(for: .now)
@@ -1650,17 +477,17 @@ struct HomeView: View {
 
     // MARK: - TDEE Warning
 
-    private var todayKey: String {
+    var todayKey: String {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy-MM-dd"
         return fmt.string(from: Date())
     }
 
-    private var isTdeeWarningDismissedToday: Bool {
+    var isTdeeWarningDismissedToday: Bool {
         UserDefaults.standard.bool(forKey: "tdeeWarningDismissed_\(todayKey)")
     }
 
-    private var shouldShowTdeeBanner: Bool {
+    var shouldShowTdeeBanner: Bool {
         guard goalEngine.isInBannerWindow,
               !tdeeWarningDismissed,
               !isTdeeWarningDismissedToday,
@@ -1672,20 +499,19 @@ struct HomeView: View {
         return goalEngine.tdeeDropWarning
     }
 
-    private func dismissTdeeWarning() {
+    func dismissTdeeWarning() {
         UserDefaults.standard.set(true, forKey: "tdeeWarningDismissed_\(todayKey)")
         tdeeWarningDismissed = true
     }
 
-    private func loadMorningTDEE() {
+    func loadMorningTDEE() {
         if let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext),
            snapshot.morningTDEE > 0 {
             goalEngine.todayMorningTDEE = snapshot.morningTDEE
         }
     }
 
-    private func applyTDEEUpdate() {
-        // Update today's snapshot with new target
+    func applyTDEEUpdate() {
         if let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext) {
             snapshot.dailyCalorieTarget = goalEngine.updatedEatingGoalIfAccepted
         }
@@ -1700,306 +526,13 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Actions
+    // MARK: - Water
 
-    private func handleCameraTap() {
-        print("📷 [Camera] Button tapped, setting showCamera=true")
-        #if targetEnvironment(simulator)
-        errorMessage = "camera_simulator_error".localized
-        #else
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
-        switch status {
-        case .authorized:
-            showCamera = true
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                DispatchQueue.main.async {
-                    if granted {
-                        showCamera = true
-                    } else {
-                        showCameraPermissionDenied = true
-                    }
-                }
-            }
-        case .denied, .restricted:
-            showCameraPermissionDenied = true
-        @unknown default:
-            showCameraPermissionDenied = true
-        }
-        #endif
-    }
-
-    private func handleMicTap() {
-        if speechService.isRecording {
-            speechService.stopListening()
-        } else {
-            guard permissionGranted else { return }
-            errorMessage = nil
-            showSavedConfirmation = false
-            // Preserve state if in clarification, correction, or fix mode
-            let preserveState = !clarificationQuestion.isEmpty
-                || !correctionQuestion.isEmpty
-                || fixingMealName != nil
-            if !preserveState {
-                resetVoiceState()
-            }
-            do {
-                try speechService.startListening()
-                FeedbackService.shared.addLog("Voice recording started")
-                FeedbackService.shared.lastAction = "Meal entry"
-            } catch {
-                errorMessage = speechService.lastError ?? "mic_error".localized
-                print("❌ [HomeView] Mic start error: \(error)")
-            }
-        }
-    }
-
-    private func sendToGroq() {
-        let newText = speechService.transcript
-
-        // Fix mode for review meals (not yet saved)
-        if let mealName = fixingMealName,
-           let mealIndex = reviewMeals.firstIndex(where: { $0.name == mealName }) {
-            let meal = reviewMeals[mealIndex]
-            let lang = groqService.appLanguage
-            let fixTranscript: String
-            if lang == "en" {
-                fixTranscript = """
-                Current meal: \(meal.name), \(meal.amount), \(Int(meal.calories ?? 0)) kcal, \
-                P:\(Int(meal.protein ?? 0))g C:\(Int(meal.carbs ?? 0))g F:\(Int(meal.fat ?? 0))g. \
-                User correction: "\(newText)". \
-                Update values based on what user said. Verify consistency: \
-                protein×4 + carbs×4 + fat×9 ≈ calories (adjust carbs if needed). \
-                Return updated meal in meals array. clarification_needed: false.
-                """
-            } else {
-                fixTranscript = """
-                Mevcut yemek: \(meal.name), \(meal.amount), \(Int(meal.calories ?? 0)) kcal, \
-                P:\(Int(meal.protein ?? 0))g K:\(Int(meal.carbs ?? 0))g Y:\(Int(meal.fat ?? 0))g. \
-                Kullanıcı düzeltmesi: "\(newText)". \
-                Söylenene göre değerleri güncelle. Tutarlılık kontrolü: \
-                protein×4 + karb×4 + yağ×9 ≈ kalori (gerekirse karbı ayarla). \
-                Güncel yemeği meals dizisinde döndür. clarification_needed: false.
-                """
-            }
-
-            isAnalyzing = true
-            errorMessage = nil
-
-            Task {
-                do {
-                    let response = try await groqService.parseMeals(transcript: fixTranscript, personalContext: profiles.first?.fullAIContext ?? "")
-                    if let updatedMeal = response.meals.first {
-                        reviewMeals[mealIndex] = updatedMeal
-                    }
-                } catch {
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? "mic_error".localized
-                }
-                fixingMealName = nil
-                isAnalyzing = false
-            }
-            return
-        }
-
-        // Per-item correction mode for saved entries
-        if let entry = entryToCorrect {
-            let lang = groqService.appLanguage
-            let correctionTranscript: String
-            if lang == "en" {
-                correctionTranscript = """
-                Previously saved: \(entry.name), \(entry.amount), \(entry.calories) kcal, \
-                P:\(Int(entry.protein))g C:\(Int(entry.carbs))g F:\(Int(entry.fat))g. \
-                User wants to change: "\(newText)". \
-                Update only the changed fields. Set isCorrection: true, targetFoodName: "\(entry.name)".
-                """
-            } else {
-                correctionTranscript = """
-                Daha önce kaydedilen: \(entry.name), \(entry.amount), \(entry.calories) kcal, \
-                P:\(Int(entry.protein))g K:\(Int(entry.carbs))g Y:\(Int(entry.fat))g. \
-                Kullanıcı düzeltmek istiyor: "\(newText)". \
-                Sadece değişen alanları güncelle. isCorrection: true, targetFoodName: "\(entry.name)" yap.
-                """
-            }
-
-            isAnalyzing = true
-            errorMessage = nil
-            correctionQuestion = ""
-
-            Task {
-                do {
-                    let response = try await groqService.parseMeals(transcript: correctionTranscript, personalContext: profiles.first?.fullAIContext ?? "")
-                    applyCorrection(to: entry, from: response)
-                    entryToCorrect = nil
-                } catch {
-                    errorMessage = (error as? LocalizedError)?.errorDescription ?? "mic_error".localized
-                    entryToCorrect = nil
-                }
-                isAnalyzing = false
-            }
-            return
-        }
-
-        // If clarifying, combine original + answer
-        let transcript: String
-        if !clarificationQuestion.isEmpty && !originalSpeechText.isEmpty {
-            transcript = originalSpeechText + ". " + newText
-            clarificationQuestion = ""
-        } else {
-            originalSpeechText = newText
-            transcript = newText
-        }
-
-        isAnalyzing = true
-        errorMessage = nil
-
-        Task {
-            do {
-                let response = try await groqService.parseMeals(transcript: transcript, personalContext: profiles.first?.fullAIContext ?? "")
-
-                // Handle water if detected and water tracking is enabled
-                if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
-                    addWater(ml: waterMl, source: "voice")
-                }
-
-                print("🏠 [HomeView] entering meal result handler")
-                print("🏠 [HomeView] clarification_needed: \(response.clarification_needed)")
-                print("🏠 [HomeView] clarification_question: \(response.clarification_question ?? "nil")")
-                print("🏠 [HomeView] isCorrection: \(response.isCorrection ?? false)")
-                print("🏠 [HomeView] meals count: \(response.meals.count)")
-                print("🏠 [HomeView] showReviewCard before: \(showReviewCard)")
-                print("🏠 [HomeView] reviewMeals count before: \(reviewMeals.count)")
-
-                if response.isCorrection == true {
-                    print("🏠 [HomeView] → branch: correction")
-                    handleCorrection(response)
-                } else if response.clarification_needed {
-                    print("🏠 [HomeView] → branch: clarification (NOT saving)")
-                    // Store meals and show review card with clarification inside it
-                    reviewMeals = response.meals
-                    clarificationQuestion = response.clarification_question ?? ""
-                    showReviewCard = true
-                    FeedbackService.shared.addLog("Clarification needed: \(clarificationQuestion)")
-                    print("🏠 [HomeView] reviewMeals count after: \(reviewMeals.count)")
-                } else if !response.meals.isEmpty {
-                    print("🏠 [HomeView] → branch: confirmation card")
-                    reviewMeals = response.meals
-                    showReviewCard = true
-                } else if response.waterMl != nil {
-                    showSavedConfirmation = true
-                    Task {
-                        try? await Task.sleep(for: .seconds(2))
-                        showSavedConfirmation = false
-                    }
-                }
-            } catch {
-                print("❌ [HomeView] Groq error: \(error)")
-                FeedbackService.shared.addErrorLog(error.localizedDescription)
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? "Bir hata olu\u{015F}tu, tekrar deneyin"
-                // Reset meal-entry state so UI is interactive again
-                clarificationQuestion = ""
-                reviewMeals = []
-                showReviewCard = false
-                originalSpeechText = ""
-                // Auto-clear error after 4 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-                    errorMessage = nil
-                }
-            }
-            isAnalyzing = false
-        }
-    }
-
-    private func handleCorrection(_ response: MealParseResponse) {
-        guard let targetName = response.targetFoodName else {
-            errorMessage = "D\u{00FC}zeltilecek yemek belirlenemedi"
-            return
-        }
-
-        let matches = todayEntries.filter {
-            $0.name.localizedCaseInsensitiveContains(targetName)
-        }
-
-        if matches.count == 1, let entry = matches.first {
-            applyCorrection(to: entry, from: response)
-        } else if matches.count > 1 {
-            correctionPickerEntries = matches
-        } else {
-            // No match found — show picker with all entries
-            correctionPickerEntries = todayEntries
-        }
-    }
-
-    private func applyCorrection(to entry: FoodEntry, from response: MealParseResponse) {
-        // Safety fallback: if amount changed but macros missing, scale proportionally
-        if let newAmount = response.correctedAmount,
-           response.correctedCalories == nil {
-            let ratio = parseAmountRatio(old: entry.amount, new: newAmount)
-            if let ratio, ratio > 0, ratio != 1.0 {
-                entry.calories = Int(Double(entry.calories) * ratio)
-                entry.protein = entry.protein * ratio
-                entry.carbs = entry.carbs * ratio
-                entry.fat = entry.fat * ratio
-                entry.amount = newAmount
-            } else {
-                entry.amount = newAmount
-            }
-        } else {
-            if let cal = response.correctedCalories { entry.calories = cal }
-            if let pro = response.correctedProtein { entry.protein = pro }
-            if let carb = response.correctedCarbs { entry.carbs = carb }
-            if let fat = response.correctedFat { entry.fat = fat }
-            if let amount = response.correctedAmount { entry.amount = amount }
-        }
-        try? modelContext.save()
-        saveTodaySnapshot()
-
-        showCorrected = true
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            showCorrected = false
-        }
-    }
-
-    private func parseAmountRatio(old: String, new: String) -> Double? {
-        func extractNumber(_ s: String) -> Double? {
-            let digits = s.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-            return Double(digits)
-        }
-        guard let oldNum = extractNumber(old), oldNum > 0,
-              let newNum = extractNumber(new) else {
-            return nil
-        }
-        return newNum / oldNum
-    }
-
-    private func addWater(ml: Int, source: String) {
+    func addWater(ml: Int, source: String) {
         let entry = WaterEntry(amountMl: ml, source: source)
         modelContext.insert(entry)
         try? modelContext.save()
         saveTodaySnapshot()
-    }
-
-    private func saveEntries(from meals: [ParsedMeal]) {
-        for meal in meals {
-            let entry = FoodEntry(
-                name: meal.name,
-                amount: meal.amount,
-                calories: Int(meal.calories ?? 0),
-                protein: meal.protein ?? 0,
-                carbs: meal.carbs ?? 0,
-                fat: meal.fat ?? 0
-            )
-            modelContext.insert(entry)
-            FeedbackService.shared.addLog("Meal saved: \(meal.name) - \(Int(meal.calories ?? 0))kcal")
-        }
-        let totalCal = meals.reduce(0) { $0 + Int($1.calories ?? 0) }
-        FeedbackService.shared.addLog("Meal confirmed: \(meals.count) items, \(totalCal)kcal total")
-        saveTodaySnapshot()
-        showSavedConfirmation = true
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            showSavedConfirmation = false
-        }
     }
 }
 
@@ -2007,69 +540,4 @@ struct HomeView: View {
     HomeView()
         .environment(GoalEngine())
         .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self], inMemory: true)
-}
-
-// MARK: - Goal Info Sheet Components
-
-struct MetricInfoCard: View {
-    let icon: String
-    let iconColor: Color
-    let label: String
-    let value: String
-    let unit: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(iconColor)
-                    .font(.system(size: 13))
-                    .frame(width: 26, height: 26)
-                    .background(iconColor.opacity(0.15))
-                    .cornerRadius(8)
-                Text(label)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(value)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-                Text(unit)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
-    }
-}
-
-struct MacroTargetPill: View {
-    let label: String
-    let value: String
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Text(label)
-                .font(.caption2.bold())
-                .foregroundColor(color)
-            Text(value)
-                .font(.caption.bold())
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .frame(maxWidth: .infinity)
-        .background(color.opacity(0.12))
-        .cornerRadius(8)
-    }
 }
