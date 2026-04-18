@@ -31,10 +31,10 @@ struct FeedbackSheet: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(appLanguage == "en" ? "Send Feedback" : "Geri Bildirim")
+                        Text(L.sendFeedback.localized)
                             .font(.headline.bold())
                             .foregroundColor(.white)
-                        Text(appLanguage == "en" ? "Describe what happened" : "Ne olduğunu anlat")
+                        Text(L.describeWhatHappened.localized)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -59,7 +59,7 @@ struct FeedbackSheet: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 60))
                                     .foregroundColor(.green)
-                                Text(appLanguage == "en" ? "Feedback sent!" : "Gönderildi!")
+                                Text(L.feedbackSent.localized)
                                     .font(.title2.bold())
                                     .foregroundColor(.white)
                                 Text(appLanguage == "en"
@@ -93,7 +93,7 @@ struct FeedbackSheet: View {
                                     .toolbar {
                                         ToolbarItemGroup(placement: .keyboard) {
                                             Spacer()
-                                            Button(appLanguage == "en" ? "Done" : "Tamam") {
+                                            Button(L.done.localized) {
                                                 UIApplication.shared.sendAction(
                                                     #selector(UIResponder.resignFirstResponder),
                                                     to: nil, from: nil, for: nil
@@ -115,7 +115,7 @@ struct FeedbackSheet: View {
                                     Image(systemName: "info.circle.fill")
                                         .foregroundColor(themeManager.current.accent)
                                         .font(.caption)
-                                    Text(appLanguage == "en" ? "Automatically included" : "Otomatik eklenenler")
+                                    Text(L.autoIncluded.localized)
                                         .font(.caption.bold())
                                         .foregroundColor(.secondary)
                                 }
@@ -134,7 +134,7 @@ struct FeedbackSheet: View {
                                     )
                                     InfoRow(
                                         icon: "rectangle.3.group",
-                                        text: "\(appLanguage == "en" ? "Current tab" : "Mevcut sekme"): \(FeedbackService.shared.currentTab)"
+                                        text: "\(L.currentTab.localized): \(FeedbackService.shared.currentTab)"
                                     )
                                     InfoRow(
                                         icon: "clock",
@@ -184,8 +184,8 @@ struct FeedbackSheet: View {
                                         Image(systemName: "paperplane.fill")
                                     }
                                     Text(isSending
-                                        ? (appLanguage == "en" ? "Sending..." : "Gönderiliyor...")
-                                        : (appLanguage == "en" ? "Send Feedback" : "Gönder"))
+                                        ? L.sendingFeedback.localized
+                                        : L.sendFeedback.localized)
                                 }
                                 .font(.subheadline.bold())
                                 .foregroundColor(.white)

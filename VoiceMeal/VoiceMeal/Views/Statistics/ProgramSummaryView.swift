@@ -83,7 +83,7 @@ struct ProgramSummaryView: View {
                     Text("\(programCompletionPercent)%")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
-                    Text(isEN ? "done" : "tamam")
+                    Text(L.doneLower.localized)
                         .font(.system(size: 9))
                         .foregroundStyle(Theme.textTertiary)
                 }
@@ -348,7 +348,7 @@ struct ProgramSummaryView: View {
                 Image(systemName: "calendar.badge.clock")
                     .foregroundStyle(Theme.accent)
                     .font(.system(size: 14))
-                Text(isEN ? "Highlights" : "Öne Çıkanlar")
+                Text(L.highlights.localized)
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
                 Spacer()

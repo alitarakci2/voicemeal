@@ -84,7 +84,7 @@ struct StatisticsView: View {
             VStack(spacing: 0) {
                 // Sticky header
                 HStack {
-                    Text(isEN ? "Statistics" : "İstatistik")
+                    Text(L.statistics.localized)
                         .font(.headline.bold())
                         .foregroundStyle(.white)
                     Spacer()
@@ -222,8 +222,7 @@ struct StatisticsView: View {
     // MARK: - Custom Segmented Picker
 
     private var customSegmentedPicker: some View {
-        let labelsEN = ["Weekly", "Monthly", "Program"]
-        let labelsTR = ["Haftalık", "Aylık", "Program"]
+        let labels = [L.weekly.localized, L.monthly.localized, L.program.localized]
         return HStack(spacing: 0) {
             ForEach(0..<3, id: \.self) { i in
                 Button {
@@ -231,7 +230,7 @@ struct StatisticsView: View {
                         selectedRange = i
                     }
                 } label: {
-                    Text(isEN ? labelsEN[i] : labelsTR[i])
+                    Text(labels[i])
                         .font(.subheadline.weight(selectedRange == i ? .semibold : .regular))
                         .foregroundStyle(selectedRange == i ? Color.white : Theme.textSecondary)
                         .frame(maxWidth: .infinity)
@@ -300,11 +299,11 @@ struct StatisticsView: View {
                 MetricSummaryCard(
                     icon: "flame.fill",
                     iconColor: Theme.orange,
-                    title: isEN ? "Streak" : "Seri",
+                    title: L.streak.localized,
                     value: "\(statisticsService.currentStreak)",
-                    subtitle: isEN ? "days" : "gün",
+                    subtitle: L.daysLabelShort.localized,
                     detail: statisticsService.bestStreak > 0
-                        ? (isEN ? "Best: \(statisticsService.bestStreak)" : "En iyi: \(statisticsService.bestStreak)")
+                        ? String(format: L.bestFormat.localized, statisticsService.bestStreak)
                         : ""
                 )
 
@@ -312,7 +311,7 @@ struct StatisticsView: View {
                 MetricSummaryCard(
                     icon: trendIcon,
                     iconColor: trendColor,
-                    title: isEN ? "Trend" : "Trend",
+                    title: L.trend.localized,
                     value: avgDef != 0 ? "\(abs(avgDef))" : "—",
                     subtitle: "kcal",
                     detail: statisticsService.trend.localized + " " + trendEmoji
@@ -330,7 +329,7 @@ struct StatisticsView: View {
                 Image(systemName: "scalemass.fill")
                     .foregroundStyle(Theme.accent)
                     .font(.system(size: 14))
-                Text(isEN ? "Weight Estimate" : "Tahmini Kilo")
+                Text(L.weightEstimate.localized)
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
                 Spacer()
@@ -400,7 +399,7 @@ struct StatisticsView: View {
                 Image(systemName: "brain.head.profile")
                     .foregroundStyle(Theme.accent)
                     .font(.system(size: 14))
-                Text(isEN ? "Weekly Insight" : "Haftalık İçgörü")
+                Text(L.weeklyInsight.localized)
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
                 Spacer()

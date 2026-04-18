@@ -40,13 +40,12 @@ struct ProteinTrackingCard: View {
                     .frame(width: 30, height: 30)
                     .background(Color(hex: "5E9FFF").opacity(0.15))
                     .cornerRadius(8)
-                Text(appLanguage == "en"
-                     ? "Protein Goal" : "Protein Hedefi")
+                Text(L.proteinGoalTitle.localized)
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
                 Spacer()
                 Text("\(Int(proteinTarget))g " +
-                     (appLanguage == "en" ? "target" : "hedef"))
+                     L.targetLabel.localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -58,8 +57,7 @@ struct ProteinTrackingCard: View {
                     Text("\(daysOnTarget)")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(Color(hex: "5E9FFF"))
-                    Text(appLanguage == "en"
-                         ? "days on target" : "gün hedefte")
+                    Text(L.daysOnTarget.localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -74,8 +72,7 @@ struct ProteinTrackingCard: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(
                             avgProtein >= proteinTarget ? .green : .orange)
-                    Text(appLanguage == "en"
-                         ? "daily avg" : "günlük ort.")
+                    Text(L.dailyAvg.localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -90,8 +87,7 @@ struct ProteinTrackingCard: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(
                             onTargetPct >= 70 ? .green : .orange)
-                    Text(appLanguage == "en"
-                         ? "hit rate" : "başarı oranı")
+                    Text(L.hitRate.localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -101,8 +97,7 @@ struct ProteinTrackingCard: View {
 
             // Per-day breakdown
             Divider().opacity(0.2)
-            Text(appLanguage == "en"
-                 ? "Daily Breakdown" : "Günlük Detay")
+            Text(L.dailyBreakdown.localized)
                 .font(.caption.bold())
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
@@ -164,7 +159,7 @@ struct ProteinTrackingCard: View {
 
     func shortDayLabel(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = appLanguage == "en" ? "EEE" : "EEE"
+        formatter.dateFormat = "EEE"
         formatter.locale = Locale(identifier:
                                     appLanguage == "en" ? "en_US" : "tr_TR")
         return formatter.string(from: date)

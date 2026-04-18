@@ -68,16 +68,14 @@ struct MealInsightsCard: View {
                         themeManager.current.accent.opacity(0.15))
                     .cornerRadius(8)
 
-                Text(appLanguage == "en"
-                     ? "Meal Insights"
-                     : "Yemek Analizi")
+                Text(L.mealInsights.localized)
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
 
                 Spacer()
 
                 Text("\(entries.count) " +
-                     (appLanguage == "en" ? "entries" : "kayıt"))
+                     L.entriesLabel.localized)
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -88,8 +86,7 @@ struct MealInsightsCard: View {
             HStack(spacing: 0) {
                 QuickStatCell(
                     value: String(format: "%.1f", avgMealsPerDay),
-                    label: appLanguage == "en"
-                        ? "meals/day" : "öğün/gün",
+                    label: L.mealsPerDayStat.localized,
                     color: themeManager.current.accent
                 )
 
@@ -99,8 +96,7 @@ struct MealInsightsCard: View {
 
                 QuickStatCell(
                     value: "\(avgCaloriesPerMeal)",
-                    label: appLanguage == "en"
-                        ? "kcal/meal" : "kcal/öğün",
+                    label: L.kcalPerMeal.localized,
                     color: .orange
                 )
 
@@ -110,8 +106,7 @@ struct MealInsightsCard: View {
 
                 QuickStatCell(
                     value: "\(topFoods.first?.count ?? 0)",
-                    label: appLanguage == "en"
-                        ? "most eaten" : "en sık",
+                    label: L.mostEatenCount.localized,
                     color: .green
                 )
             }
@@ -120,8 +115,7 @@ struct MealInsightsCard: View {
                 Divider().opacity(0.2)
 
                 // Top foods
-                Text(appLanguage == "en"
-                     ? "Most Eaten" : "En Çok Yenenler")
+                Text(L.mostEatenTitle.localized)
                     .font(.caption.bold())
                     .foregroundColor(.secondary)
                     .textCase(.uppercase)
@@ -139,7 +133,7 @@ struct MealInsightsCard: View {
                                 .foregroundColor(.white)
                                 .lineLimit(1)
                             Text("\(food.avgCalories) kcal " +
-                                 (appLanguage == "en" ? "avg" : "ort."))
+                                 L.avgShort.localized)
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }

@@ -44,8 +44,7 @@ struct BestDayCard: View {
                     .frame(width: 30, height: 30)
                     .background(Color.yellow.opacity(0.15))
                     .cornerRadius(8)
-                Text(appLanguage == "en"
-                     ? "Best of the Period" : "En İyi Günler")
+                Text(L.bestOfPeriod.localized)
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
                 Spacer()
@@ -57,8 +56,7 @@ struct BestDayCard: View {
             if let best = bestDay {
                 HighlightRow(
                     emoji: "🔥",
-                    title: appLanguage == "en"
-                        ? "Best Deficit Day" : "En Yüksek Açık",
+                    title: L.bestDeficitDay.localized,
                     value: "\(Int(best.deficit)) kcal",
                     subtitle: formatDate(best.date),
                     valueColor: .orange
@@ -69,13 +67,9 @@ struct BestDayCard: View {
             if mostConsistentStreak > 1 {
                 HighlightRow(
                     emoji: "⚡",
-                    title: appLanguage == "en"
-                        ? "Longest Streak" : "En Uzun Seri",
-                    value: "\(mostConsistentStreak) " +
-                        (appLanguage == "en" ? "days" : "gün"),
-                    subtitle: appLanguage == "en"
-                        ? "consecutive days logged"
-                        : "ardışık gün kayıt",
+                    title: L.longestStreak.localized,
+                    value: "\(mostConsistentStreak) " + L.daysShort.localized,
+                    subtitle: L.consecutiveDaysLogged.localized,
                     valueColor: themeManager.current.accent
                 )
             }
@@ -84,8 +78,7 @@ struct BestDayCard: View {
             if let protDay = highestProteinDay {
                 HighlightRow(
                     emoji: "💪",
-                    title: appLanguage == "en"
-                        ? "Best Protein Day" : "En İyi Protein Günü",
+                    title: L.bestProteinDay.localized,
                     value: "\(Int(protDay.protein))g",
                     subtitle: formatDate(protDay.date),
                     valueColor: Color(hex: "5E9FFF")

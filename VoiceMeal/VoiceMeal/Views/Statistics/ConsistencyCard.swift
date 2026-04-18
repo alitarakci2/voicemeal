@@ -74,7 +74,7 @@ struct ConsistencyCard: View {
                     .foregroundColor(consistencyColor.opacity(0.7))
                 Spacer()
                 Text("\(daysWithData)/\(totalDays) " +
-                     (appLanguage == "en" ? "days logged" : "gün kayıt"))
+                     L.daysLogged.localized)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

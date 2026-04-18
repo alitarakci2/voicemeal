@@ -74,7 +74,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 // Sticky header with Save button
                 HStack {
-                    Text(isEN ? "Settings" : "Ayarlar")
+                    Text(L.settings.localized)
                         .font(.headline.bold())
                         .foregroundStyle(.white)
                     Spacer()
@@ -293,8 +293,8 @@ struct SettingsView: View {
 
     private var genderPicker: some View {
         HStack(spacing: 0) {
-            genderButton(value: "male", label: isEN ? "Male" : "Erkek", icon: "person.fill")
-            genderButton(value: "female", label: isEN ? "Female" : "Kadın", icon: "person.fill")
+            genderButton(value: "male", label: L.male.localized, icon: "person.fill")
+            genderButton(value: "female", label: L.female.localized, icon: "person.fill")
         }
         .padding(3)
         .background(Color.white.opacity(0.06))
@@ -371,60 +371,60 @@ struct SettingsView: View {
     private var foodProfileSection: some View {
         settingsCard {
             VStack(alignment: .leading, spacing: 12) {
-                sectionHeader(isEN ? "Food Profile" : "Yemek Profili", icon: "fork.knife", iconColor: Theme.orange)
+                sectionHeader(L.foodProfile.localized, icon: "fork.knife", iconColor: Theme.orange)
 
                 foodHabitRow(
-                    label: isEN ? "Cooking" : "Yemek Yeri",
+                    label: L.cookingLabel.localized,
                     emoji: cookingLocation.emoji,
-                    value: cookingLocation.label(isEN ? "en" : "tr"),
+                    value: cookingLocation.label(groqService.appLanguage),
                     options: CookingLocation.allCases,
                     selected: $cookingLocation,
-                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    labelFn: { $0.label(groqService.appLanguage) },
                     emojiFn: { $0.emoji }
                 )
                 foodHabitRow(
-                    label: isEN ? "Portion" : "Porsiyon",
+                    label: L.portionLabel.localized,
                     emoji: portionSize.emoji,
-                    value: portionSize.label(isEN ? "en" : "tr"),
+                    value: portionSize.label(groqService.appLanguage),
                     options: PortionSize.allCases,
                     selected: $portionSize,
-                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    labelFn: { $0.label(groqService.appLanguage) },
                     emojiFn: { $0.emoji }
                 )
                 foodHabitRow(
-                    label: isEN ? "Oil Usage" : "Yağ",
+                    label: L.oilUsage.localized,
                     emoji: oilUsage.emoji,
-                    value: oilUsage.label(isEN ? "en" : "tr"),
+                    value: oilUsage.label(groqService.appLanguage),
                     options: OilUsage.allCases,
                     selected: $oilUsage,
-                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    labelFn: { $0.label(groqService.appLanguage) },
                     emojiFn: { $0.emoji }
                 )
                 foodHabitRow(
-                    label: isEN ? "Protein" : "Protein",
+                    label: L.protein.localized,
                     emoji: proteinSource.emoji,
-                    value: proteinSource.label(isEN ? "en" : "tr"),
+                    value: proteinSource.label(groqService.appLanguage),
                     options: ProteinSource.allCases,
                     selected: $proteinSource,
-                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    labelFn: { $0.label(groqService.appLanguage) },
                     emojiFn: { $0.emoji }
                 )
                 foodHabitRow(
-                    label: isEN ? "Cuisine" : "Mutfak",
+                    label: L.cuisineLabel.localized,
                     emoji: cuisinePreference.emoji,
-                    value: cuisinePreference.label(isEN ? "en" : "tr"),
+                    value: cuisinePreference.label(groqService.appLanguage),
                     options: CuisinePreference.allCases,
                     selected: $cuisinePreference,
-                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    labelFn: { $0.label(groqService.appLanguage) },
                     emojiFn: { $0.emoji }
                 )
                 foodHabitRow(
-                    label: isEN ? "Meals/Day" : "Öğün",
+                    label: L.mealsPerDay.localized,
                     emoji: mealFrequency.emoji,
-                    value: mealFrequency.label(isEN ? "en" : "tr"),
+                    value: mealFrequency.label(groqService.appLanguage),
                     options: MealFrequency.allCases,
                     selected: $mealFrequency,
-                    labelFn: { $0.label(isEN ? "en" : "tr") },
+                    labelFn: { $0.label(groqService.appLanguage) },
                     emojiFn: { $0.emoji }
                 )
             }
@@ -497,7 +497,7 @@ struct SettingsView: View {
                     .toolbar {
                         ToolbarItemGroup(placement: .keyboard) {
                             Spacer()
-                            Button(isEN ? "Done" : "Tamam") {
+                            Button(L.done.localized) {
                                 UIApplication.shared.sendAction(
                                     #selector(UIResponder.resignFirstResponder),
                                     to: nil, from: nil, for: nil)
@@ -562,7 +562,7 @@ struct SettingsView: View {
                         Image(systemName: "drop.fill")
                             .foregroundStyle(Theme.blue)
                             .font(.system(size: 14))
-                        Text(isEN ? "Water Tracking" : "Su Takibi")
+                        Text(L.waterTracking.localized)
                             .font(.subheadline)
                             .foregroundStyle(.white)
                     }

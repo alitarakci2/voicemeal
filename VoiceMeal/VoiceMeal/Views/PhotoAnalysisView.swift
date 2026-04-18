@@ -78,11 +78,11 @@ struct PhotoAnalysisView: View {
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(1.3)
 
-                                Text(isEN ? "Analyzing..." : "Analiz ediliyor...")
+                                Text(L.analyzing.localized)
                                     .font(.subheadline)
                                     .foregroundColor(.white)
 
-                                Text(isEN ? "This may take 5-15 seconds" : "5-15 saniye sürebilir")
+                                Text(L.mayTake515.localized)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }

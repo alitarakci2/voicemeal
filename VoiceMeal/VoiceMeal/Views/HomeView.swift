@@ -88,7 +88,7 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 // STICKY HEADER BAR
                 HStack {
-                    Text(groqService.appLanguage == "en" ? "Record" : "Kayıt")
+                    Text(L.record.localized)
                         .font(.headline.bold())
                         .foregroundStyle(.white)
 
@@ -306,23 +306,22 @@ struct HomeView: View {
 
                 // Error
                 if let error = errorMessage {
-                    let isEN = groqService.appLanguage == "en"
                     VStack(spacing: 6) {
                         HStack(spacing: 6) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.orange)
-                            Text(isEN ? "Error" : "Hata")
+                            Text(L.error.localized)
                                 .font(.subheadline.bold())
                                 .foregroundColor(.orange)
                         }
                         Text(error.isEmpty
-                             ? (isEN ? "Could not process. Try again." : "Yanıt işlenemedi. Tekrar deneyin.")
+                             ? L.couldNotProcess.localized
                              : error)
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
 
-                        Text(isEN ? "Tap mic to try again" : "Tekrar denemek için mikrofona bas")
+                        Text(L.tapMicRetry.localized)
                             .font(.caption2)
                             .foregroundColor(.secondary)
                             .opacity(0.7)
@@ -536,12 +535,12 @@ struct HomeView: View {
                             .scaleEffect(1.3)
 
                         VStack(spacing: 6) {
-                            Text(groqService.appLanguage == "en" ? "Analyzing your meal..." : "Yemeğin analiz ediliyor...")
+                            Text(L.analyzingMeal.localized)
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.white)
 
-                            Text(groqService.appLanguage == "en" ? "This may take a few seconds" : "Birkaç saniye sürebilir")
+                            Text(L.mayTakeSeconds.localized)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.6))
                         }
@@ -692,11 +691,10 @@ struct HomeView: View {
     // MARK: - Meal Review Card
 
     private var mealReviewCard: some View {
-        let isEN = groqService.appLanguage == "en"
         return VStack(spacing: 0) {
             // Header
             HStack {
-                Text(isEN ? "Review your meals" : "Yemekleri kontrol et")
+                Text(L.reviewMeals.localized)
                     .font(Theme.bodyFont)
                     .fontWeight(.bold)
                     .foregroundStyle(Theme.textPrimary)
@@ -760,7 +758,7 @@ struct HomeView: View {
                             HStack(spacing: 3) {
                                 Image(systemName: "mic.fill")
                                     .font(.system(size: 10))
-                                Text(isEN ? "Fix" : "Düzelt")
+                                Text(L.fixMeal.localized)
                                     .font(.caption)
                             }
                             .foregroundStyle(Theme.accent)
@@ -798,7 +796,7 @@ struct HomeView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
 
-                Text(isEN ? "Tap mic to answer" : "Cevaplamak i\u{00E7}in mikrofona bas")
+                Text(L.tapMicAnswer.localized)
                     .font(.caption2)
                     .foregroundStyle(Theme.textTertiary)
                     .padding(.horizontal, 16)
@@ -810,9 +808,7 @@ struct HomeView: View {
                 Divider().overlay(Theme.cardBorder.opacity(0.3)).padding(.horizontal)
                 HStack(alignment: .top, spacing: 8) {
                     Text("\u{270F}\u{FE0F}")
-                    Text(isEN
-                        ? "Tell me about \(fixing) — amount, brand, or correct values"
-                        : "\(fixing) hakk\u{0131}nda s\u{00F6}yle — miktar, marka veya de\u{011F}erleri d\u{00FC}zelt")
+                    Text(String(format: L.tellAboutFormat.localized, fixing))
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textPrimary)
                 }
@@ -830,7 +826,7 @@ struct HomeView: View {
                     Circle()
                         .fill(Theme.red)
                         .frame(width: 8, height: 8)
-                    Text(isEN ? "Listening..." : "Dinliyorum...")
+                    Text(L.listening.localized)
                         .font(.caption)
                         .foregroundStyle(Theme.red)
                 }
@@ -843,7 +839,7 @@ struct HomeView: View {
             // Total + Save
             VStack(spacing: 8) {
                 HStack {
-                    Text(isEN ? "Total" : "Toplam")
+                    Text(L.total.localized)
                         .font(Theme.bodyFont)
                         .fontWeight(.bold)
                         .foregroundStyle(Theme.textPrimary)
@@ -858,7 +854,7 @@ struct HomeView: View {
                     saveEntries(from: reviewMeals)
                     resetVoiceState()
                 } label: {
-                    Label(isEN ? "Save All" : "Kaydet", systemImage: "checkmark")
+                    Label(L.saveAll.localized, systemImage: "checkmark")
                         .font(Theme.bodyFont)
                         .fontWeight(.bold)
                         .foregroundStyle(.white)
@@ -1219,7 +1215,7 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 // Custom header
                 HStack {
-                    Text(isEN ? "Goal Details" : "Hedef Detayları")
+                    Text(L.goalDetails.localized)
                         .font(.headline.bold())
                         .foregroundColor(.white)
                     Spacer()
@@ -1256,7 +1252,7 @@ struct HomeView: View {
                             MetricInfoCard(
                                 icon: "arrow.down.circle.fill",
                                 iconColor: Theme.accent,
-                                label: isEN ? "Daily Target" : "Günlük Hedef",
+                                label: L.dailyTarget.localized,
                                 value: "\(goalEngine.dailyCalorieTarget)",
                                 unit: "kcal"
                             )
@@ -1266,14 +1262,14 @@ struct HomeView: View {
                             MetricInfoCard(
                                 icon: "minus.circle.fill",
                                 iconColor: Theme.red,
-                                label: isEN ? "Deficit" : "Açık",
+                                label: L.deficit.localized,
                                 value: "\(Int(goalEngine.cappedDailyDeficit))",
                                 unit: "kcal"
                             )
                             MetricInfoCard(
                                 icon: "scalemass.fill",
                                 iconColor: Theme.green,
-                                label: isEN ? "Est. Weekly" : "Tahmini/Hafta",
+                                label: L.estWeekly.localized,
                                 value: String(format: "%.2f", goalEngine.projectedWeeklyLossKg),
                                 unit: "kg"
                             )
@@ -1310,36 +1306,34 @@ struct HomeView: View {
     }
 
     private var tdeeSourceTitle: String {
-        let isEN = groqService.appLanguage == "en"
         if goalEngine.isUsingExtrapolatedTDEE {
-            return isEN ? "Extrapolated TDEE" : "Tahmini TDEE"
+            return L.extrapolatedTdee.localized
         }
         if goalEngine.usingHealthKit {
             return "Apple Health"
         }
         if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
-            return isEN ? "Early Morning" : "Sabah Erken"
+            return L.earlyMorning.localized
         }
         if goalEngine.healthKitBurn > 0 {
-            return isEN ? "HealthKit Insufficient" : "HealthKit Yetersiz"
+            return L.healthkitInsufficient.localized
         }
-        return isEN ? "Calculated Formula" : "Hesaplanan Formül"
+        return L.calculatedFormula.localized
     }
 
     private var tdeeSourceSubtitle: String {
-        let isEN = groqService.appLanguage == "en"
         if goalEngine.isUsingExtrapolatedTDEE {
             let pct = Int(healthKitService.dayFraction * 100)
-            return isEN ? "\(pct)% of day extrapolated" : "Günün %\(pct)'i tahmin"
+            return String(format: L.dayExtrapolatedFormat.localized, pct)
         }
         if goalEngine.usingHealthKit {
-            return isEN ? "Real-time burn data" : "Gerçek yanma verisi"
+            return L.realtimeBurn.localized
         }
         if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable {
-            return isEN ? "Waiting for more data" : "Daha fazla veri bekliyor"
+            return L.waitingData.localized
         }
         if goalEngine.healthKitBurn > 0 {
-            return isEN ? "Using BMR estimate" : "BMR tahmini"
+            return L.bmrEstimate.localized
         }
         return "\(Int(goalEngine.tdee)) kcal"
     }
@@ -1431,7 +1425,6 @@ struct HomeView: View {
     }
 
     private var healthDataCard: some View {
-        let isEN = groqService.appLanguage == "en"
         return VStack(spacing: 10) {
             HStack {
                 Image(systemName: "heart.fill")
@@ -1440,7 +1433,7 @@ struct HomeView: View {
                     .frame(width: 26, height: 26)
                     .background(Color.red.opacity(0.15))
                     .cornerRadius(8)
-                Text(isEN ? "Health Data" : "Sağlık Verisi")
+                Text(L.healthData.localized)
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
                 Spacer()
@@ -1455,7 +1448,7 @@ struct HomeView: View {
                     valueColor: Theme.green
                 )
                 modernInfoRow(
-                    label: isEN ? "Fitness Level" : "Fitness",
+                    label: L.fitnessLevel.localized,
                     value: goalEngine.vo2MaxLevel,
                     valueColor: Theme.blue
                 )
@@ -1470,7 +1463,7 @@ struct HomeView: View {
             if let w = goalEngine.latestWeightFromHealth {
                 let dateStr = goalEngine.latestWeightDate?.formatted(.dateTime.day().month(.abbreviated)) ?? ""
                 modernInfoRow(
-                    label: isEN ? "Weight (Health)" : "Kilo (Health)",
+                    label: L.weightHealth.localized,
                     value: "\(String(format: "%.2f", w)) kg \u{2014} \(dateStr)",
                     valueColor: .white
                 )
@@ -1486,7 +1479,6 @@ struct HomeView: View {
     }
 
     private var formulaBreakdownCard: some View {
-        let isEN = groqService.appLanguage == "en"
         return VStack(spacing: 10) {
             HStack {
                 Image(systemName: "function")
@@ -1495,7 +1487,7 @@ struct HomeView: View {
                     .frame(width: 26, height: 26)
                     .background(Theme.accent.opacity(0.15))
                     .cornerRadius(8)
-                Text(isEN ? "Formula Breakdown" : "Formül Detayı")
+                Text(L.formulaBreakdown.localized)
                     .font(.subheadline.bold())
                     .foregroundColor(.white)
                 Spacer()
@@ -1505,7 +1497,7 @@ struct HomeView: View {
 
             modernInfoRow(label: "BMR", value: "\(Int(goalEngine.bmr)) kcal")
             modernInfoRow(
-                label: isEN ? "Activity Multiplier" : "Aktivite Çarpanı",
+                label: L.activityMultiplier.localized,
                 value: String(format: "%.2fx", goalEngine.activityMultiplier)
             )
             if goalEngine.vo2Max != nil {

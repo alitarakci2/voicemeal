@@ -526,3 +526,88 @@
 "fix_entry" = "Düzelt";
 "what_to_change" = "%@ için ne değiştirmek istiyorsun?";
 "entry_updated" = "Güncellendi";
+
+// Sprint 2 — i18n migration
+// HomeView
+"record" = "Kayıt";
+"could_not_process" = "Yanıt işlenemedi. Tekrar deneyin.";
+"tap_mic_retry" = "Tekrar denemek için mikrofona bas";
+"analyzing_meal" = "Yemeğin analiz ediliyor...";
+"may_take_seconds" = "Birkaç saniye sürebilir";
+"review_meals" = "Yemekleri kontrol et";
+"fix_meal" = "Düzelt";
+"tap_mic_answer" = "Cevaplamak için mikrofona bas";
+"tell_about_format" = "%@ hakkında söyle — miktar, marka veya değerleri düzelt";
+"listening" = "Dinliyorum...";
+"save_all" = "Kaydet";
+"goal_details" = "Hedef Detayları";
+"est_weekly" = "Tahmini/Hafta";
+"extrapolated_tdee" = "Tahmini TDEE";
+"early_morning" = "Sabah Erken";
+"healthkit_insufficient" = "HealthKit Yetersiz";
+"calculated_formula" = "Hesaplanan Formül";
+"day_extrapolated_format" = "Günün %%%d'i tahmin";
+"realtime_burn" = "Gerçek yanma verisi";
+"waiting_data" = "Daha fazla veri bekliyor";
+"bmr_estimate" = "BMR tahmini";
+"health_data" = "Sağlık Verisi";
+"fitness_level" = "Fitness";
+"weight_health" = "Kilo (Health)";
+"formula_breakdown" = "Formül Detayı";
+"activity_multiplier" = "Aktivite Çarpanı";
+
+// SettingsView
+"food_profile" = "Yemek Profili";
+"cooking_label" = "Yemek Yeri";
+"portion_label" = "Porsiyon";
+"oil_usage" = "Yağ";
+"cuisine_label" = "Mutfak";
+"meals_per_day" = "Öğün";
+
+// FeedbackSheet
+"send_feedback" = "Geri Bildirim";
+"describe_what_happened" = "Ne olduğunu anlat";
+"feedback_sent" = "Gönderildi!";
+"auto_included" = "Otomatik eklenenler";
+"current_tab" = "Mevcut sekme";
+"sending" = "Gönderiliyor...";
+
+// StatisticsView
+"days_label_short" = "gün";
+"best_format" = "En iyi: %d";
+"weekly_insight" = "Haftalık İçgörü";
+
+// Statistics Cards
+"days_logged" = "gün kayıt";
+"entries_label" = "kayıt";
+"avg_short" = "ort.";
+"target_label" = "hedef";
+"highlights" = "Öne Çıkanlar";
+
+// PhotoAnalysisView
+"may_take_5_15" = "5-15 saniye sürebilir";
+
+// BestDayCard
+"best_of_period" = "En İyi Günler";
+"best_deficit_day" = "En Yüksek Açık";
+"longest_streak" = "En Uzun Seri";
+"days_short" = "gün";
+"consecutive_days_logged" = "ardışık gün kayıt";
+"best_protein_day" = "En İyi Protein Günü";
+
+// MealInsightsCard
+"meal_insights" = "Yemek Analizi";
+"meals_per_day_stat" = "öğün/gün";
+"kcal_per_meal" = "kcal/öğün";
+"most_eaten_count" = "en sık";
+"most_eaten_title" = "En Çok Yenenler";
+
+// ProteinTrackingCard
+"protein_goal_title" = "Protein Hedefi";
+"days_on_target" = "gün hedefte";
+"daily_avg" = "günlük ort.";
+"hit_rate" = "başarı oranı";
+"daily_breakdown" = "Günlük Detay";
+
+// ProgramSummaryView
+"done_lower" = "tamam";

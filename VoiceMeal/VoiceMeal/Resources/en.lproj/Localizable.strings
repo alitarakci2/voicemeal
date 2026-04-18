@@ -528,3 +528,88 @@
 "worst_day_deviation" = "Worst Day Deviation";
 "worst_day_short" = "Worst Day";
 "worst_day_surplus" = "Worst Surplus Day";
+
+// Sprint 2 — i18n migration
+// HomeView
+"record" = "Record";
+"could_not_process" = "Could not process. Try again.";
+"tap_mic_retry" = "Tap mic to try again";
+"analyzing_meal" = "Analyzing your meal...";
+"may_take_seconds" = "This may take a few seconds";
+"review_meals" = "Review your meals";
+"fix_meal" = "Fix";
+"tap_mic_answer" = "Tap mic to answer";
+"tell_about_format" = "Tell me about %@ — amount, brand, or correct values";
+"listening" = "Listening...";
+"save_all" = "Save All";
+"goal_details" = "Goal Details";
+"est_weekly" = "Est. Weekly";
+"extrapolated_tdee" = "Extrapolated TDEE";
+"early_morning" = "Early Morning";
+"healthkit_insufficient" = "HealthKit Insufficient";
+"calculated_formula" = "Calculated Formula";
+"day_extrapolated_format" = "%d%% of day extrapolated";
+"realtime_burn" = "Real-time burn data";
+"waiting_data" = "Waiting for more data";
+"bmr_estimate" = "Using BMR estimate";
+"health_data" = "Health Data";
+"fitness_level" = "Fitness Level";
+"weight_health" = "Weight (Health)";
+"formula_breakdown" = "Formula Breakdown";
+"activity_multiplier" = "Activity Multiplier";
+
+// SettingsView
+"food_profile" = "Food Profile";
+"cooking_label" = "Cooking";
+"portion_label" = "Portion";
+"oil_usage" = "Oil Usage";
+"cuisine_label" = "Cuisine";
+"meals_per_day" = "Meals/Day";
+
+// FeedbackSheet
+"send_feedback" = "Send Feedback";
+"describe_what_happened" = "Describe what happened";
+"feedback_sent" = "Feedback sent!";
+"auto_included" = "Automatically included";
+"current_tab" = "Current tab";
+"sending" = "Sending...";
+
+// StatisticsView
+"days_label_short" = "days";
+"best_format" = "Best: %d";
+"weekly_insight" = "Weekly Insight";
+
+// Statistics Cards
+"days_logged" = "days logged";
+"entries_label" = "entries";
+"avg_short" = "avg";
+"target_label" = "target";
+"highlights" = "Highlights";
+
+// PhotoAnalysisView
+"may_take_5_15" = "This may take 5-15 seconds";
+
+// BestDayCard
+"best_of_period" = "Best of the Period";
+"best_deficit_day" = "Best Deficit Day";
+"longest_streak" = "Longest Streak";
+"days_short" = "days";
+"consecutive_days_logged" = "consecutive days logged";
+"best_protein_day" = "Best Protein Day";
+
+// MealInsightsCard
+"meal_insights" = "Meal Insights";
+"meals_per_day_stat" = "meals/day";
+"kcal_per_meal" = "kcal/meal";
+"most_eaten_count" = "most eaten";
+"most_eaten_title" = "Most Eaten";
+
+// ProteinTrackingCard
+"protein_goal_title" = "Protein Goal";
+"days_on_target" = "days on target";
+"daily_avg" = "daily avg";
+"hit_rate" = "hit rate";
+"daily_breakdown" = "Daily Breakdown";
+
+// ProgramSummaryView
+"done_lower" = "done";

@@ -255,6 +255,90 @@ enum L {
     // BarcodeResultView
     static let quantity = "quantity"
     static let confirmQuantity = "confirm_quantity"
+
+    // Sprint 2 — HomeView
+    static let record = "record"
+    static let couldNotProcess = "could_not_process"
+    static let tapMicRetry = "tap_mic_retry"
+    static let analyzingMeal = "analyzing_meal"
+    static let mayTakeSeconds = "may_take_seconds"
+    static let reviewMeals = "review_meals"
+    static let fixMeal = "fix_meal"
+    static let tapMicAnswer = "tap_mic_answer"
+    static let tellAboutFormat = "tell_about_format"
+    static let listening = "listening"
+    static let saveAll = "save_all"
+    static let goalDetails = "goal_details"
+    static let estWeekly = "est_weekly"
+    static let extrapolatedTdee = "extrapolated_tdee"
+    static let earlyMorning = "early_morning"
+    static let healthkitInsufficient = "healthkit_insufficient"
+    static let calculatedFormula = "calculated_formula"
+    static let dayExtrapolatedFormat = "day_extrapolated_format"
+    static let realtimeBurn = "realtime_burn"
+    static let waitingData = "waiting_data"
+    static let bmrEstimate = "bmr_estimate"
+    static let healthData = "health_data"
+    static let fitnessLevel = "fitness_level"
+    static let weightHealth = "weight_health"
+    static let formulaBreakdown = "formula_breakdown"
+    static let activityMultiplier = "activity_multiplier"
+
+    // Sprint 2 — SettingsView
+    static let foodProfile = "food_profile"
+    static let cookingLabel = "cooking_label"
+    static let portionLabel = "portion_label"
+    static let oilUsage = "oil_usage"
+    static let cuisineLabel = "cuisine_label"
+    static let mealsPerDay = "meals_per_day"
+
+    // Sprint 2 — FeedbackSheet
+    static let sendFeedback = "send_feedback"
+    static let describeWhatHappened = "describe_what_happened"
+    static let feedbackSent = "feedback_sent"
+    static let autoIncluded = "auto_included"
+    static let currentTab = "current_tab"
+    static let sendingFeedback = "sending"
+
+    // Sprint 2 — StatisticsView
+    static let daysLabelShort = "days_label_short"
+    static let bestFormat = "best_format"
+    static let weeklyInsight = "weekly_insight"
+
+    // Sprint 2 — Statistics Cards
+    static let daysLogged = "days_logged"
+    static let entriesLabel = "entries_label"
+    static let avgShort = "avg_short"
+    static let targetLabel = "target_label"
+    static let highlights = "highlights"
+
+    // Sprint 2 — PhotoAnalysisView
+    static let mayTake515 = "may_take_5_15"
+
+    // Sprint 2 — BestDayCard
+    static let bestOfPeriod = "best_of_period"
+    static let bestDeficitDay = "best_deficit_day"
+    static let longestStreak = "longest_streak"
+    static let daysShort = "days_short"
+    static let consecutiveDaysLogged = "consecutive_days_logged"
+    static let bestProteinDay = "best_protein_day"
+
+    // Sprint 2 — MealInsightsCard
+    static let mealInsights = "meal_insights"
+    static let mealsPerDayStat = "meals_per_day_stat"
+    static let kcalPerMeal = "kcal_per_meal"
+    static let mostEatenCount = "most_eaten_count"
+    static let mostEatenTitle = "most_eaten_title"
+
+    // Sprint 2 — ProteinTrackingCard
+    static let proteinGoalTitle = "protein_goal_title"
+    static let daysOnTarget = "days_on_target"
+    static let dailyAvg = "daily_avg"
+    static let hitRate = "hit_rate"
+    static let dailyBreakdown = "daily_breakdown"
+
+    // Sprint 2 — ProgramSummaryView
+    static let doneLower = "done_lower"
 }
 // swiftlint:enable type_name
 
