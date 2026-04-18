@@ -56,11 +56,21 @@ class GroqService {
         return Locale.current.language.languageCode?.identifier ?? "tr"
     }
 
-    private var languageInstruction: String {
-        if appLanguage == "en" {
-            return "\n\nIMPORTANT: Respond in English. The user's app language is English."
+    private func languageInstruction(for code: String) -> String {
+        switch code {
+        case "tr":
+            return "KRİTİK KURAL: YALNIZCA Türkçe yanıt ver. Başka hiçbir dil kullanma."
+        case "en":
+            return "CRITICAL RULE: Respond in English ONLY. Do not use any other language."
+        case "es":
+            return "REGLA CRÍTICA: Responde SOLO en español."
+        case "de":
+            return "KRITISCHE REGEL: Antworte NUR auf Deutsch."
+        case "fr":
+            return "RÈGLE CRITIQUE: Réponds UNIQUEMENT en français."
+        default:
+            return "CRITICAL RULE: Respond in English ONLY."
         }
-        return "\n\nIMPORTANT: Respond in Turkish (Türkçe). The user's app language is Turkish."
     }
 
     func coachPersonalityPrompt(for coachStyle: CoachStyle) -> String {
@@ -397,10 +407,10 @@ class GroqService {
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": systemPrompt(personalContext: personalContext) + languageInstruction],
+                ["role": "system", "content": languageInstruction(for: appLanguage) + "\n\n" + systemPrompt(personalContext: personalContext)],
                 ["role": "user", "content": transcript]
             ],
-            "temperature": 0.1
+            "temperature": 0.3
         ]
 
         var request = URLRequest(url: endpoint)
@@ -519,7 +529,7 @@ class GroqService {
             evaluate this positively
             - Never show TDEE as the eating target
             Write maximum 3-4 complete sentences. Never cut off mid-sentence. Always end with a complete sentence.
-            Never make lists, write plain text. Respond ONLY in English.
+            Never make lists, write plain text.
             """
         } else {
             return """
@@ -543,7 +553,7 @@ class GroqService {
             bunu olumlu değerlendir
             - Asla TDEE'yi yeme hedefi olarak gösterme
             Maksimum 3-4 tam cümle yaz. Asla cümleyi yarıda kesme. Her zaman tam cümleyle bitir.
-            Asla liste yapma, düz metin yaz. SADECE Türkçe yanıt ver.
+            Asla liste yapma, düz metin yaz.
             """
         }
     }
@@ -730,7 +740,7 @@ class GroqService {
             appLanguage: lang
         )
 
-        var systemPrompt = insightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + insightSystemPrompt(personalContext: personalContext) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }
@@ -741,7 +751,7 @@ class GroqService {
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": userPrompt]
             ],
-            "temperature": 0.7,
+            "temperature": 0.5,
             "max_tokens": 350
         ]
 
@@ -797,8 +807,7 @@ class GroqService {
             Include: highlight the best/worst days and why, compare to previous week if data exists, \
             identify patterns (e.g. weekends vs weekdays), and give ONE actionable tip for next week. \
             Use scientific but conversational language. \
-            You may use emojis. Never make lists, write plain text. \
-            Respond ONLY in English. Do not use Turkish words.
+            You may use emojis. Never make lists, write plain text.
             """
         } else {
             return """
@@ -810,8 +819,7 @@ class GroqService {
             Şunları dahil et: en iyi/en kötü günleri ve nedenlerini belirt, önceki haftayla karşılaştır (veri varsa), \
             kalıpları belirle (hafta içi vs hafta sonu), ve gelecek hafta için BİR somut ipucu ver. \
             Bilimsel ama sohbet dili kullan. \
-            Emoji kullanabilirsin. Asla liste yapma, düz metin yaz. \
-            SADECE Türkçe yanıt ver.
+            Emoji kullanabilirsin. Asla liste yapma, düz metin yaz.
             """
         }
     }
@@ -931,7 +939,7 @@ class GroqService {
         )
         guard quality.shouldShowInsight else { return "" }
 
-        var systemPrompt = weeklyInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + weeklyInsightSystemPrompt(personalContext: personalContext) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }
@@ -942,7 +950,7 @@ class GroqService {
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": userPrompt]
             ],
-            "temperature": 0.7,
+            "temperature": 0.5,
             "max_tokens": 400
         ]
 
@@ -996,8 +1004,7 @@ class GroqService {
             a 2-3 sentence assessment in English. \
             Be motivating but realistic. \
             Add an important suggestion if applicable. \
-            You may use emojis. Write plain text, no lists. \
-            Respond ONLY in English. Do not use Turkish words.
+            You may use emojis. Write plain text, no lists.
             """
         } else {
             return """
@@ -1008,8 +1015,7 @@ class GroqService {
             2-3 cümlelik Türkçe bir değerlendirme yap. \
             Motive edici ama gerçekçi ol. \
             Varsa önemli bir öneri ekle. \
-            Emoji kullanabilirsin. Düz metin yaz, liste yapma. \
-            SADECE Türkçe yanıt ver.
+            Emoji kullanabilirsin. Düz metin yaz, liste yapma.
             """
         }
     }
@@ -1095,7 +1101,7 @@ class GroqService {
                 """
         }
 
-        var systemPrompt = programInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + programInsightSystemPrompt(personalContext: personalContext) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }
@@ -1106,7 +1112,7 @@ class GroqService {
                 ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": userPrompt]
             ],
-            "temperature": 0.7,
+            "temperature": 0.5,
             "max_tokens": 350
         ]
 
@@ -1228,7 +1234,7 @@ class GroqService {
                         ],
                         [
                             "type": "text",
-                            "text": photoAnalysisPrompt + languageInstruction
+                            "text": languageInstruction(for: appLanguage) + "\n\n" + photoAnalysisPrompt
                         ]
                     ]
                 ]
@@ -1313,7 +1319,7 @@ class GroqService {
 
             Return updated JSON with this information.
             Set clarification_needed: false since the user clarified.
-            \(languageInstruction)
+            \(languageInstruction(for: appLanguage))
             """
 
         let body: [String: Any] = [
