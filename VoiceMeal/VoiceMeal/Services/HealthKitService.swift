@@ -103,6 +103,7 @@ class HealthKitService {
             HKQuantityType(.heartRateVariabilitySDNN),
             HKCharacteristicType(.biologicalSex),
             HKCharacteristicType(.dateOfBirth),
+            HKObjectType.workoutType(),
         ]
         if HKQuantityType.quantityType(forIdentifier: .leanBodyMass) != nil {
             types.insert(HKQuantityType(.leanBodyMass))
