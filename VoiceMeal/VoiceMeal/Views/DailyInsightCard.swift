@@ -144,7 +144,12 @@ struct DailyInsightCard: View {
                 let threeHoursAgo = Date().addingTimeInterval(-3 * 3600)
                 let needsRefresh = generatedAt == nil || generatedAt! < threeHoursAgo
 
-                if timeOfDayChanged || needsRefresh {
+                let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext)
+                let storedTarget = snapshot?.insightGeneratedWithTarget ?? 0
+                let targetDrift = storedTarget > 0 ? abs(dailyCalorieTarget - storedTarget) : 0
+                let targetChanged = targetDrift > 100
+
+                if timeOfDayChanged || needsRefresh || targetChanged {
                     lastTimeOfDay = currentTOD
                     isAutoRefreshing = true
                     await generateInsight(force: true)
@@ -210,6 +215,7 @@ struct DailyInsightCard: View {
             if let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext) {
                 snapshot.dailyInsight = text
                 snapshot.insightGeneratedAt = .now
+                snapshot.insightGeneratedWithTarget = dailyCalorieTarget
                 if let s = sleep {
                     snapshot.sleepMinutes = s.totalMinutes
                     snapshot.deepSleepMinutes = s.deepSleepMinutes
