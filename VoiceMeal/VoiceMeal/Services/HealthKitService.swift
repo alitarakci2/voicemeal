@@ -230,8 +230,12 @@ class HealthKitService {
         // Last night = yesterday 18:00 to today 12:00
         let calendar = Calendar.current
         let now = Date()
-        let todayNoon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now)!
-        let yesterdayEvening = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: calendar.date(byAdding: .day, value: -1, to: now)!)!
+        guard let todayNoon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now),
+              let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+              let yesterdayEvening = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: yesterday) else {
+            FeedbackService.shared.addLog("Warning: date calculation returned nil")
+            return nil
+        }
         let predicate = HKQuery.predicateForSamples(withStart: yesterdayEvening, end: todayNoon, options: .strictStartDate)
 
         let samples: [HKCategorySample] = await withCheckedContinuation { continuation in
@@ -305,7 +309,10 @@ class HealthKitService {
 
         let type = HKQuantityType(.heartRateVariabilitySDNN)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: .now)!
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: .now) else {
+            FeedbackService.shared.addLog("Warning: date calculation returned nil")
+            return nil
+        }
         let predicate = HKQuery.predicateForSamples(withStart: yesterday, end: .now, options: .strictStartDate)
 
         let result: Double? = await withCheckedContinuation { continuation in
@@ -329,7 +336,10 @@ class HealthKitService {
 
         let type = HKQuantityType(.heartRateVariabilitySDNN)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now)!
+        guard let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now) else {
+            FeedbackService.shared.addLog("Warning: date calculation returned nil")
+            return nil
+        }
         let predicate = HKQuery.predicateForSamples(withStart: sevenDaysAgo, end: .now, options: .strictStartDate)
 
         let values: [Double] = await withCheckedContinuation { continuation in

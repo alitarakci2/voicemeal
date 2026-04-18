@@ -499,3 +499,32 @@
 "fix_entry" = "Fix";
 "what_to_change" = "What to change about %@?";
 "entry_updated" = "Updated";
+
+// Program Summary & Statistics
+"adherence_rate" = "Adherence Rate";
+"assessment_failed" = "Assessment could not be loaded";
+"assessment_loading" = "Assessment loading...";
+"avg_daily_calories" = "Avg Daily Calories";
+"best_day_deficit" = "Best Deficit Day";
+"best_day_deviation" = "Best Day Deviation";
+"best_day_surplus" = "Best Surplus Day";
+"best_streak_days" = "Best Streak";
+"change_maintenance" = "Maintenance";
+"current_streak_days" = "Current Streak";
+"day_progress_format" = "Day %d of %d";
+"estimated_change_gaining" = "Est. gaining";
+"estimated_change_losing" = "Est. losing";
+"health_source" = "Health Source";
+"macro_averages" = "Macro Averages";
+"percent_completed" = "% Completed";
+"program_coach" = "Program Coach";
+"program_summary_min_days" = "Log at least 7 days to see your program summary";
+"real_weight_detail" = "Actual weight from Health";
+"start_label_format" = "Started %@";
+"total_deficit_label" = "Total Deficit";
+"total_surplus" = "Total Surplus";
+"workout_days" = "Workout Days";
+"worst_day_deficit" = "Worst Deficit Day";
+"worst_day_deviation" = "Worst Day Deviation";
+"worst_day_short" = "Worst Day";
+"worst_day_surplus" = "Worst Surplus Day";

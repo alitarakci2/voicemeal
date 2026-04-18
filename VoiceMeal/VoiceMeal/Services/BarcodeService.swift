@@ -55,7 +55,7 @@ final class BarcodeService {
             name: name,
             brands: brands,
             quantity: quantity,
-            caloriesPer100g: calories != nil ? Int(calories!) : nil,
+            caloriesPer100g: calories.map { Int($0) },
             proteinPer100g: protein,
             carbsPer100g: carbs,
             fatPer100g: fat,

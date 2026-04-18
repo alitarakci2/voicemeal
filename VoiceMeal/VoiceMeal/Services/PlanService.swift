@@ -97,7 +97,11 @@ class PlanService {
             )
             plans.append(plan)
 
-            current = calendar.date(byAdding: .day, value: 1, to: current)!
+            guard let next = calendar.date(byAdding: .day, value: 1, to: current) else {
+                FeedbackService.shared.addLog("Warning: date calculation returned nil")
+                break
+            }
+            current = next
         }
 
         return plans

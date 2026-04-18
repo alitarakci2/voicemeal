@@ -183,7 +183,11 @@ class StatisticsService {
                 snapshotTargetDeficit: snapshot?.targetDeficit ?? 0
             ))
 
-            current = calendar.date(byAdding: .day, value: 1, to: current)!
+            guard let next = calendar.date(byAdding: .day, value: 1, to: current) else {
+                FeedbackService.shared.addLog("Warning: date calculation returned nil")
+                break
+            }
+            current = next
         }
 
         return stats
@@ -358,7 +362,7 @@ class StatisticsService {
         let calendar = Self.localCalendar
         let startDate = calendar.startOfDay(for: profile.createdAt)
         let today = calendar.startOfDay(for: .now)
-        let totalDays = max(1, calendar.dateComponents([.day], from: startDate, to: today).day! + 1)
+        let totalDays = max(1, (calendar.dateComponents([.day], from: startDate, to: today).day ?? 0) + 1)
 
         // Determine start weight from earliest snapshot or profile
         let earliestSnapshot = snapshots

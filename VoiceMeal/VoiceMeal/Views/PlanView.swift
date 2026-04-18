@@ -60,13 +60,15 @@ struct PlanView: View {
 
     private var previousDays: [DayPlan] {
         let calendar = Calendar.current
-        let cutoff = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -1, to: Date())!)
+        guard let date = calendar.date(byAdding: .day, value: -1, to: Date()) else { return [] }
+        let cutoff = calendar.startOfDay(for: date)
         return dayPlans.filter { $0.date < cutoff }.sorted { $0.date > $1.date }
     }
 
     private var upcomingDays: [DayPlan] {
         let calendar = Calendar.current
-        let cutoff = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 2, to: todayID)!)
+        guard let date = calendar.date(byAdding: .day, value: 2, to: todayID) else { return [] }
+        let cutoff = calendar.startOfDay(for: date)
         return dayPlans.filter { $0.date >= cutoff }.sorted { $0.date < $1.date }
     }
 
@@ -82,10 +84,10 @@ struct PlanView: View {
     private var thisWeekDays: [DayPlan] {
         var calendar = Calendar.current
         calendar.firstWeekday = 2 // Monday
-        let mondayStart = calendar.date(
+        guard let mondayStart = calendar.date(
             from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
-        )!
-        let sundayEnd = calendar.date(byAdding: .day, value: 6, to: mondayStart)!
+        ),
+        let sundayEnd = calendar.date(byAdding: .day, value: 6, to: mondayStart) else { return [] }
         return dayPlans.filter { $0.date >= mondayStart && $0.date <= sundayEnd }
     }
 

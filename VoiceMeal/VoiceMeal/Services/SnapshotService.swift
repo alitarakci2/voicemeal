@@ -60,7 +60,10 @@ struct SnapshotService {
 
     static func fetchSnapshot(for date: Date, modelContext: ModelContext) -> DailySnapshot? {
         let startOfDay = Calendar.current.startOfDay(for: date)
-        let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+        guard let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+            FeedbackService.shared.addLog("Warning: date calculation returned nil")
+            return nil
+        }
 
         let descriptor = FetchDescriptor<DailySnapshot>(
             predicate: #Predicate<DailySnapshot> { snapshot in
