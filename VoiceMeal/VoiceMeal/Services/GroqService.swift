@@ -724,10 +724,21 @@ class GroqService {
                 """
         }
 
+        let quality = DataQualityService.dailyQuality(
+            consumed: consumed,
+            target: dailyCalorieTarget,
+            appLanguage: lang
+        )
+
+        var systemPrompt = insightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        if !quality.warningNote.isEmpty {
+            systemPrompt = quality.warningNote + "\n\n" + systemPrompt
+        }
+
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": insightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
+                ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -914,10 +925,21 @@ class GroqService {
                 """
         }
 
+        let quality = DataQualityService.weeklyQuality(
+            stats: stats,
+            appLanguage: lang
+        )
+        guard quality.shouldShowInsight else { return "" }
+
+        var systemPrompt = weeklyInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        if !quality.warningNote.isEmpty {
+            systemPrompt = quality.warningNote + "\n\n" + systemPrompt
+        }
+
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": weeklyInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
+                ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
@@ -997,6 +1019,18 @@ class GroqService {
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
 
         let lang = appLanguage
+
+        let totalProgramDays = summary.totalDays + summary.daysRemaining
+        let quality = DataQualityService.programQuality(
+            completedDays: summary.daysWithData,
+            totalDays: totalProgramDays,
+            appLanguage: lang
+        )
+        guard quality.shouldShowInsight else {
+            return lang == "en"
+                ? "Log at least 10% of your program days to see insights."
+                : "İçgörü görmek için programın en az %10'unu kaydet."
+        }
         let noDataText = lang == "en" ? "No data" : "Veri yok"
 
         let goalText: String
@@ -1061,10 +1095,15 @@ class GroqService {
                 """
         }
 
+        var systemPrompt = programInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        if !quality.warningNote.isEmpty {
+            systemPrompt = quality.warningNote + "\n\n" + systemPrompt
+        }
+
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": programInsightSystemPrompt(personalContext: personalContext) + languageInstruction + "\n\n" + coachPersonalityPrompt(for: coachStyle)],
+                ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.7,
