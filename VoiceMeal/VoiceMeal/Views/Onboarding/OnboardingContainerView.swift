@@ -8,28 +8,29 @@ import SwiftUI
 
 struct OnboardingContainerView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var themeManager: ThemeManager
     @Binding var onboardingComplete: Bool
 
     @State private var step = 0 // 0 = HealthKit intro
-    private let totalSteps = 8
+    private let totalSteps = 10
 
-    // Step 1 (Welcome)
+    // Step 2 (Welcome)
     @State private var name = ""
-    // Step 2 (Body)
+    // Step 3 (Body)
     @State private var gender = "male"
     @State private var age = 25
     @State private var heightCm = 175.0
     @State private var currentWeightKg = 80.0
-    // Step 3 (Goal)
+    // Step 4 (Goal)
     @State private var goalWeightKg = 75.0
     @State private var goalDays = 90
-    // Step 4 (Intensity)
+    // Step 5 (Intensity)
     @State private var intensityLevel = 0.5
-    // Step 5 (Schedule)
+    // Step 6 (Schedule)
     @State private var weeklySchedule: [[String]] = [["walking"], ["rest"], ["walking"], ["rest"], ["walking"], ["rest"], ["rest"]]
-    // Step 6 (Coach Style)
+    // Step 7 (Coach Style)
     @State private var selectedCoachStyle: CoachStyle = .supportive
-    // Step 7 (Food Habits)
+    // Step 8 (Food Habits)
     @State private var cookingLocation: CookingLocation = .mostly_home
     @State private var portionSize: PortionSize = .medium
     @State private var oilUsage: OilUsage = .moderate
@@ -42,28 +43,42 @@ struct OnboardingContainerView: View {
     @State private var healthKitLoaded = false
     @State private var showHealthKitBanner = false
 
+    private var appLanguage: String {
+        UserDefaults.standard.string(forKey: "appLanguage") ?? "tr"
+    }
+
     private var canProceed: Bool {
         switch step {
-        case 0: true
-        case 1: !name.trimmingCharacters(in: .whitespaces).isEmpty
-        case 2: !gender.isEmpty
+        case 0, 1: true
+        case 2: !name.trimmingCharacters(in: .whitespaces).isEmpty
+        case 3: !gender.isEmpty
         default: true
         }
     }
 
-    // Steps 0 through totalSteps-1, progress starts from step 1
     private var displayStep: Int {
-        max(1, step)
+        max(1, step - 1)
     }
 
     private var displayTotal: Int {
-        totalSteps - 1 // Don't count HealthKit intro in progress
+        totalSteps - 2
+    }
+
+    private var estimatedDailyTarget: Int {
+        let bmr: Double
+        if gender == "male" {
+            bmr = 10 * currentWeightKg + 6.25 * heightCm - 5 * Double(age) + 5
+        } else {
+            bmr = 10 * currentWeightKg + 6.25 * heightCm - 5 * Double(age) - 161
+        }
+        let tdee = bmr * 1.5
+        let deficit = tdee * intensityLevel * 0.35
+        return max(Int(tdee - deficit), gender == "male" ? 1500 : 1200)
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            if step > 0 {
-                // Progress bar (don't show on HealthKit intro)
+            if step > 1 && step < totalSteps {
                 ProgressView(value: Double(displayStep), total: Double(displayTotal))
                     .tint(Theme.accent)
                     .padding(.horizontal)
@@ -75,7 +90,6 @@ struct OnboardingContainerView: View {
                     .padding(.top, 4)
             }
 
-            // HealthKit banner
             if showHealthKitBanner {
                 HStack(spacing: 10) {
                     Image(systemName: "heart.fill")
@@ -93,24 +107,27 @@ struct OnboardingContainerView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            // Content
             Group {
                 switch step {
                 case 0:
                     healthKitIntroView
                 case 1:
-                    Step1WelcomeView(name: $name)
+                    StepAppTourView(appLanguage: appLanguage) {
+                        step = 2
+                    }
                 case 2:
-                    Step2BodyView(gender: $gender, age: $age, heightCm: $heightCm, currentWeightKg: $currentWeightKg)
+                    Step1WelcomeView(name: $name)
                 case 3:
-                    Step3GoalView(currentWeightKg: currentWeightKg, goalWeightKg: $goalWeightKg, goalDays: $goalDays)
+                    Step2BodyView(gender: $gender, age: $age, heightCm: $heightCm, currentWeightKg: $currentWeightKg)
                 case 4:
-                    Step4IntensityView(intensityLevel: $intensityLevel)
+                    Step3GoalView(currentWeightKg: currentWeightKg, goalWeightKg: $goalWeightKg, goalDays: $goalDays)
                 case 5:
-                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
+                    Step4IntensityView(intensityLevel: $intensityLevel)
                 case 6:
-                    coachStyleView
+                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
                 case 7:
+                    coachStyleView
+                case 8:
                     Step7FoodHabitsView(
                         cookingLocation: $cookingLocation,
                         portionSize: $portionSize,
@@ -118,15 +135,23 @@ struct OnboardingContainerView: View {
                         proteinSource: $proteinSource,
                         cuisinePreference: $cuisinePreference,
                         mealFrequency: $mealFrequency,
-                        appLanguage: UserDefaults.standard.string(forKey: "appLanguage") ?? "tr"
+                        appLanguage: appLanguage
                     )
-                case 8:
+                case 9:
                     Step6SummaryView(
                         name: name, gender: gender, age: age, heightCm: heightCm,
                         currentWeightKg: currentWeightKg, goalWeightKg: goalWeightKg,
                         goalDays: goalDays, intensityLevel: intensityLevel,
                         weeklySchedule: weeklySchedule
                     )
+                case 10:
+                    StepReadyView(
+                        appLanguage: appLanguage,
+                        userName: name.trimmingCharacters(in: .whitespaces),
+                        dailyTarget: estimatedDailyTarget
+                    ) {
+                        saveProfile()
+                    }
                 default:
                     EmptyView()
                 }
@@ -134,38 +159,41 @@ struct OnboardingContainerView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(.easeInOut(duration: 0.2), value: step)
 
-            // Navigation buttons
-            HStack(spacing: 16) {
-                if step > 0 {
+            if step != 1 && step != totalSteps {
+                HStack(spacing: 16) {
+                    if step > 0 {
+                        Button {
+                            if step == 2 {
+                                step = 0
+                            } else {
+                                step -= 1
+                            }
+                        } label: {
+                            Text(L.back.localized)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
                     Button {
-                        step -= 1
+                        if step == 0 {
+                            requestHealthKitAndProceed()
+                        } else if step < totalSteps {
+                            step += 1
+                        }
                     } label: {
-                        Text(L.back.localized)
+                        Text(step == totalSteps - 1 ? L.next.localized : L.next.localized)
+                            .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    .disabled(!canProceed)
                 }
-
-                Button {
-                    if step == 0 {
-                        requestHealthKitAndProceed()
-                    } else if step < totalSteps {
-                        step += 1
-                    } else {
-                        saveProfile()
-                    }
-                } label: {
-                    Text(step == totalSteps ? L.start.localized : L.next.localized)
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.accent)
-                .disabled(!canProceed)
+                .padding()
             }
-            .padding()
         }
         .background(Theme.background)
     }
