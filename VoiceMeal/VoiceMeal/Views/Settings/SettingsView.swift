@@ -122,6 +122,9 @@ struct SettingsView: View {
                             // Section: App Theme
                             appThemeSection
 
+                            // Section: Tooltips
+                            tooltipSection
+
                             // Section: App
                             appSection
 
@@ -533,7 +536,7 @@ struct SettingsView: View {
                 if weightReminderEnabled {
                     Divider().overlay(Theme.cardBorder)
 
-                    settingsRow(label: "weight_reminder_days".localized) {
+                    settingsRow(label: String(format: "weight_reminder_days".localized, weightReminderDays)) {
                         Stepper("\(weightReminderDays)", value: $weightReminderDays, in: 1...7)
                             .frame(width: 130)
                     }
@@ -755,6 +758,50 @@ struct SettingsView: View {
         }
     }
     #endif
+
+    // MARK: - Tooltip Section
+
+    @ObservedObject private var tooltipManager = TooltipManager.shared
+
+    private var tooltipSection: some View {
+        settingsCard {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("tooltips_label".localized, icon: "lightbulb.fill", iconColor: Theme.accent)
+
+                Toggle(isOn: $tooltipManager.tooltipsEnabled) {
+                    Text("tooltips_label".localized)
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                }
+                .tint(Theme.accent)
+
+                Button {
+                    tooltipManager.resetAll()
+                    withAnimation { debugToast = "tooltips_reset_done".localized }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .foregroundStyle(Theme.accent)
+                        Text("tooltips_reset".localized)
+                            .font(Theme.bodyFont)
+                            .foregroundStyle(Theme.accent)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Theme.accent.opacity(0.5))
+                    }
+                    .padding(14)
+                    .background(Theme.accent.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.accent.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
 
     // MARK: - App Section
 

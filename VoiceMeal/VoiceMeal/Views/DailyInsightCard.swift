@@ -63,7 +63,10 @@ struct DailyInsightCard: View {
                     PillBadge(text: s.quality.localized)
                 }
                 if hrvStatus != .noData {
-                    PillBadge(text: "\u{1FAC0} \(hrvStatus.localized)")
+                    HStack(spacing: 2) {
+                        PillBadge(text: "\u{1FAC0} \(hrvStatus.localized)")
+                        InfoTooltipButton(tooltip: Tooltips.hrv, size: 10)
+                    }
                 }
             }
 

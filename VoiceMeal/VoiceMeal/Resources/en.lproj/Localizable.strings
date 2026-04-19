@@ -613,3 +613,29 @@
 
 // ProgramSummaryView
 "done_lower" = "done";
+
+// Tooltips
+"tooltip_tdee_title" = "TDEE – Total Daily Energy Expenditure";
+"tooltip_tdee_body" = "The total calories your body burns in a day, including your basal metabolism, daily activities, and exercise. VoiceMeal calculates this using Apple Health data when available, or estimates it from your profile.";
+"tooltip_deficit_title" = "Calorie Deficit";
+"tooltip_deficit_body" = "The difference between calories burned (TDEE) and calories consumed. A consistent deficit leads to weight loss — roughly 7,700 kcal deficit equals 1 kg of fat loss.";
+"tooltip_bmr_title" = "BMR – Basal Metabolic Rate";
+"tooltip_bmr_body" = "The calories your body burns at complete rest — just to keep you alive (breathing, circulation, cell repair). Calculated from your age, gender, height, and weight using the Mifflin-St Jeor formula.";
+"tooltip_activity_multiplier_title" = "Activity Multiplier";
+"tooltip_activity_multiplier_body" = "A factor applied to your BMR based on your workout schedule. More active days get a higher multiplier. This converts your resting calorie burn into your total daily burn estimate.";
+"tooltip_vo2max_title" = "VO₂ Max";
+"tooltip_vo2max_body" = "Your maximum oxygen uptake during exercise, measured in ml/kg/min. Higher values indicate better cardiovascular fitness. Apple Watch estimates this from your workouts and heart rate data.";
+"tooltip_hrv_title" = "HRV – Heart Rate Variability";
+"tooltip_hrv_body" = "The variation in time between heartbeats. Higher HRV generally indicates better recovery and lower stress. VoiceMeal uses your HRV trend to adjust daily insight recommendations.";
+"tooltip_protein_title" = "Protein";
+"tooltip_protein_body" = "Essential for muscle repair and growth. Your target is set based on your body weight and activity level. Aim to hit your protein target even on rest days to support recovery.";
+"tooltip_deficit_ring_title" = "Deficit Ring";
+"tooltip_deficit_ring_body" = "Shows your actual calorie deficit vs. your target deficit. The ring fills as your actual deficit approaches the target. Green means on track, red means you've overeaten beyond your TDEE.";
+"tooltip_macros_title" = "Macronutrients";
+"tooltip_macros_body" = "The three main nutrients: Protein (muscle repair), Carbs (energy), and Fat (hormones & absorption). Your targets are calculated based on your calorie goal and activity level.";
+"tooltip_consistency_title" = "Consistency Score";
+"tooltip_consistency_body" = "Measures how consistently you log meals and stay within your calorie and macro targets. Regular logging — even on imperfect days — helps the AI give you better insights.";
+"tooltips_label" = "Educational Tooltips";
+"tooltips_reset" = "Reset All Tooltips";
+"tooltips_reset_done" = "Tooltips reset";
+"tooltip_onboarding_hint" = "Tap the ? icons throughout the app to learn what each metric means.";

@@ -611,3 +611,29 @@
 
 // ProgramSummaryView
 "done_lower" = "tamam";
+
+// Tooltips
+"tooltip_tdee_title" = "TDEE – Günlük Toplam Enerji Harcaması";
+"tooltip_tdee_body" = "Vücudunuzun bir günde yaktığı toplam kalori — bazal metabolizma, günlük aktiviteler ve egzersiz dahil. VoiceMeal bunu Apple Health verileriyle veya profilinizden hesaplar.";
+"tooltip_deficit_title" = "Kalori Açığı";
+"tooltip_deficit_body" = "Yakılan kalori (TDEE) ile tüketilen kalori arasındaki fark. Düzenli açık kilo kaybına yol açar — yaklaşık 7.700 kcal açık, 1 kg yağ kaybına eşittir.";
+"tooltip_bmr_title" = "BMR – Bazal Metabolizma Hızı";
+"tooltip_bmr_body" = "Vücudunuzun tamamen dinlenirken yaktığı kalori — nefes alma, dolaşım, hücre onarımı için. Yaş, cinsiyet, boy ve kilonuza göre Mifflin-St Jeor formülüyle hesaplanır.";
+"tooltip_activity_multiplier_title" = "Aktivite Çarpanı";
+"tooltip_activity_multiplier_body" = "Antrenman programınıza göre BMR'nize uygulanan çarpan. Daha aktif günler daha yüksek çarpan alır. Dinlenme kalori yakımınızı toplam günlük yakıma dönüştürür.";
+"tooltip_vo2max_title" = "VO₂ Max";
+"tooltip_vo2max_body" = "Egzersiz sırasındaki maksimum oksijen tüketiminiz (ml/kg/dk). Yüksek değerler daha iyi kardiyovasküler fitness gösterir. Apple Watch bunu antrenman ve kalp atış hızı verilerinden tahmin eder.";
+"tooltip_hrv_title" = "HRV – Kalp Atış Hızı Değişkenliği";
+"tooltip_hrv_body" = "Kalp atışları arasındaki süre değişimi. Yüksek HRV genellikle daha iyi toparlanma ve düşük stres gösterir. VoiceMeal, HRV trendini günlük öneriler için kullanır.";
+"tooltip_protein_title" = "Protein";
+"tooltip_protein_body" = "Kas onarımı ve büyümesi için gereklidir. Hedefiniz vücut ağırlığınıza ve aktivite düzeyinize göre belirlenir. Toparlanmayı desteklemek için dinlenme günlerinde bile protein hedefinizi tutturun.";
+"tooltip_deficit_ring_title" = "Açık Halkası";
+"tooltip_deficit_ring_body" = "Gerçek kalori açığınızı hedefe göre gösterir. Halka, gerçek açık hedefe yaklaştıkça dolar. Yeşil hedefteyseniz, kırmızı TDEE'nizi aştığınız anlamına gelir.";
+"tooltip_macros_title" = "Makro Besinler";
+"tooltip_macros_body" = "Üç ana besin: Protein (kas onarımı), Karbonhidrat (enerji), Yağ (hormonlar ve emilim). Hedefleriniz kalori hedefinize ve aktivite düzeyinize göre hesaplanır.";
+"tooltip_consistency_title" = "Tutarlılık Puanı";
+"tooltip_consistency_body" = "Öğün kayıtlarınızın ve kalori/makro hedeflerinizin ne kadar tutarlı olduğunu ölçer. Mükemmel olmayan günlerde bile düzenli kayıt tutmak, AI'ın daha iyi öneriler vermesini sağlar.";
+"tooltips_label" = "Eğitici İpuçları";
+"tooltips_reset" = "Tüm İpuçlarını Sıfırla";
+"tooltips_reset_done" = "İpuçları sıfırlandı";
+"tooltip_onboarding_hint" = "Uygulama genelinde ? simgelerine dokunarak her metriğin ne anlama geldiğini öğrenebilirsin.";

@@ -51,7 +51,8 @@ extension HomeView {
                                 iconColor: Theme.orange,
                                 label: "TDEE",
                                 value: "\(Int(goalEngine.tdee))",
-                                unit: "kcal"
+                                unit: "kcal",
+                                tooltip: Tooltips.tdee
                             )
                             MetricInfoCard(
                                 icon: "arrow.down.circle.fill",
@@ -68,7 +69,8 @@ extension HomeView {
                                 iconColor: Theme.red,
                                 label: L.deficit.localized,
                                 value: "\(Int(goalEngine.cappedDailyDeficit))",
-                                unit: "kcal"
+                                unit: "kcal",
+                                tooltip: Tooltips.deficit
                             )
                             MetricInfoCard(
                                 icon: "scalemass.fill",
@@ -294,7 +296,8 @@ extension HomeView {
                 modernInfoRow(
                     label: "VO2 Max",
                     value: "\(String(format: "%.1f", vo2)) ml/kg/min",
-                    valueColor: Theme.green
+                    valueColor: Theme.green,
+                    tooltip: Tooltips.vo2Max
                 )
                 modernInfoRow(
                     label: L.fitnessLevel.localized,
@@ -305,7 +308,8 @@ extension HomeView {
                 modernInfoRow(
                     label: "VO2 Max",
                     value: "no_data".localized,
-                    valueColor: Theme.textSecondary
+                    valueColor: Theme.textSecondary,
+                    tooltip: Tooltips.vo2Max
                 )
             }
 
@@ -344,10 +348,11 @@ extension HomeView {
 
             Divider().opacity(0.2)
 
-            modernInfoRow(label: "BMR", value: "\(Int(goalEngine.bmr)) kcal")
+            modernInfoRow(label: "BMR", value: "\(Int(goalEngine.bmr)) kcal", tooltip: Tooltips.bmr)
             modernInfoRow(
                 label: L.activityMultiplier.localized,
-                value: String(format: "%.2fx", goalEngine.activityMultiplier)
+                value: String(format: "%.2fx", goalEngine.activityMultiplier),
+                tooltip: Tooltips.activityMultiplier
             )
             if goalEngine.vo2Max != nil {
                 modernInfoRow(
@@ -385,11 +390,14 @@ extension HomeView {
         )
     }
 
-    func modernInfoRow(label: String, value: String, valueColor: Color = .white) -> some View {
+    func modernInfoRow(label: String, value: String, valueColor: Color = .white, tooltip: TooltipItem? = nil) -> some View {
         HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                if let tooltip { InfoTooltipButton(tooltip: tooltip, size: 12) }
+            }
             Spacer()
             Text(value)
                 .font(.subheadline.bold())
@@ -406,6 +414,7 @@ struct MetricInfoCard: View {
     let label: String
     let value: String
     let unit: String
+    var tooltip: TooltipItem? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -419,6 +428,7 @@ struct MetricInfoCard: View {
                 Text(label)
                     .font(.caption)
                     .foregroundColor(.secondary)
+                if let tooltip { InfoTooltipButton(tooltip: tooltip, size: 11) }
                 Spacer()
             }
             HStack(alignment: .firstTextBaseline, spacing: 3) {

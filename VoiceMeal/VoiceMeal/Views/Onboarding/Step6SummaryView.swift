@@ -79,6 +79,16 @@ struct Step6SummaryView: View {
                 }
                 .padding()
                 .themeCard()
+
+                HStack(spacing: 6) {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundStyle(Theme.accent)
+                        .font(.system(size: 14))
+                    Text("tooltip_onboarding_hint".localized)
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .padding(.horizontal)
             }
             .padding()
         }

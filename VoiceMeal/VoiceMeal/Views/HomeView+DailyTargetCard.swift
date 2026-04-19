@@ -72,7 +72,8 @@ extension HomeView {
                     value: "\(actualDeficit)",
                     subtitle: "/ \(targetDeficit) kcal",
                     progress: deficitProgress,
-                    ringColor: actualDeficit < 0 ? Theme.red : Theme.green
+                    ringColor: actualDeficit < 0 ? Theme.red : Theme.green,
+                    tooltip: Tooltips.caloricDeficitRing
                 )
 
                 metricStatCard(
@@ -86,11 +87,16 @@ extension HomeView {
                     title: "TDEE",
                     value: "\(Int(goalEngine.tdee))",
                     unit: "kcal",
-                    color: .white
+                    color: .white,
+                    tooltip: Tooltips.tdee
                 )
             }
 
             VStack(spacing: 8) {
+                HStack {
+                    InfoTooltipButton(tooltip: Tooltips.macros, size: 11)
+                    Spacer()
+                }
                 macroProgressRow(label: "pro_short".localized, value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
                 macroProgressRow(label: "carb_short".localized, value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
                 macroProgressRow(label: "fat_short".localized, value: eatenFat, target: Double(goalEngine.fatTarget), color: Theme.fatColor)
@@ -137,13 +143,16 @@ extension HomeView {
         }
     }
 
-    func metricRingCard(title: String, value: String, subtitle: String, progress: Double, ringColor: Color) -> some View {
+    func metricRingCard(title: String, value: String, subtitle: String, progress: Double, ringColor: Color, tooltip: TooltipItem? = nil) -> some View {
         VStack(spacing: 8) {
-            Text(title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
+            HStack(spacing: 4) {
+                Text(title)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+                    .textCase(.uppercase)
+                    .tracking(0.5)
+                if let tooltip { InfoTooltipButton(tooltip: tooltip, size: 10) }
+            }
 
             ZStack {
                 Circle()
@@ -186,13 +195,16 @@ extension HomeView {
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
-    func metricStatCard(title: String, value: String, unit: String, color: Color) -> some View {
+    func metricStatCard(title: String, value: String, unit: String, color: Color, tooltip: TooltipItem? = nil) -> some View {
         VStack(spacing: 4) {
-            Text(title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
+            HStack(spacing: 4) {
+                Text(title)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+                    .textCase(.uppercase)
+                    .tracking(0.5)
+                if let tooltip { InfoTooltipButton(tooltip: tooltip, size: 10) }
+            }
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(color)
