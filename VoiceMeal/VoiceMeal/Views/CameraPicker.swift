@@ -12,7 +12,6 @@ struct CameraPicker: UIViewControllerRepresentable {
     @Environment(\.dismiss) var dismiss
 
     func makeUIViewController(context: Context) -> CameraViewController {
-        print("📷 [CameraPicker] makeUIViewController called")
         let vc = CameraViewController()
         vc.onImageCaptured = { image in
             onImageCaptured(image)
@@ -53,7 +52,6 @@ class CameraViewController: UIViewController {
     }
 
     private func setupCamera() {
-        print("📷 [CameraVC] setupCamera called")
         let session = AVCaptureSession()
         session.sessionPreset = .photo
 
@@ -64,7 +62,6 @@ class CameraViewController: UIViewController {
             for: .video,
             position: .back
         ) else {
-            print("📷 [CameraVC] No camera found")
             return
         }
 
@@ -90,10 +87,11 @@ class CameraViewController: UIViewController {
 
             DispatchQueue.global(qos: .userInitiated).async {
                 session.startRunning()
-                print("📷 [CameraVC] Session started")
             }
         } catch {
+            #if DEBUG
             print("📷 [CameraVC] Setup error: \(error)")
+            #endif
         }
     }
 
@@ -145,14 +143,12 @@ class CameraViewController: UIViewController {
     }
 
     @objc private func takePhoto() {
-        print("📷 [CameraVC] takePhoto tapped")
         guard let output = photoOutput else { return }
         let settings = AVCapturePhotoSettings()
         output.capturePhoto(with: settings, delegate: self)
     }
 
     @objc private func cancel() {
-        print("📷 [CameraVC] cancel tapped")
         onCancel?()
     }
 }
@@ -163,17 +159,16 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         didFinishProcessingPhoto photo: AVCapturePhoto,
         error: Error?
     ) {
-        print("📷 [CameraVC] Photo captured")
         if let error = error {
+            #if DEBUG
             print("📷 [CameraVC] Error: \(error)")
+            #endif
             return
         }
         guard let data = photo.fileDataRepresentation(),
               let image = UIImage(data: data) else {
-            print("📷 [CameraVC] Could not get image")
             return
         }
-        print("📷 [CameraVC] Calling onImageCaptured")
         DispatchQueue.main.async {
             self.onImageCaptured?(image)
         }

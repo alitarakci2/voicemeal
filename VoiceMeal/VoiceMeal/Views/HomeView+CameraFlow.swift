@@ -44,7 +44,6 @@ extension HomeView {
     }
 
     func handleCameraTap() {
-        print("📷 [Camera] Button tapped, setting showCamera=true")
         #if targetEnvironment(simulator)
         errorMessage = "camera_simulator_error".localized
         #else

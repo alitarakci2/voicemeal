@@ -334,7 +334,9 @@ struct HomeView: View {
                                 }
                             }
                         } else {
+                            #if DEBUG
                             print("📷 [ERROR] Compression returned nil")
+                            #endif
                         }
                     }
                 }

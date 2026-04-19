@@ -424,7 +424,9 @@ class GroqService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch let urlError as URLError {
+            #if DEBUG
             print("❌ [GroqService] Network error: \(urlError.code.rawValue) - \(urlError.localizedDescription)")
+            #endif
             if urlError.code == .timedOut {
                 throw GroqError.timeout
             }
@@ -435,7 +437,9 @@ class GroqService {
         guard let httpResponse, (200...299).contains(httpResponse.statusCode) else {
             let code = httpResponse?.statusCode ?? -1
             let body = String(data: data, encoding: .utf8) ?? ""
+            #if DEBUG
             print("❌ [GroqService] HTTP \(code): \(body)")
+            #endif
             SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
@@ -456,7 +460,9 @@ class GroqService {
         let extractedJSON = extractJSON(cleanedJSON)
 
         guard let jsonData = extractedJSON.data(using: .utf8) else {
+            #if DEBUG
             print("❌ [GroqService] Invalid JSON string: \(extractedJSON)")
+            #endif
             throw GroqError.invalidJSON
         }
 
@@ -464,17 +470,12 @@ class GroqService {
             let result = try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
             let elapsed = Date().timeIntervalSince(startTime)
             FeedbackService.shared.addLog("Groq parseMeals: \(String(format: "%.1f", elapsed))s")
-            print("🤖 [Groq] Raw response: \(jsonString)")
-            print("🤖 [Groq] clarification_needed: \(result.clarification_needed)")
-            print("🤖 [Groq] clarification_question: \(result.clarification_question ?? "nil")")
-            print("🤖 [Groq] meals count: \(result.meals.count)")
-            for meal in result.meals {
-                print("🤖 [Groq] meal: \(meal.name) | \(meal.amount) | cal:\(meal.calories ?? -1)")
-            }
             return result
         } catch {
             SentrySDK.capture(error: error)
+            #if DEBUG
             print("❌ [GroqService] JSON decode error: \(error) — raw: \(jsonString)")
+            #endif
             throw GroqError.invalidJSON
         }
     }
@@ -805,14 +806,18 @@ class GroqService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch let urlError as URLError {
+            #if DEBUG
             print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            #endif
             throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
         }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            #if DEBUG
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            #endif
             SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
@@ -1004,14 +1009,18 @@ class GroqService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch let urlError as URLError {
+            #if DEBUG
             print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            #endif
             throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
         }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            #if DEBUG
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            #endif
             SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
@@ -1166,14 +1175,18 @@ class GroqService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch let urlError as URLError {
+            #if DEBUG
             print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            #endif
             throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
         }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            #if DEBUG
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            #endif
             SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
@@ -1253,7 +1266,9 @@ class GroqService {
         let startTime = Date()
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
+            #if DEBUG
             print("📷 [ERROR] Missing API key")
+            #endif
             throw GroqError.missingAPIKey
         }
 
@@ -1293,21 +1308,27 @@ class GroqService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch let urlError as URLError {
+            #if DEBUG
             print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            #endif
             throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
         }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            #if DEBUG
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            #endif
             SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
         guard let content = chatResponse.choices.first?.message.content else {
+            #if DEBUG
             print("📷 [ERROR] Empty response content")
+            #endif
             throw GroqError.emptyResponse
         }
 
@@ -1319,7 +1340,9 @@ class GroqService {
         let extractedJSON = extractJSON(cleanGroqJSON(jsonString))
 
         guard let jsonData = extractedJSON.data(using: .utf8) else {
+            #if DEBUG
             print("📷 [ERROR] Could not convert JSON string to data")
+            #endif
             throw GroqError.invalidJSON
         }
 
@@ -1330,7 +1353,9 @@ class GroqService {
             return result
         } catch {
             SentrySDK.capture(error: error)
+            #if DEBUG
             print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")
+            #endif
             throw GroqError.invalidJSON
         }
     }
@@ -1342,7 +1367,9 @@ class GroqService {
     ) async throws -> PhotoAnalysisResponse {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
+            #if DEBUG
             print("📷 [ERROR] Missing API key")
+            #endif
             throw GroqError.missingAPIKey
         }
 
@@ -1395,21 +1422,27 @@ class GroqService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch let urlError as URLError {
+            #if DEBUG
             print("❌ [GroqService] Network error: \(urlError.code.rawValue)")
+            #endif
             throw urlError.code == .timedOut ? GroqError.timeout : GroqError.networkError
         }
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            #if DEBUG
             print("❌ [GroqService] HTTP \(code): \(String(data: data, encoding: .utf8) ?? "")")
+            #endif
             SentrySDK.capture(message: "Groq API error: \(code)")
             throw GroqError.apiError(statusCode: code)
         }
 
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
         guard let content = chatResponse.choices.first?.message.content else {
+            #if DEBUG
             print("📷 [ERROR] Empty clarification response")
+            #endif
             throw GroqError.emptyResponse
         }
 
@@ -1421,7 +1454,9 @@ class GroqService {
         let extractedJSON = extractJSON(cleanGroqJSON(jsonString))
 
         guard let jsonData = extractedJSON.data(using: .utf8) else {
+            #if DEBUG
             print("📷 [ERROR] Could not convert JSON to data")
+            #endif
             throw GroqError.invalidJSON
         }
 
@@ -1429,7 +1464,9 @@ class GroqService {
             return try JSONDecoder().decode(PhotoAnalysisResponse.self, from: jsonData)
         } catch {
             SentrySDK.capture(error: error)
+            #if DEBUG
             print("📷 [ERROR] JSON decode failed: \(error) — raw: \(extractedJSON)")
+            #endif
             throw GroqError.invalidJSON
         }
     }

@@ -41,13 +41,17 @@ class SpeechService: ObservableObject {
         }
         guard speechStatus == .authorized else {
             lastError = "Mikrofon izni gerekli. Ayarlardan izin verin."
+            #if DEBUG
             print("❌ [SpeechService] Speech recognition not authorized: \(speechStatus.rawValue)")
+            #endif
             return false
         }
         let micGranted = await AVAudioApplication.requestRecordPermission()
         if !micGranted {
             lastError = "Mikrofon izni gerekli. Ayarlardan izin verin."
+            #if DEBUG
             print("❌ [SpeechService] Microphone permission denied")
+            #endif
         }
         return micGranted
     }
@@ -59,7 +63,9 @@ class SpeechService: ObservableObject {
 
         guard speechRecognizer?.isAvailable == true else {
             lastError = "Ses tanıma şu an kullanılamıyor."
+            #if DEBUG
             print("❌ [SpeechService] Speech recognizer not available")
+            #endif
             throw SpeechError.recognitionUnavailable
         }
 
@@ -69,7 +75,9 @@ class SpeechService: ObservableObject {
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             lastError = "Ses kaydı başlatılamadı."
+            #if DEBUG
             print("❌ [SpeechService] Audio session error: \(error)")
+            #endif
             throw error
         }
 
@@ -97,7 +105,9 @@ class SpeechService: ObservableObject {
                 }
                 if let error {
                     let nsError = error as NSError
+                    #if DEBUG
                     print("❌ [SpeechService] Recognition error: \(nsError.domain) \(nsError.code) - \(error.localizedDescription)")
+                    #endif
                     if nsError.domain == "kAFAssistantErrorDomain" && nsError.code == 1110 {
                         self.lastError = "Ses algılanamadı. Tekrar deneyin."
                     } else if nsError.domain == NSURLErrorDomain {

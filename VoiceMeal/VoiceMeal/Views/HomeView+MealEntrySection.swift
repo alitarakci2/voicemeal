@@ -497,26 +497,14 @@ extension HomeView {
                     addWater(ml: waterMl, source: "voice")
                 }
 
-                print("🏠 [HomeView] entering meal result handler")
-                print("🏠 [HomeView] clarification_needed: \(response.clarification_needed)")
-                print("🏠 [HomeView] clarification_question: \(response.clarification_question ?? "nil")")
-                print("🏠 [HomeView] isCorrection: \(response.isCorrection ?? false)")
-                print("🏠 [HomeView] meals count: \(response.meals.count)")
-                print("🏠 [HomeView] showReviewCard before: \(showReviewCard)")
-                print("🏠 [HomeView] reviewMeals count before: \(reviewMeals.count)")
-
                 if response.isCorrection == true {
-                    print("🏠 [HomeView] → branch: correction")
                     handleCorrection(response)
                 } else if response.clarification_needed {
-                    print("🏠 [HomeView] → branch: clarification (NOT saving)")
                     reviewMeals = response.meals
                     clarificationQuestion = response.clarification_question ?? ""
                     showReviewCard = true
                     FeedbackService.shared.addLog("Clarification needed: \(clarificationQuestion)")
-                    print("🏠 [HomeView] reviewMeals count after: \(reviewMeals.count)")
                 } else if !response.meals.isEmpty {
-                    print("🏠 [HomeView] → branch: confirmation card")
                     reviewMeals = response.meals
                     showReviewCard = true
                 } else if response.waterMl != nil {
