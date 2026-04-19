@@ -484,8 +484,18 @@ class GroqService {
     enum TimeOfDay: String {
         case morning  = "Sabah"    // 06:00 - 11:00
         case midday   = "Öğle"     // 11:00 - 15:00
-        case evening  = "Akşam"    // 15:00 - 20:00
-        case night    = "Gece"     // 20:00 - 06:00
+        case evening  = "Akşam"    // 15:00 - 21:00
+        case night    = "Gece"     // 21:00 - 06:00
+
+        static func from(date: Date) -> TimeOfDay {
+            let hour = Calendar.current.component(.hour, from: date)
+            switch hour {
+            case 6..<11:  return .morning
+            case 11..<15: return .midday
+            case 15..<21: return .evening
+            default:      return .night
+            }
+        }
     }
 
     static func currentTimeOfDay() -> TimeOfDay {

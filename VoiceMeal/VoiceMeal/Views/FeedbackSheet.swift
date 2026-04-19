@@ -153,7 +153,7 @@ struct FeedbackSheet: View {
                                     InfoRow(icon: "app.badge",
                                             text: "VoiceMeal v\(ver)")
                                     InfoRow(icon: "rectangle.3.group",
-                                            text: "\(appLanguage == "en" ? "Tab" : "Sekme"): \(FeedbackService.shared.currentTab)")
+                                            text: "\(L.currentTab.localized): \(FeedbackService.shared.currentTab)")
                                     InfoRow(icon: "clock",
                                             text: Date().formatted(date: .abbreviated, time: .shortened))
                                 }
@@ -203,8 +203,8 @@ struct FeedbackSheet: View {
                                 Image(systemName: "paperplane.fill")
                             }
                             Text(isSending
-                                ? (appLanguage == "en" ? "Sending..." : "Gönderiliyor...")
-                                : (appLanguage == "en" ? "Send Feedback" : "Gönder"))
+                                ? L.sendingFeedback.localized
+                                : L.sendFeedback.localized)
                         }
                         .font(.subheadline.bold())
                         .foregroundColor(.white)

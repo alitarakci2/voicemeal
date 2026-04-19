@@ -130,7 +130,18 @@ struct DailyInsightCard: View {
         .task {
             loadCachedInsight()
             lastTimeOfDay = GroqService.currentTimeOfDay()
-            if insightText == nil {
+
+            if insightText != nil {
+                if let cachedTime = generatedAt {
+                    let generatedPeriod = GroqService.TimeOfDay.from(date: cachedTime)
+                    let currentPeriod = GroqService.currentTimeOfDay()
+                    let hoursSince = Date().timeIntervalSince(cachedTime) / 3600
+
+                    if generatedPeriod != currentPeriod || hoursSince > 3 {
+                        await generateInsight(force: true)
+                    }
+                }
+            } else {
                 await generateInsight(force: false)
             }
 
