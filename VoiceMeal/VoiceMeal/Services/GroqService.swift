@@ -493,7 +493,27 @@ class GroqService {
         switch hour {
         case 6..<11:  return .morning
         case 11..<15: return .midday
-        case 15..<20: return .evening
+        case 15..<21: return .evening
+        default:      return .night
+        }
+    }
+
+    private func insightDayStart() -> Date {
+        let cal = Calendar.current
+        let now = Date()
+        let sixAM = cal.date(bySettingHour: 6, minute: 0, second: 0, of: now) ?? now
+        if now < sixAM {
+            return cal.date(byAdding: .day, value: -1, to: sixAM) ?? sixAM
+        }
+        return sixAM
+    }
+
+    private func insightTimeOfDay() -> TimeOfDay {
+        let hour = Calendar.current.component(.hour, from: .now)
+        switch hour {
+        case 6..<11:  return .morning
+        case 11..<15: return .midday
+        case 15..<21: return .evening
         default:      return .night
         }
     }
@@ -587,6 +607,8 @@ class GroqService {
 
         let lang = appLanguage
         let noDataText = lang == "en" ? "No data" : "Veri yok"
+        let effectiveTimeOfDay = insightTimeOfDay()
+        let isLateNight = Calendar.current.component(.hour, from: Date()) < 6
 
         let hrvText: String
         if let hrv = todayHRV {
@@ -669,7 +691,7 @@ class GroqService {
         }
         let contextNote = contextFlags.isEmpty ? "" : "\n\n" + contextFlags.joined(separator: "\n")
 
-        let userPrompt: String
+        var userPrompt: String
         if lang == "en" {
             let remainingStatus = remainingCalories < 0 ? "exceeded target" : "within target"
             let deficitStatus = deficitGap > 0
@@ -677,7 +699,7 @@ class GroqService {
                 : "exceeded target, great job"
 
             userPrompt = """
-                Time: \(timeStr) (\(timeOfDay.rawValue))
+                Time: \(timeStr) (\(effectiveTimeOfDay.rawValue))
                 HRV: \(hrvText)
                 Sleep: \(sleepText)
                 \(activityLine)
@@ -708,7 +730,7 @@ class GroqService {
                 : "hedefi geçtin, bravo"
 
             userPrompt = """
-                Saat: \(timeStr) (\(timeOfDay.rawValue))
+                Saat: \(timeStr) (\(effectiveTimeOfDay.rawValue))
                 HRV: \(hrvText)
                 Uyku: \(sleepText)
                 \(activityLine)
@@ -732,6 +754,13 @@ class GroqService {
                 İçilen su: \(waterMl) ml / \(waterGoalMl) ml hedef
                 """ : "")\(contextNote)
                 """
+        }
+
+        if isLateNight {
+            let lateNightNote = lang == "en"
+                ? "Note: It's past midnight but the day is still ongoing (biological day ends at 06:00)."
+                : "Not: Gece yarısını geçti ama gün hala devam ediyor (biyolojik gün 06:00'da biter)."
+            userPrompt = lateNightNote + "\n\n" + userPrompt
         }
 
         let quality = DataQualityService.dailyQuality(
