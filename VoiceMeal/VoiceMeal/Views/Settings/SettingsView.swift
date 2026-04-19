@@ -116,9 +116,6 @@ struct SettingsView: View {
                             // Section: Notifications
                             notificationsSection
 
-                            // Section: Premium
-                            premiumSection
-
                             // Section: Language
                             languageSection
 
