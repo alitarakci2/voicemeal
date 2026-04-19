@@ -193,7 +193,7 @@ struct MealInsightsCard: View {
                 )
                 TimingRow(
                     icon: "moon.fill",
-                    iconColor: .purple,
+                    iconColor: Theme.accent,
                     label: appLanguage == "en"
                         ? "Night (21+)" : "Gece (21+)",
                     count: timing.night,

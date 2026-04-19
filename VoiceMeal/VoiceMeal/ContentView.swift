@@ -73,7 +73,7 @@ struct ContentView: View {
         tabAppearance.inlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
 
         // Selected icons/text
-        let accent = UIColor(Color(hex: "6C63FF"))
+        let accent = UIColor(ThemeManager.shared.current.accent)
         tabAppearance.stackedLayoutAppearance.selected.iconColor = accent
         tabAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
         tabAppearance.compactInlineLayoutAppearance.selected.iconColor = accent

@@ -87,7 +87,7 @@ struct PhotoAnalysisView: View {
                                     .foregroundColor(.secondary)
                             }
                             .padding(20)
-                            .background(Color(hex: "1A1A2E"))
+                            .background(Theme.cardBackground)
                             .cornerRadius(16)
 
                             Spacer()
@@ -142,7 +142,7 @@ struct PhotoAnalysisView: View {
         } else {
             // Placeholder while image loads
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(hex: "1C1C24"))
+                .fill(Theme.cardBackground)
                 .frame(height: 200)
                 .overlay(
                     ProgressView()

@@ -328,7 +328,7 @@ struct SettingsView: View {
     private var coachStyleSection: some View {
         settingsCard {
             VStack(alignment: .leading, spacing: 12) {
-                sectionHeader("coach_style".localized, icon: "brain.fill", iconColor: .purple)
+                sectionHeader("coach_style".localized, icon: "brain.fill", iconColor: Theme.accent)
 
                 ForEach(CoachStyle.allCases, id: \.self) { style in
                     Button {
