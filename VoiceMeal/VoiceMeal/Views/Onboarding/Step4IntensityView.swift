@@ -2,6 +2,7 @@
 //  Step4IntensityView.swift
 //  VoiceMeal
 //
+// Removed from onboarding - kept for reference
 
 import SwiftUI
 

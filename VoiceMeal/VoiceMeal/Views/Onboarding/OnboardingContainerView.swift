@@ -12,7 +12,7 @@ struct OnboardingContainerView: View {
     @Binding var onboardingComplete: Bool
 
     @State private var step = 0 // 0 = HealthKit intro
-    private let totalSteps = 10
+    private let totalSteps = 8
 
     // Step 2 (Welcome)
     @State private var name = ""
@@ -24,9 +24,7 @@ struct OnboardingContainerView: View {
     // Step 4 (Goal)
     @State private var goalWeightKg = 75.0
     @State private var goalDays = 90
-    // Step 5 (Intensity)
-    @State private var intensityLevel = 0.5
-    // Step 6 (Schedule)
+    // Step 5 (Schedule)
     @State private var weeklySchedule: [[String]] = [["walking"], ["rest"], ["walking"], ["rest"], ["walking"], ["rest"], ["rest"]]
     // Step 7 (Coach Style)
     @State private var selectedCoachStyle: CoachStyle = .supportive
@@ -72,8 +70,10 @@ struct OnboardingContainerView: View {
             bmr = 10 * currentWeightKg + 6.25 * heightCm - 5 * Double(age) - 161
         }
         let tdee = bmr * 1.5
-        let deficit = tdee * intensityLevel * 0.35
-        return max(Int(tdee - deficit), gender == "male" ? 1500 : 1200)
+        let weightDiff = currentWeightKg - goalWeightKg
+        let rawDeficit = goalDays > 0 ? (weightDiff * 7700) / Double(goalDays) : 0
+        let cappedDeficit = min(rawDeficit, tdee * 0.35)
+        return max(Int(tdee - cappedDeficit), gender == "male" ? 1500 : 1200)
     }
 
     var body: some View {
@@ -122,12 +122,10 @@ struct OnboardingContainerView: View {
                 case 4:
                     Step3GoalView(currentWeightKg: currentWeightKg, goalWeightKg: $goalWeightKg, goalDays: $goalDays)
                 case 5:
-                    Step4IntensityView(intensityLevel: $intensityLevel)
-                case 6:
                     Step5ScheduleView(weeklySchedule: $weeklySchedule)
-                case 7:
+                case 6:
                     coachStyleView
-                case 8:
+                case 7:
                     Step7FoodHabitsView(
                         cookingLocation: $cookingLocation,
                         portionSize: $portionSize,
@@ -137,14 +135,7 @@ struct OnboardingContainerView: View {
                         mealFrequency: $mealFrequency,
                         appLanguage: appLanguage
                     )
-                case 9:
-                    Step6SummaryView(
-                        name: name, gender: gender, age: age, heightCm: heightCm,
-                        currentWeightKg: currentWeightKg, goalWeightKg: goalWeightKg,
-                        goalDays: goalDays, intensityLevel: intensityLevel,
-                        weeklySchedule: weeklySchedule
-                    )
-                case 10:
+                case 8:
                     StepReadyView(
                         appLanguage: appLanguage,
                         userName: name.trimmingCharacters(in: .whitespaces),
@@ -360,7 +351,7 @@ struct OnboardingContainerView: View {
             currentWeightKg: currentWeightKg,
             goalWeightKg: goalWeightKg,
             goalDays: goalDays,
-            intensityLevel: intensityLevel,
+            intensityLevel: 0.2,
             weeklySchedule: weeklySchedule
         )
         profile.programStartWeightKg = currentWeightKg
