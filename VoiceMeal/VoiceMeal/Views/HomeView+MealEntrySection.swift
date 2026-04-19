@@ -409,7 +409,10 @@ extension HomeView {
                 User correction: "\(newText)". \
                 Update values based on what user said. Verify consistency: \
                 protein×4 + carbs×4 + fat×9 ≈ calories (adjust carbs if needed). \
-                Return updated meal in meals array. clarification_needed: false.
+                Return updated meal in meals array. clarification_needed: false. \
+                Keep the food name ('\(meal.name)') as-is \
+                UNLESS the user explicitly mentioned a different food. \
+                If name changes, it must be in English.
                 """
             } else {
                 fixTranscript = """
@@ -418,7 +421,10 @@ extension HomeView {
                 Kullanıcı düzeltmesi: "\(newText)". \
                 Söylenene göre değerleri güncelle. Tutarlılık kontrolü: \
                 protein×4 + karb×4 + yağ×9 ≈ kalori (gerekirse karbı ayarla). \
-                Güncel yemeği meals dizisinde döndür. clarification_needed: false.
+                Güncel yemeği meals dizisinde döndür. clarification_needed: false. \
+                Yemek adını ('\(meal.name)') aynen koru \
+                SADECE kullanıcı farklı bir yemek adı söylemedikçe. \
+                Ad değiştirilecekse Türkçe olmalı.
                 """
             }
 
@@ -448,14 +454,20 @@ extension HomeView {
                 Previously saved: \(entry.name), \(entry.amount), \(entry.calories) kcal, \
                 P:\(Int(entry.protein))g C:\(Int(entry.carbs))g F:\(Int(entry.fat))g. \
                 User wants to change: "\(newText)". \
-                Update only the changed fields. Set isCorrection: true, targetFoodName: "\(entry.name)".
+                Update only the changed fields. Set isCorrection: true, targetFoodName: "\(entry.name)". \
+                Keep the food name ('\(entry.name)') as-is \
+                UNLESS the user explicitly mentioned a different food. \
+                If name changes, it must be in English.
                 """
             } else {
                 correctionTranscript = """
                 Daha önce kaydedilen: \(entry.name), \(entry.amount), \(entry.calories) kcal, \
                 P:\(Int(entry.protein))g K:\(Int(entry.carbs))g Y:\(Int(entry.fat))g. \
                 Kullanıcı düzeltmek istiyor: "\(newText)". \
-                Sadece değişen alanları güncelle. isCorrection: true, targetFoodName: "\(entry.name)" yap.
+                Sadece değişen alanları güncelle. isCorrection: true, targetFoodName: "\(entry.name)" yap. \
+                Yemek adını ('\(entry.name)') aynen koru \
+                SADECE kullanıcı farklı bir yemek adı söylemedikçe. \
+                Ad değiştirilecekse Türkçe olmalı.
                 """
             }
 

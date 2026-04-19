@@ -110,6 +110,9 @@ class GroqService {
 
     func buildNutritionExpertPrompt(language: String, locale: String, personalContext: String) -> String {
         let localeDescription = localeToDescription(locale)
+        let langRule = appLanguage == "en"
+            ? "3. All responses and food names must be in ENGLISH."
+            : "3. Tüm yanıtlar ve yemek isimleri TÜRKÇE olmalı."
 
         var prompt = """
         You are a world-class nutrition expert and dietitian \
@@ -135,7 +138,7 @@ class GroqService {
         CRITICAL RULES:
         1. NEVER return null for calories/protein/carbs/fat
         2. Always estimate if uncertain - use "~" in amount
-        3. Use \(language) language in all responses
+        \(langRule)
         4. Apply \(localeDescription) portion standards
         5. Consider local cooking methods (oil usage, etc.)
         """
@@ -276,6 +279,7 @@ class GroqService {
             - The "~" prefix for estimates goes ONLY in the "amount" field: "~1 bowl"
             - Never use ~ in numeric fields
             - Never add any prefix/suffix to numeric values
+            - name: Food name MUST be in English. Example: "Chicken Breast" not "Tavuk Göğsü"
 
             JSON format must be exactly as follows, write nothing else:
             \(jsonFormat)
@@ -364,6 +368,7 @@ class GroqService {
             - "~" tahmini sadece "amount" alanında kullanılır: "~1 tabak"
             - Sayısal alanlarda asla ~ kullanma
             - Sayısal değerlere asla önek/sonek ekleme
+            - name: Yemeğin adı MUTLAKA Türkçe olmalı. İngilizce veya başka dil kullanma. Örnek: "Mercimek Çorbası" değil "Lentil Soup"
 
             JSON formatı kesinlikle şu şekilde olmalı, başka hiçbir şey yazma:
             \(jsonFormat)
