@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "voicemeal_icon.svg.png",
+      "filename" : "voicemeal_icon_square.svg.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "voicemeal_icon.svg 2.png",
+      "filename" : "voicemeal_icon_square.svg 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "voicemeal_icon.svg 1.png",
+      "filename" : "voicemeal_icon_square.svg 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
