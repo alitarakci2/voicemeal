@@ -641,7 +641,6 @@ class GroqService {
         proteinConsumed: Double,
         proteinTarget: Int,
         tdee: Int,
-        intensityLevel: Double,
         waterMl: Int = 0,
         waterGoalMl: Int = 0,
         coachStyle: CoachStyle = .supportive,

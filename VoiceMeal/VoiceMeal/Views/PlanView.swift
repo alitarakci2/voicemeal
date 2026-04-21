@@ -27,7 +27,6 @@ struct PlanView: View {
     @State private var originalSchedule: [[String]] = Array(repeating: ["rest"], count: 7)
     @State private var goalWeightKg: Double = 65
     @State private var goalDays = 90
-    @State private var intensityLevel: Double = 0.5
     @State private var showSavedToast = false
     @State private var settingsLoaded = false
 
@@ -215,22 +214,6 @@ struct PlanView: View {
         let maxDeficit = estimatedTDEE * 0.35
         let maxSurplus = estimatedTDEE * 0.20
         return rawDeficit > maxDeficit || rawDeficit < -maxSurplus
-    }
-
-    private var intensityLabel: String {
-        switch intensityLevel {
-        case ...0.3: return L.intensityLight.localized
-        case 0.3...0.7: return L.intensityModerate.localized
-        default: return L.intensityIntense.localized
-        }
-    }
-
-    private var intensityDescription: String {
-        switch intensityLevel {
-        case ...0.3: return L.intensityLightDesc.localized
-        case 0.3...0.7: return L.intensityModerateDesc.localized
-        default: return L.intensityIntenseDesc.localized
-        }
     }
 
     var body: some View {
@@ -456,27 +439,6 @@ struct PlanView: View {
                 Divider()
                     .overlay(Theme.cardBorder)
 
-                // Intensity
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(L.intensity.localized)
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textPrimary)
-                        Spacer()
-                        Text(intensityLabel)
-                            .font(Theme.bodyFont)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    Slider(value: $intensityLevel, in: 0...1, step: 0.1)
-                        .tint(Theme.accent)
-                    Text(intensityDescription)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-
-                Divider()
-                    .overlay(Theme.cardBorder)
-
                 // Weekly Schedule
                 VStack(alignment: .leading, spacing: 8) {
                     Text(L.weeklySchedule.localized)
@@ -512,7 +474,7 @@ struct PlanView: View {
                     Text(L.goal.localized)
                         .font(.subheadline.bold())
                         .foregroundStyle(.white)
-                    Text("\(String(format: "%.1f", goalWeightKg)) kg \u{00B7} \(String(format: "goal_duration".localized, goalDays)) \u{00B7} \(intensityLabel)")
+                    Text("\(String(format: "%.1f", goalWeightKg)) kg \u{00B7} \(String(format: "goal_duration".localized, goalDays))")
                         .font(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -539,7 +501,6 @@ struct PlanView: View {
         guard let p = profiles.first else { return }
         goalWeightKg = p.goalWeightKg
         goalDays = p.goalDays
-        intensityLevel = p.intensityLevel
         weeklySchedule = p.weeklySchedule
         originalSchedule = p.weeklySchedule
         settingsLoaded = true
@@ -549,7 +510,6 @@ struct PlanView: View {
         guard let p = profiles.first else { return }
         p.goalWeightKg = goalWeightKg
         p.goalDays = goalDays
-        p.intensityLevel = intensityLevel
         p.weeklySchedule = weeklySchedule
         p.updatedAt = .now
 

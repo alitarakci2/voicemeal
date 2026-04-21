@@ -199,7 +199,6 @@ struct HomeView: View {
                         proteinConsumed: eatenProtein,
                         proteinTarget: goalEngine.proteinTarget,
                         tdee: Int(goalEngine.tdee),
-                        intensityLevel: goalEngine.profile?.intensityLevel ?? 0.5,
                         waterMl: isWaterTrackingEnabled ? todayWaterMl : 0,
                         waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
                         coachStyle: profiles.first?.coachStyle ?? .supportive,

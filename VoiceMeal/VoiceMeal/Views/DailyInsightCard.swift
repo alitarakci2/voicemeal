@@ -21,7 +21,6 @@ struct DailyInsightCard: View {
     let proteinConsumed: Double
     let proteinTarget: Int
     let tdee: Int
-    let intensityLevel: Double
     let waterMl: Int
     let waterGoalMl: Int
     var coachStyle: CoachStyle = .supportive
@@ -215,7 +214,6 @@ struct DailyInsightCard: View {
                 proteinConsumed: proteinConsumed,
                 proteinTarget: proteinTarget,
                 tdee: tdee,
-                intensityLevel: intensityLevel,
                 waterMl: waterMl,
                 waterGoalMl: waterGoalMl,
                 coachStyle: coachStyle,

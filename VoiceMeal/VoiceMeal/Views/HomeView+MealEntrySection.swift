@@ -14,76 +14,34 @@ extension HomeView {
                 .font(Theme.bodyFont)
                 .foregroundStyle(Theme.textSecondary)
 
-            HStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Button {
-                        handleMicTap()
-                    } label: {
-                        Image(systemName: speechService.isRecording ? "mic.fill" : "mic")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.white)
-                            .frame(width: 80, height: 80)
-                            .background(speechService.isRecording ? Theme.red : Theme.cardBackground)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(speechService.isRecording ? Theme.red.opacity(0.4) : Theme.cardBorder.opacity(0.6), lineWidth: 2)
+            HStack {
+                Spacer()
+
+                Button {
+                    handleMicTap()
+                } label: {
+                    VStack(spacing: 10) {
+                        Image(systemName: speechService.isRecording ? "mic.circle.fill" : "mic.circle.fill")
+                            .font(.system(size: 64))
+                            .foregroundStyle(speechService.isRecording ? Theme.red : Theme.accent)
+                            .padding(28)
+                            .background(
+                                (speechService.isRecording ? Theme.red : Theme.accent).opacity(0.1)
                             )
-                            .shadow(color: speechService.isRecording ? Theme.red.opacity(0.5) : Theme.accent.opacity(0.25), radius: 12, y: 2)
-                    }
-                    .disabled(isAnalyzing)
-                    .sensoryFeedback(.impact, trigger: speechService.isRecording)
-
-                    Text("voice_record".localized)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-
-                VStack(spacing: 8) {
-                    Button {
-                        handleCameraTap()
-                    } label: {
-                        Image(systemName: "camera")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.white)
-                            .frame(width: 80, height: 80)
-                            .background(Theme.cardBackground)
                             .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Theme.cardBorder.opacity(0.6), lineWidth: 2)
-                            )
-                            .shadow(color: Theme.accent.opacity(0.25), radius: 12, y: 2)
-                    }
-                    .disabled(isAnalyzing)
 
-                    Text("photo_record".localized)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-
-                VStack(spacing: 8) {
-                    Button {
-                        showBarcodeScanner = true
-                    } label: {
-                        Image(systemName: "barcode.viewfinder")
-                            .font(.system(size: 36))
+                        Text(speechService.isRecording
+                             ? "listening".localized
+                             : "voice_record".localized)
+                            .font(.subheadline.bold())
                             .foregroundStyle(.white)
-                            .frame(width: 80, height: 80)
-                            .background(Theme.cardBackground)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Theme.cardBorder.opacity(0.6), lineWidth: 2)
-                            )
-                            .shadow(color: Theme.accent.opacity(0.25), radius: 12, y: 2)
                     }
-                    .disabled(isAnalyzing)
-
-                    Text("barcode_record".localized)
-                        .font(Theme.captionFont)
-                        .foregroundStyle(Theme.textSecondary)
                 }
+                .buttonStyle(.plain)
+                .disabled(isAnalyzing)
+                .sensoryFeedback(.impact, trigger: speechService.isRecording)
+
+                Spacer()
             }
 
             if isAnalyzing {

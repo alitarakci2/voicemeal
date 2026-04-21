@@ -161,7 +161,7 @@ final class UserProfile {
     var currentWeightKg: Double
     var goalWeightKg: Double
     var goalDays: Int
-    var intensityLevel: Double
+    var intensityLevel: Double // deprecated - hidden in UI
     var weeklyScheduleJSON: String
     var notification1Enabled: Bool
     var notification1Hour: Int
