@@ -33,6 +33,10 @@ struct PlanView: View {
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
         guard let profile = profiles.first else { return [] }
+        _ = profile.goalWeightKg
+        _ = profile.goalDays
+        _ = profile.currentWeightKg
+        _ = profile.updatedAt
         return planService.generateDayPlans(profile: profile, entries: allEntries, snapshots: allSnapshots, goalEngine: goalEngine)
     }
 
