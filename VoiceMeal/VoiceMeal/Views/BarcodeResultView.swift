@@ -436,6 +436,7 @@ struct BarcodeResultView: View {
         )
         modelContext.insert(entry)
         try? modelContext.save()
+        NotificationCenter.default.post(name: .foodEntrySaved, object: nil)
 
         withAnimation {
             showSavedToast = true

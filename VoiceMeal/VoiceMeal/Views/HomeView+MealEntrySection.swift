@@ -575,6 +575,7 @@ extension HomeView {
             modelContext.insert(entry)
             FeedbackService.shared.addLog("Meal saved: \(meal.name) - \(Int(meal.calories ?? 0))kcal")
         }
+        try? modelContext.save()
         let totalCal = meals.reduce(0) { $0 + Int($1.calories ?? 0) }
         FeedbackService.shared.addLog("Meal confirmed: \(meals.count) items, \(totalCal)kcal total")
         saveTodaySnapshot()

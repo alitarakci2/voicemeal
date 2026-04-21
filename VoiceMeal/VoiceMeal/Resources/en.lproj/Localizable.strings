@@ -364,6 +364,7 @@
 /* HomeView errors */
 "camera_simulator_error" = "Camera not available in simulator";
 "mic_error" = "Microphone failed to start";
+"mic_permission_denied" = "Microphone access required. Enable it for VoiceMeal in Settings.";
 
 /* Units */
 "kg" = "kg";

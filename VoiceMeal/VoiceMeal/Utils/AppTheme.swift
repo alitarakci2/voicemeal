@@ -84,6 +84,8 @@ class ThemeManager: ObservableObject {
     @Published var current: AppTheme = .purple
 
     static let shared = ThemeManager()
+    private static let suiteName = "group.indio.VoiceMeal"
+    private static let themeKey = "appTheme"
 
     init() {
         load()
@@ -91,11 +93,24 @@ class ThemeManager: ObservableObject {
 
     func apply(_ theme: AppTheme) {
         current = theme
-        UserDefaults.standard.set(theme.rawValue, forKey: "appTheme")
+        UserDefaults(suiteName: Self.suiteName)?.set(theme.rawValue, forKey: Self.themeKey)
     }
 
     func load() {
-        let saved = UserDefaults.standard.string(forKey: "appTheme") ?? "purple"
-        current = AppTheme(rawValue: saved) ?? .purple
+        let group = UserDefaults(suiteName: Self.suiteName)
+        if let saved = group?.string(forKey: Self.themeKey),
+           let theme = AppTheme(rawValue: saved) {
+            current = theme
+            return
+        }
+        // One-time migration from standard defaults → App Group
+        if let legacy = UserDefaults.standard.string(forKey: Self.themeKey),
+           let theme = AppTheme(rawValue: legacy) {
+            current = theme
+            group?.set(theme.rawValue, forKey: Self.themeKey)
+            UserDefaults.standard.removeObject(forKey: Self.themeKey)
+            return
+        }
+        current = .purple
     }
 }

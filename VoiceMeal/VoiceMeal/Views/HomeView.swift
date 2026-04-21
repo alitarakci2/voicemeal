@@ -41,6 +41,8 @@ struct HomeView: View {
 
     @State var scrollToTopTrigger = false
     @State var voiceScrollTrigger = false
+    @State var pendingVoiceStart = false
+    @State var recordingStartedAt: Date?
 
     @State var showCamera = false
     @State var capturedImage: UIImage?
@@ -262,6 +264,12 @@ struct HomeView: View {
         }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
             if oldValue && !newValue {
+                if let startedAt = recordingStartedAt {
+                    if Date().timeIntervalSince(startedAt) <= 2.0 {
+                        FeedbackService.shared.addLog("auto_record_cancelled")
+                    }
+                    recordingStartedAt = nil
+                }
                 if let speechError = speechService.lastError {
                     errorMessage = speechError
                 } else if !speechService.transcript.isEmpty {
@@ -289,6 +297,32 @@ struct HomeView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .profileUpdated)) { _ in
             saveTodaySnapshot()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .foodEntrySaved)) { _ in
+            saveTodaySnapshot()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .widgetDeepLinkRecord)) { _ in
+            pendingVoiceStart = true
+        }
+        .onChange(of: pendingVoiceStart) { _, shouldStart in
+            guard shouldStart else { return }
+            Task {
+                try? await Task.sleep(for: .milliseconds(300))
+                let deadline = Date().addingTimeInterval(1.5)
+                while !permissionGranted && Date() < deadline {
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+                guard permissionGranted else {
+                    errorMessage = "mic_permission_denied".localized
+                    FeedbackService.shared.addLog("auto_record_blocked: no mic permission")
+                    pendingVoiceStart = false
+                    return
+                }
+                FeedbackService.shared.addLog("auto_record_started")
+                recordingStartedAt = Date()
+                handleMicTap()
+                pendingVoiceStart = false
+            }
         }
         .sheet(isPresented: $showGoalInfo) {
             goalInfoSheet
@@ -448,12 +482,24 @@ struct HomeView: View {
 
     func updateWidgetData() {
         let remaining = goalEngine.dailyCalorieTarget - eatenCalories
+        let startOfDay = Calendar.current.startOfDay(for: .now)
+        let todayEntriesSorted = allEntries
+            .filter { $0.date >= startOfDay }
+            .sorted { $0.date > $1.date }
+        let recentMeals = todayEntriesSorted.prefix(3).map {
+            WidgetMealEntry(name: $0.name, calories: $0.calories, date: $0.date)
+        }
+
         let data = WidgetData(
             consumedCalories: eatenCalories,
             targetCalories: goalEngine.dailyCalorieTarget,
             remainingCalories: remaining,
             targetDeficit: Int(goalEngine.cappedDailyDeficit),
             actualDeficit: Int(goalEngine.tdee) - eatenCalories,
+            proteinEaten: eatenProtein,
+            proteinTarget: Double(goalEngine.proteinTarget),
+            lastMeals: Array(recentMeals),
+            theme: ThemeManager.shared.current.rawValue,
             waterConsumed: isWaterTrackingEnabled ? todayWaterMl : 0,
             waterGoal: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
             lastUpdated: Date()

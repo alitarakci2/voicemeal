@@ -391,6 +391,7 @@
 /* HomeView errors */
 "camera_simulator_error" = "Kamera simülatörde kullanılamaz";
 "mic_error" = "Mikrofon başlatılamadı";
+"mic_permission_denied" = "Mikrofon izni gerekli. Ayarlar'dan VoiceMeal için mikrofonu açabilirsin.";
 
 /* Units */
 "kg" = "kg";

@@ -180,6 +180,17 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onOpenURL { url in
+            guard url.scheme == "voicemeal" else { return }
+            if url.host == "record" {
+                selectedTab = 0
+                FeedbackService.shared.addLog("widget_deep_link: record")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    NotificationCenter.default.post(name: .widgetDeepLinkRecord, object: nil)
+                }
+            }
+            FeedbackService.shared.addLog("Deep link opened: \(url.absoluteString)")
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
                 backgroundedAt = Date()
