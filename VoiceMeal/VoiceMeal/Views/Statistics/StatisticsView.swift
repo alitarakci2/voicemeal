@@ -185,6 +185,7 @@ struct StatisticsView: View {
 
                                 BestDayCard(
                                     stats: currentStats,
+                                    gapKind: profiles.first.map { CalorieGapKind.from(profile: $0) } ?? .deficit,
                                     appLanguage: groqService.appLanguage
                                 )
                                 .environmentObject(themeManager)

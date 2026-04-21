@@ -567,12 +567,72 @@ class GroqService {
 
     // MARK: - Daily Insight
 
-    private func insightSystemPrompt(personalContext: String = "") -> String {
+    private func insightSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
         let expertBase = buildNutritionExpertPrompt(
             language: appLanguage == "en" ? "English" : "Turkish",
             locale: userLocale,
             personalContext: personalContext
         )
+
+        let modeRulesEN: String = {
+            switch gapKind {
+            case .deficit:
+                return """
+                MODE: CUTTING (calorie deficit goal)
+                - Eating target (dailyCalorieTarget) and calorie deficit (targetDeficit) are DIFFERENT things. Deficit = TDEE - eaten. Eating target = how much to eat.
+                - If the user exceeded their eating target, mention it
+                - If real deficit is greater than target deficit (lots of exercise), evaluate this positively
+                - Never show TDEE as the eating target
+                """
+            case .surplus:
+                return """
+                MODE: BULKING (calorie surplus goal — user wants to GAIN weight/muscle)
+                - Eating target (dailyCalorieTarget) and calorie surplus (targetDeficit is negative) are DIFFERENT things. Surplus = eaten - TDEE. Eating target = how much to eat.
+                - The user is TRYING to eat ABOVE TDEE. Do NOT warn about exceeding TDEE; that is the goal.
+                - If the user is behind their eating target (undereating), gently push them to eat more
+                - Never use the word "deficit" or "açık" — this user is bulking
+                - Never show TDEE as the eating target
+                """
+            case .maintain:
+                return """
+                MODE: MAINTENANCE (calorie balance — user wants to HOLD weight)
+                - The goal is to eat AT TDEE, not below or above. Target deficit is ~0.
+                - If the user is significantly below or above TDEE, note it neutrally; neither is "bad" but big swings each direction compound over days
+                - Never use the word "deficit" or "surplus" as a goal framing — the goal is balance
+                - Never show TDEE as the eating target
+                """
+            }
+        }()
+
+        let modeRulesTR: String = {
+            switch gapKind {
+            case .deficit:
+                return """
+                MOD: KİLO VERME (kalori açığı hedefi)
+                - Yeme hedefi (dailyCalorieTarget) ile kalori açığı (targetDeficit) FARKLI şeylerdir. Açık = TDEE - yenen. Yeme hedefi = ne kadar yemeli.
+                - Kullanıcı yeme hedefini aştıysa bunu belirt
+                - Gerçek açık hedef açıktan büyükse (çok spor yaptı) bunu olumlu değerlendir
+                - Asla TDEE'yi yeme hedefi olarak gösterme
+                """
+            case .surplus:
+                return """
+                MOD: KİLO ALMA / KAS YAPMA (kalori fazlası hedefi — kullanıcı KİLO/KAS ALMAK istiyor)
+                - Yeme hedefi (dailyCalorieTarget) ile kalori fazlası (targetDeficit negatif) FARKLI şeylerdir. Fazla = yenen - TDEE. Yeme hedefi = ne kadar yemeli.
+                - Kullanıcı TDEE'nin ÜZERİNDE yemeye ÇALIŞIYOR. TDEE'yi aşıyor diye uyarma; hedef bu.
+                - Kullanıcı yeme hedefinin altındaysa (az yiyor), daha çok yemesi için nazikçe teşvik et
+                - "Açık" veya "deficit" kelimesini ASLA kullanma — bu kullanıcı bulk yapıyor
+                - Asla TDEE'yi yeme hedefi olarak gösterme
+                """
+            case .maintain:
+                return """
+                MOD: KORUMA (kalori dengesi — kullanıcı kilosunu KORUMAK istiyor)
+                - Hedef TDEE kadar yemek, altında veya üstünde değil. Hedef açık ~0.
+                - Kullanıcı TDEE'nin belirgin altında veya üstündeyse nötr bir tonla belirt; hiçbiri "kötü" değil ama günlerce süren sapmalar birikir
+                - "Açık" veya "fazla"yı hedef çerçevesi olarak ASLA kullanma — hedef denge
+                - Asla TDEE'yi yeme hedefi olarak gösterme
+                """
+            }
+        }()
 
         if appLanguage == "en" {
             return """
@@ -585,16 +645,10 @@ class GroqService {
             Time period rules:
             - Morning: Plan the day, motivate, what to watch out for
             - Midday: How the morning went, afternoon suggestions
-            - Evening: Evening meal guidance based on remaining calories/deficit
+            - Evening: Evening meal guidance based on remaining calories
             - Night: Day summary, prep for tomorrow, bedtime advice
 
-            IMPORTANT:
-            - Eating target (dailyCalorieTarget) and calorie deficit (targetDeficit) \
-            are DIFFERENT things. Deficit = TDEE - eaten. Eating target = how much to eat.
-            - If the user exceeded their eating target, mention it
-            - But if real deficit is greater than target deficit (lots of exercise), \
-            evaluate this positively
-            - Never show TDEE as the eating target
+            \(modeRulesEN)
             Write maximum 3-4 complete sentences. Never cut off mid-sentence. Always end with a complete sentence.
             Never make lists, write plain text.
             """
@@ -609,16 +663,10 @@ class GroqService {
             Zaman dilimi kuralları:
             - Sabah: Günü planla, motivasyon ver, neye dikkat etmeli
             - Öğle: Sabah nasıl geçti, öğleden sonra için öneri
-            - Akşam: Kalan kalori/açık durumuna göre akşam yemeği yönlendirmesi
+            - Akşam: Kalan kalori durumuna göre akşam yemeği yönlendirmesi
             - Gece: Günün özeti, yarına hazırlık, uyku öncesi öneri
 
-            ÖNEMLİ:
-            - Yeme hedefi (dailyCalorieTarget) ile kalori açığı (targetDeficit) \
-            FARKLI şeylerdir. Açık = TDEE - yenen. Yeme hedefi = ne kadar yemeli.
-            - Kullanıcı yeme hedefini aştıysa bunu belirt
-            - Ama gerçek açık hedef açıktan büyükse (çok spor yaptı) \
-            bunu olumlu değerlendir
-            - Asla TDEE'yi yeme hedefi olarak gösterme
+            \(modeRulesTR)
             Maksimum 3-4 tam cümle yaz. Asla cümleyi yarıda kesme. Her zaman tam cümleyle bitir.
             Asla liste yapma, düz metin yaz.
             """
@@ -815,7 +863,8 @@ class GroqService {
             appLanguage: lang
         )
 
-        var systemPrompt = languageInstruction(for: lang) + "\n\n" + insightSystemPrompt(personalContext: personalContext) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        let dailyGapKind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + insightSystemPrompt(personalContext: personalContext, gapKind: dailyGapKind) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }
@@ -869,12 +918,28 @@ class GroqService {
 
     // MARK: - Weekly Insight
 
-    private func weeklyInsightSystemPrompt(personalContext: String = "") -> String {
+    private func weeklyInsightSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
         let expertBase = buildNutritionExpertPrompt(
             language: appLanguage == "en" ? "English" : "Turkish",
             locale: userLocale,
             personalContext: personalContext
         )
+
+        let modeHintEN: String = {
+            switch gapKind {
+            case .deficit:  return "User's goal is a weekly calorie DEFICIT (cutting). Best days = highest deficit days."
+            case .surplus:  return "User's goal is a weekly calorie SURPLUS (bulking, gaining weight/muscle). Best days = highest SURPLUS days (eaten above TDEE). Never frame falling below TDEE as progress — that is the opposite of the goal. Never use the word 'deficit'."
+            case .maintain: return "User's goal is MAINTENANCE (calorie balance). Best days = days closest to TDEE. Large swings in either direction are off-target. Don't frame deficit or surplus as progress."
+            }
+        }()
+
+        let modeHintTR: String = {
+            switch gapKind {
+            case .deficit:  return "Kullanıcının hedefi haftalık kalori AÇIĞI (kilo verme). En iyi günler = en yüksek açığın olduğu günler."
+            case .surplus:  return "Kullanıcının hedefi haftalık kalori FAZLASI (kilo/kas alma). En iyi günler = TDEE'nin en çok ÜZERİNDE yenen günler. TDEE'nin altına düşmeyi ilerleme olarak SUNMA — hedefin tersi. 'Açık' kelimesini kullanma."
+            case .maintain: return "Kullanıcının hedefi KORUMA (kalori dengesi). En iyi günler = TDEE'ye en yakın günler. Her iki yöndeki büyük sapmalar hedef dışıdır. Açık veya fazlayı ilerleme olarak sunma."
+            }
+        }()
 
         if appLanguage == "en" {
             return """
@@ -887,6 +952,8 @@ class GroqService {
             identify patterns (e.g. weekends vs weekdays), and give ONE actionable tip for next week. \
             Use scientific but conversational language. \
             You may use emojis. Never make lists, write plain text.
+
+            MODE: \(modeHintEN)
             """
         } else {
             return """
@@ -899,6 +966,8 @@ class GroqService {
             kalıpları belirle (hafta içi vs hafta sonu), ve gelecek hafta için BİR somut ipucu ver. \
             Bilimsel ama sohbet dili kullan. \
             Emoji kullanabilirsin. Asla liste yapma, düz metin yaz.
+
+            MOD: \(modeHintTR)
             """
         }
     }
@@ -1018,7 +1087,8 @@ class GroqService {
         )
         guard quality.shouldShowInsight else { return "" }
 
-        var systemPrompt = languageInstruction(for: lang) + "\n\n" + weeklyInsightSystemPrompt(personalContext: personalContext) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        let weeklyGapKind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + weeklyInsightSystemPrompt(personalContext: personalContext, gapKind: weeklyGapKind) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }
@@ -1071,12 +1141,28 @@ class GroqService {
     }
     // MARK: - Program Insight
 
-    private func programInsightSystemPrompt(personalContext: String = "") -> String {
+    private func programInsightSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
         let expertBase = buildNutritionExpertPrompt(
             language: appLanguage == "en" ? "English" : "Turkish",
             locale: userLocale,
             personalContext: personalContext
         )
+
+        let modeHintEN: String = {
+            switch gapKind {
+            case .deficit:  return "Program goal: weight loss (calorie deficit). Success = consistent deficit."
+            case .surplus:  return "Program goal: weight/muscle gain (calorie surplus). Success = consistent surplus. Never frame deficit as success. Never use the word 'deficit'."
+            case .maintain: return "Program goal: weight maintenance (calorie balance). Success = staying near TDEE. Don't frame deficit or surplus as success."
+            }
+        }()
+
+        let modeHintTR: String = {
+            switch gapKind {
+            case .deficit:  return "Program hedefi: kilo verme (kalori açığı). Başarı = istikrarlı açık."
+            case .surplus:  return "Program hedefi: kilo/kas alma (kalori fazlası). Başarı = istikrarlı fazla. Açığı başarı olarak SUNMA. 'Açık' kelimesini kullanma."
+            case .maintain: return "Program hedefi: kilo koruma (kalori dengesi). Başarı = TDEE'ye yakın kalmak. Açık veya fazlayı başarı olarak sunma."
+            }
+        }()
 
         if appLanguage == "en" {
             return """
@@ -1088,6 +1174,8 @@ class GroqService {
             Be motivating but realistic. \
             Add an important suggestion if applicable. \
             You may use emojis. Write plain text, no lists.
+
+            MODE: \(modeHintEN)
             """
         } else {
             return """
@@ -1099,6 +1187,8 @@ class GroqService {
             Motive edici ama gerçekçi ol. \
             Varsa önemli bir öneri ekle. \
             Emoji kullanabilirsin. Düz metin yaz, liste yapma.
+
+            MOD: \(modeHintTR)
             """
         }
     }
@@ -1184,7 +1274,13 @@ class GroqService {
                 """
         }
 
-        var systemPrompt = languageInstruction(for: lang) + "\n\n" + programInsightSystemPrompt(personalContext: personalContext) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        let programGapKind: CalorieGapKind
+        switch summary.goalDirection {
+        case .losing: programGapKind = .deficit
+        case .gaining: programGapKind = .surplus
+        case .maintenance: programGapKind = .maintain
+        }
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + programInsightSystemPrompt(personalContext: personalContext, gapKind: programGapKind) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }

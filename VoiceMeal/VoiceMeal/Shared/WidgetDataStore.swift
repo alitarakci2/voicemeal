@@ -25,7 +25,8 @@ struct WidgetData: Codable {
     }
 
     var deficitPercent: Double {
-        targetDeficit > 0 ? Double(actualDeficit) / Double(targetDeficit) : 0
+        guard targetDeficit != 0 else { return 0 }
+        return min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0)
     }
 
     static let placeholder = WidgetData(

@@ -46,6 +46,7 @@ struct ContentView: View {
             carbTarget: Double(goalEngine.carbTarget),
             fatTarget: Double(goalEngine.fatTarget),
             deficit: realDeficit,
+            targetDeficit: Int(goalEngine.cappedDailyDeficit),
             meals: meals
         )
     }

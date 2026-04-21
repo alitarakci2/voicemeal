@@ -7,12 +7,44 @@ import SwiftUI
 
 struct BestDayCard: View {
     let stats: [DayStat]
+    let gapKind: CalorieGapKind
     @EnvironmentObject var themeManager: ThemeManager
     var appLanguage: String
 
     var bestDay: DayStat? {
-        stats.filter { $0.hasData && $0.deficit > 0 }
-            .max { $0.deficit < $1.deficit }
+        let data = stats.filter { $0.hasData }
+        switch gapKind {
+        case .deficit:
+            return data.filter { $0.deficit > 0 }.max { $0.deficit < $1.deficit }
+        case .surplus:
+            return data.filter { $0.deficit < 0 }.min { $0.deficit < $1.deficit }
+        case .maintain:
+            return data.min { abs($0.deficit) < abs($1.deficit) }
+        }
+    }
+
+    var bestDayTitle: String {
+        switch gapKind {
+        case .deficit:  return L.bestDeficitDay.localized
+        case .surplus:  return L.bestSurplusDay.localized
+        case .maintain: return L.bestBalanceDay.localized
+        }
+    }
+
+    var bestDayEmoji: String {
+        switch gapKind {
+        case .deficit:  return "🔥"
+        case .surplus:  return "💪"
+        case .maintain: return "⚖️"
+        }
+    }
+
+    var bestDayValueColor: Color {
+        switch gapKind {
+        case .deficit:  return .orange
+        case .surplus:  return Color(hex: "5E9FFF")
+        case .maintain: return .green
+        }
     }
 
     var mostConsistentStreak: Int {
@@ -52,14 +84,14 @@ struct BestDayCard: View {
 
             Divider().opacity(0.2)
 
-            // Best deficit day
+            // Best day (mode-aware)
             if let best = bestDay {
                 HighlightRow(
-                    emoji: "🔥",
-                    title: L.bestDeficitDay.localized,
-                    value: "\(Int(best.deficit)) kcal",
+                    emoji: bestDayEmoji,
+                    title: bestDayTitle,
+                    value: "\(abs(Int(best.deficit))) kcal",
                     subtitle: formatDate(best.date),
-                    valueColor: .orange
+                    valueColor: bestDayValueColor
                 )
             }
 

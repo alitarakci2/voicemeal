@@ -11,10 +11,18 @@ extension HomeView {
         let remaining = goalEngine.dailyCalorieTarget - eatenCalories
         let targetDeficit = Int(goalEngine.cappedDailyDeficit)
         let actualDeficit = Int(goalEngine.tdee) - eatenCalories
+        let gapKind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
         let eatingProgress = goalEngine.dailyCalorieTarget > 0
             ? min(Double(eatenCalories) / Double(goalEngine.dailyCalorieTarget), 1.0) : 0
-        let deficitProgress = targetDeficit > 0
+        let deficitProgress: Double = targetDeficit != 0
             ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
+        let gapRingColor: Color = {
+            switch CalorieGapCopy.colorCue(actual: actualDeficit, target: targetDeficit, kind: gapKind) {
+            case .good: return Theme.green
+            case .warn: return Theme.orange
+            case .bad:  return Theme.red
+            }
+        }()
 
         return VStack(spacing: 16) {
             HStack {
@@ -68,11 +76,11 @@ extension HomeView {
                 )
 
                 metricRingCard(
-                    title: "calorie_deficit_label".localized,
-                    value: "\(actualDeficit)",
-                    subtitle: "/ \(targetDeficit) kcal",
+                    title: CalorieGapCopy.cardTitle(kind: gapKind),
+                    value: "\(abs(actualDeficit))",
+                    subtitle: "/ \(abs(targetDeficit)) kcal",
                     progress: deficitProgress,
-                    ringColor: actualDeficit < 0 ? Theme.red : Theme.green,
+                    ringColor: gapRingColor,
                     tooltip: Tooltips.caloricDeficitRing
                 )
 

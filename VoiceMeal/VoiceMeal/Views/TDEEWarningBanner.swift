@@ -9,8 +9,17 @@ struct TDEEWarningBanner: View {
     let hasWorkout: Bool
     let currentGoal: Int
     let updatedGoal: Int
+    let gapKind: CalorieGapKind
     let onAccept: () -> Void
     let onDismiss: () -> Void
+
+    private var noWorkoutBodyKey: String {
+        switch gapKind {
+        case .surplus:  return "banner_no_workout_body_surplus"
+        case .maintain: return "banner_no_workout_body_maintain"
+        case .deficit:  return "banner_no_workout_body"
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -60,7 +69,7 @@ struct TDEEWarningBanner: View {
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.orange)
 
-            Text(String(format: "banner_no_workout_body".localized, updatedGoal))
+            Text(String(format: noWorkoutBodyKey.localized, updatedGoal))
                 .font(Theme.captionFont)
                 .foregroundStyle(Theme.textSecondary)
 

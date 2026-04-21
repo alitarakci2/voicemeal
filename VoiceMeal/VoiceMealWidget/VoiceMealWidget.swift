@@ -123,6 +123,32 @@ private let widgetLanguage: String = {
 
 private let widgetBackground = Color(red: 0.04, green: 0.04, blue: 0.06)
 
+private enum WidgetGapMode { case deficit, surplus, maintain }
+
+private func widgetGapMode(target: Int) -> WidgetGapMode {
+    if target > 50 { return .deficit }
+    if target < -50 { return .surplus }
+    return .maintain
+}
+
+private func widgetGapLabel(mode: WidgetGapMode) -> String {
+    let isEN = widgetLanguage == "en"
+    switch mode {
+    case .deficit:  return isEN ? "deficit" : "acik"
+    case .surplus:  return isEN ? "surplus" : "fazla"
+    case .maintain: return isEN ? "balance" : "denge"
+    }
+}
+
+private func widgetGapLargeLabel(mode: WidgetGapMode) -> String {
+    let isEN = widgetLanguage == "en"
+    switch mode {
+    case .deficit:  return isEN ? "Calorie Deficit" : "Kalori Acigi"
+    case .surplus:  return isEN ? "Calorie Surplus" : "Kalori Fazlasi"
+    case .maintain: return isEN ? "Calorie Balance" : "Kalori Dengesi"
+    }
+}
+
 // MARK: - Medium Widget View
 
 struct MediumWidgetView: View {
@@ -158,9 +184,9 @@ struct MediumWidgetView: View {
 
                 WidgetMetricView(
                     icon: "🔥",
-                    value: "\(entry.data.actualDeficit)",
+                    value: "\(abs(entry.data.actualDeficit))",
                     unit: "kcal",
-                    label: widgetLanguage == "en" ? "deficit" : "acik",
+                    label: widgetGapLabel(mode: widgetGapMode(target: entry.data.targetDeficit)),
                     progress: entry.data.deficitPercent,
                     color: entry.data.deficitPercent >= 1.0 ? .green : .orange
                 )
@@ -220,9 +246,9 @@ struct LargeWidgetView: View {
 
                 WidgetMetricView(
                     icon: "🔥",
-                    value: "\(entry.data.actualDeficit)",
+                    value: "\(abs(entry.data.actualDeficit))",
                     unit: "kcal",
-                    label: widgetLanguage == "en" ? "deficit" : "acik",
+                    label: widgetGapLabel(mode: widgetGapMode(target: entry.data.targetDeficit)),
                     progress: entry.data.deficitPercent,
                     color: entry.data.deficitPercent >= 1.0 ? .green : .orange
                 )
@@ -255,9 +281,9 @@ struct LargeWidgetView: View {
 
                 LargeProgressRow(
                     icon: "🔥",
-                    label: widgetLanguage == "en" ? "Calorie Deficit" : "Kalori Acigi",
-                    consumed: entry.data.actualDeficit,
-                    target: entry.data.targetDeficit,
+                    label: widgetGapLargeLabel(mode: widgetGapMode(target: entry.data.targetDeficit)),
+                    consumed: abs(entry.data.actualDeficit),
+                    target: abs(entry.data.targetDeficit),
                     color: .orange
                 )
 
@@ -306,9 +332,9 @@ struct LockScreenWidgetView: View {
             VStack(spacing: 1) {
                 Text("🔥")
                     .font(.caption2)
-                Text("\(entry.data.actualDeficit)")
+                Text("\(abs(entry.data.actualDeficit))")
                     .font(.system(size: 13, weight: .bold))
-                Text(widgetLanguage == "en" ? "deficit" : "acik")
+                Text(widgetGapLabel(mode: widgetGapMode(target: entry.data.targetDeficit)))
                     .font(.system(size: 9))
                     .foregroundStyle(.secondary)
             }

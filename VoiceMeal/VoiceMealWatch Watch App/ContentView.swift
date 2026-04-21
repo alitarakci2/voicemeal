@@ -11,6 +11,33 @@ private func watchString(_ tr: String, _ en: String) -> String {
     return lang.hasPrefix("en") ? en : tr
 }
 
+private enum WatchGapMode { case deficit, surplus, maintain }
+
+private func watchGapMode(target: Int, threshold: Int = 50) -> WatchGapMode {
+    if target > threshold { return .deficit }
+    if target < -threshold { return .surplus }
+    return .maintain
+}
+
+private func watchGapLabel(mode: WatchGapMode) -> String {
+    switch mode {
+    case .deficit:  return watchString("Açık", "Deficit")
+    case .surplus:  return watchString("Fazla", "Surplus")
+    case .maintain: return watchString("Denge", "Balance")
+    }
+}
+
+private func watchGapColor(actual: Int, target: Int, mode: WatchGapMode) -> Color {
+    switch mode {
+    case .deficit:
+        return actual > 0 ? .green : .red
+    case .surplus:
+        return actual < 0 ? .green : .red
+    case .maintain:
+        return abs(actual) <= 100 ? .green : .orange
+    }
+}
+
 struct ContentView: View {
     @State private var sessionManager = WatchSessionManager()
 
@@ -87,10 +114,11 @@ struct CalorieSummaryView: View {
                     .frame(width: 1, height: 24)
 
                 VStack(spacing: 2) {
-                    Text("\(session.deficit)")
+                    let gapMode = watchGapMode(target: session.targetDeficit)
+                    Text("\(abs(session.deficit))")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(session.deficit > 0 ? .green : .red)
-                    Text(watchString("Açık", "Deficit"))
+                        .foregroundStyle(watchGapColor(actual: session.deficit, target: session.targetDeficit, mode: gapMode))
+                    Text(watchGapLabel(mode: gapMode))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.gray)
                 }

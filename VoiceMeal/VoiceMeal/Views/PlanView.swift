@@ -99,13 +99,17 @@ struct PlanView: View {
     }
 
     private func deficitColor(actual: Int, target: Int) -> Color {
-        if actual <= 0 {
-            return Theme.red
-        } else if target > 0 && actual >= Int(Double(target) * 0.80) {
-            return Theme.green
-        } else {
-            return Theme.orange
+        let kind = CalorieGapKind.from(signedTargetDeficit: target)
+        switch CalorieGapCopy.colorCue(actual: actual, target: target, kind: kind) {
+        case .good: return Theme.green
+        case .warn: return Theme.orange
+        case .bad:  return Theme.red
         }
+    }
+
+    private var profileGapKind: CalorieGapKind {
+        guard let p = profiles.first else { return .deficit }
+        return CalorieGapKind.from(profile: p)
     }
 
     // Completed past days only (excludes today's partial data)
@@ -549,7 +553,7 @@ struct PlanView: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(String(format: L.kcalDeficitFormat.localized, totalDeficitThisWeek))
+                        Text(CalorieGapCopy.kcalText(signedDeficit: totalDeficitThisWeek, kind: profileGapKind))
                             .font(.subheadline.bold())
                             .foregroundStyle(Theme.accent)
                         Text(trendText)
@@ -573,7 +577,7 @@ struct PlanView: View {
                         .frame(width: 40, alignment: .leading)
                     Text(L.calShort.localized)
                         .frame(maxWidth: .infinity)
-                    Text(L.deficitShort.localized)
+                    Text(CalorieGapCopy.shortLabel(kind: profileGapKind))
                         .frame(maxWidth: .infinity)
                     Text(L.proShort.localized)
                         .frame(maxWidth: .infinity)
@@ -605,8 +609,8 @@ struct PlanView: View {
                                 .frame(maxWidth: .infinity)
                                 .foregroundStyle(Theme.textPrimary)
                             let deficit = day.tdee - day.consumedCalories
-                            let targetDeficit = day.tdee - day.targetCalories
-                            Text("\(deficit)")
+                            let targetDeficit = day.snapshotTargetDeficit != 0 ? day.snapshotTargetDeficit : day.tdee - day.targetCalories
+                            Text("\(abs(deficit))")
                                 .frame(maxWidth: .infinity)
                                 .foregroundStyle(deficitColor(actual: deficit, target: targetDeficit))
                             Text("\(Int(day.consumedProtein))g")
@@ -647,10 +651,16 @@ struct PlanView: View {
                         .frame(maxWidth: .infinity)
                         .fontWeight(.bold)
                         .foregroundStyle(Theme.textPrimary)
-                    Text("\(weeklyAvgDeficit)")
+                    Text("\(abs(weeklyAvgDeficit))")
                         .frame(maxWidth: .infinity)
                         .fontWeight(.bold)
-                        .foregroundStyle(weeklyAvgDeficit > 0 ? Theme.green : Theme.red)
+                        .foregroundStyle({
+                            switch profileGapKind {
+                            case .deficit:  return weeklyAvgDeficit > 0 ? Theme.green : Theme.red
+                            case .surplus:  return weeklyAvgDeficit < 0 ? Theme.green : Theme.red
+                            case .maintain: return abs(weeklyAvgDeficit) <= 150 ? Theme.green : Theme.orange
+                            }
+                        }())
                     Text("\(Int(weeklyAvgProtein))g")
                         .frame(maxWidth: .infinity)
                         .fontWeight(.medium)
@@ -723,27 +733,35 @@ struct DayRowView: View {
         return min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0)
     }
 
+    private var planTargetDeficit: Int {
+        plan.snapshotTargetDeficit != 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
+    }
+
+    private var planGapKind: CalorieGapKind {
+        CalorieGapKind.from(signedTargetDeficit: planTargetDeficit)
+    }
+
     private var deficitText: String {
         switch plan.status {
         case .today:
             return L.ongoing.localized
         case .planned:
-            let d = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-            return String(format: L.deficitApproxFormat.localized, d)
+            return CalorieGapCopy.approxText(signedDeficit: planTargetDeficit, kind: planGapKind)
         case .missed:
             return ""
         default:
             let d = plan.tdee - plan.consumedCalories
-            return String(format: L.deficitValueFormat.localized, d)
+            return CalorieGapCopy.valueText(signedDeficit: d, kind: planGapKind)
         }
     }
 
     private var deficitColor: Color {
         let actual = plan.tdee - plan.consumedCalories
-        let target = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-        if actual <= 0 { return Theme.red }
-        if target > 0 && actual >= Int(Double(target) * 0.80) { return Theme.green }
-        return Theme.orange
+        switch CalorieGapCopy.colorCue(actual: actual, target: planTargetDeficit, kind: planGapKind) {
+        case .good: return Theme.green
+        case .warn: return Theme.orange
+        case .bad:  return Theme.red
+        }
     }
 
     var body: some View {
@@ -964,12 +982,18 @@ struct DayDetailSheetView: View {
         let eatingRingColor: Color = remaining < 0 ? Theme.red : Theme.accent
 
         let actualDeficit = plan.tdee - plan.consumedCalories
-        let targetDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-        let deficitProgress: Double = targetDeficit > 0 ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
-        let deficitRingColor: Color = actualDeficit <= 0 ? Theme.red : (targetDeficit > 0 && actualDeficit >= Int(Double(targetDeficit) * 0.80) ? Theme.green : Theme.orange)
+        let targetDeficit = plan.snapshotTargetDeficit != 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
+        let kind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
+        let progress: Double = targetDeficit != 0 ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
+        let gapRingColor: Color = {
+            switch CalorieGapCopy.colorCue(actual: actualDeficit, target: targetDeficit, kind: kind) {
+            case .good: return Theme.green
+            case .warn: return Theme.orange
+            case .bad:  return Theme.red
+            }
+        }()
 
         return HStack(spacing: 12) {
-            // Eating Goal ring
             detailRingCard(
                 title: "eating_goal".localized,
                 value: "\(plan.consumedCalories)",
@@ -978,13 +1002,12 @@ struct DayDetailSheetView: View {
                 ringColor: eatingRingColor
             )
 
-            // Deficit ring
             detailRingCard(
-                title: "calorie_deficit_label".localized,
-                value: "\(actualDeficit)",
-                subtitle: "/ \(targetDeficit) kcal",
-                progress: deficitProgress,
-                ringColor: deficitRingColor
+                title: CalorieGapCopy.cardTitle(kind: kind),
+                value: "\(abs(actualDeficit))",
+                subtitle: "/ \(abs(targetDeficit)) kcal",
+                progress: progress,
+                ringColor: gapRingColor
             )
         }
     }
@@ -1185,22 +1208,30 @@ struct DayDetailSheetView: View {
 
     private var deficitCard: some View {
         let actualDeficit = plan.tdee - plan.consumedCalories
-        let targetDeficit = plan.snapshotTargetDeficit > 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
-        let deficitGap = targetDeficit - actualDeficit
-        let deficitProgress: Double = targetDeficit > 0 ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
-        let deficitPercent = targetDeficit > 0 ? Int(deficitProgress * 100) : 0
+        let targetDeficit = plan.snapshotTargetDeficit != 0 ? plan.snapshotTargetDeficit : plan.tdee - plan.targetCalories
+        let kind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
+        let gap = targetDeficit - actualDeficit // signed; 0 = on-target
+        let progress: Double = targetDeficit != 0
+            ? min(max(Double(actualDeficit) / Double(targetDeficit), 0), 1.0) : 0
+        let progressPercent = targetDeficit != 0 ? Int(progress * 100) : 0
 
-        let deficitColor: Color
-        if actualDeficit <= 0 {
-            deficitColor = Theme.red
-        } else if targetDeficit > 0 && actualDeficit >= Int(Double(targetDeficit) * 0.80) {
-            deficitColor = Theme.green
-        } else {
-            deficitColor = Theme.orange
+        let gapColor: Color
+        switch CalorieGapCopy.colorCue(actual: actualDeficit, target: targetDeficit, kind: kind) {
+        case .good: gapColor = Theme.green
+        case .warn: gapColor = Theme.orange
+        case .bad:  gapColor = Theme.red
         }
 
+        let cardTitle: String = {
+            switch kind {
+            case .deficit:  return "calorie_deficit_card".localized
+            case .surplus:  return "calorie_surplus_card".localized
+            case .maintain: return "calorie_balance_card".localized
+            }
+        }()
+
         return VStack(alignment: .leading, spacing: 10) {
-            Text("\u{1F525} \("calorie_deficit_card".localized)")
+            Text("\u{1F525} \(cardTitle)")
                 .font(Theme.headlineFont)
                 .foregroundStyle(Theme.textPrimary)
 
@@ -1225,15 +1256,14 @@ struct DayDetailSheetView: View {
             Divider()
                 .overlay(Theme.cardBorder)
 
-            // Deficit progress bar
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("\(L.realDeficit.localized): \(actualDeficit) kcal")
+                    Text("\(CalorieGapCopy.realLabel(kind: kind)): \(abs(actualDeficit)) kcal")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
-                        .foregroundStyle(deficitColor)
+                        .foregroundStyle(gapColor)
                     Spacer()
-                    Text("\(L.goal.localized): \(targetDeficit) kcal")
+                    Text("\(L.goal.localized): \(abs(targetDeficit)) kcal")
                         .font(Theme.captionFont)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -1243,28 +1273,20 @@ struct DayDetailSheetView: View {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Theme.trackBackground)
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(deficitColor)
-                            .frame(width: max(geo.size.width * deficitProgress, 3))
+                            .fill(gapColor)
+                            .frame(width: max(geo.size.width * progress, 3))
                     }
                 }
                 .frame(height: 6)
 
-                if actualDeficit <= 0 {
-                    Label(String(format: "no_deficit_surplus".localized, abs(actualDeficit)), systemImage: "exclamationmark.triangle.fill")
-                        .font(Theme.captionFont)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Theme.red)
-                } else if deficitGap > 0 {
-                    Label(String(format: "deficit_behind_by".localized, deficitGap, deficitPercent), systemImage: "arrow.down.right")
-                        .font(Theme.captionFont)
-                        .fontWeight(.medium)
-                        .foregroundStyle(deficitColor)
-                } else {
-                    Label(String(format: "deficit_goal_reached".localized, deficitPercent), systemImage: "checkmark.circle.fill")
-                        .font(Theme.captionFont)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Theme.green)
-                }
+                deficitCardStatusLabel(
+                    kind: kind,
+                    actual: actualDeficit,
+                    target: targetDeficit,
+                    gap: gap,
+                    percent: progressPercent,
+                    color: gapColor
+                )
             }
         }
         .padding()
@@ -1274,6 +1296,42 @@ struct DayDetailSheetView: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
+    }
+
+    @ViewBuilder
+    private func deficitCardStatusLabel(kind: CalorieGapKind, actual: Int, target: Int, gap: Int, percent: Int, color: Color) -> some View {
+        switch kind {
+        case .deficit:
+            if actual <= 0 {
+                Label(String(format: "no_deficit_surplus".localized, abs(actual)), systemImage: "exclamationmark.triangle.fill")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(Theme.red)
+            } else if gap > 0 {
+                Label(String(format: "deficit_behind_by".localized, gap, percent), systemImage: "arrow.down.right")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(color)
+            } else {
+                Label(String(format: "deficit_goal_reached".localized, percent), systemImage: "checkmark.circle.fill")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(Theme.green)
+            }
+        case .surplus:
+            if actual >= 0 {
+                Label(String(format: L.noSurplusDeficitFormat.localized, abs(actual)), systemImage: "exclamationmark.triangle.fill")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(Theme.red)
+            } else if gap < 0 {
+                Label(String(format: L.surplusBehindByFormat.localized, abs(gap), percent), systemImage: "arrow.up.right")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(color)
+            } else {
+                Label(String(format: L.surplusGoalReachedFormat.localized, percent), systemImage: "checkmark.circle.fill")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(Theme.green)
+            }
+        case .maintain:
+            if abs(actual) <= 100 {
+                Label(L.balanceOnTarget.localized, systemImage: "checkmark.circle.fill")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(Theme.green)
+            } else {
+                Label(String(format: L.balanceOffFormat.localized, abs(actual)), systemImage: "exclamationmark.triangle.fill")
+                    .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(color)
+            }
+        }
     }
 
     private var macroSection: some View {

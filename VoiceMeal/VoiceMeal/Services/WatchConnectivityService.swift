@@ -29,6 +29,7 @@ class WatchConnectivityService: NSObject {
         carbTarget: Double,
         fatTarget: Double,
         deficit: Int,
+        targetDeficit: Int = 0,
         meals: [(name: String, amount: String, calories: Int, protein: Double, carbs: Double, fat: Double)] = []
     ) {
         var data: [String: Any] = [
@@ -41,6 +42,7 @@ class WatchConnectivityService: NSObject {
             "carbTarget": carbTarget,
             "fatTarget": fatTarget,
             "deficit": deficit,
+            "targetDeficit": targetDeficit,
             "timestamp": Date().timeIntervalSince1970,
             "appLanguage": UserDefaults.standard.stringArray(forKey: "AppleLanguages")?.first ?? "tr"
         ]

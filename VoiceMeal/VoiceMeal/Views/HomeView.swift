@@ -155,6 +155,7 @@ struct HomeView: View {
                             hasWorkout: goalEngine.hasWorkoutToday,
                             currentGoal: goalEngine.dailyCalorieTarget,
                             updatedGoal: goalEngine.updatedEatingGoalIfAccepted,
+                            gapKind: CalorieGapKind.from(signedTargetDeficit: Int(goalEngine.cappedDailyDeficit)),
                             onAccept: { applyTDEEUpdate() },
                             onDismiss: { dismissTdeeWarning() }
                         )
