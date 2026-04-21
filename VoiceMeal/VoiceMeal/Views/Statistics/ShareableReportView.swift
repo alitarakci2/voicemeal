@@ -1,0 +1,159 @@
+//
+//  ShareableReportView.swift
+//  VoiceMeal
+//
+
+import SwiftUI
+
+struct ShareableReportView: View {
+    let report: NutritionReport
+    let weekLabel: String
+    let avgProtein: Double
+    let avgCarbs: Double
+    let avgFat: Double
+    let theme: AppTheme
+
+    private var isEN: Bool { report.language == "en" }
+
+    private var proteinKcal: Double { avgProtein * 4 }
+    private var carbsKcal: Double { avgCarbs * 4 }
+    private var fatKcal: Double { avgFat * 9 }
+    private var totalKcal: Double { max(1, proteinKcal + carbsKcal + fatKcal) }
+
+    private var proteinPct: Double { proteinKcal / totalKcal }
+    private var carbsPct: Double { carbsKcal / totalKcal }
+    private var fatPct: Double { fatKcal / totalKcal }
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [theme.gradientTop, theme.gradientMid, Color(hex: "0A0A0F")],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 48) {
+                Spacer().frame(height: 60)
+
+                HStack(spacing: 12) {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(theme.accent)
+                    Text("VoiceMeal")
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(spacing: 16) {
+                    Text(isEN ? "Nutrition Report Card" : "Beslenme Karnesi")
+                        .font(.system(size: 40, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+
+                    Text(weekLabel)
+                        .font(.system(size: 26))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.08), lineWidth: 22)
+                        .frame(width: 340, height: 340)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(report.score) / 10.0)
+                        .stroke(
+                            AngularGradient(
+                                colors: [theme.accent, theme.accentLight, theme.accent],
+                                center: .center
+                            ),
+                            style: StrokeStyle(lineWidth: 22, lineCap: .round)
+                        )
+                        .frame(width: 340, height: 340)
+                        .rotationEffect(.degrees(-90))
+
+                    VStack(spacing: 4) {
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text("\(report.score)")
+                                .font(.system(size: 140, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                            Text("/10")
+                                .font(.system(size: 48, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                        Text(isEN ? "Weekly Score" : "Haftalık Skor")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+
+                Text(report.summary)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(8)
+                    .padding(.horizontal, 60)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                macroBar
+                    .padding(.horizontal, 60)
+
+                Spacer()
+
+                VStack(spacing: 8) {
+                    Text(isEN
+                         ? "Micronutrient analysis is an AI estimate. Not medical advice."
+                         : "Mikrobesin analizi AI tahminidir. Medikal öneri yerine geçmez.")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 60)
+
+                    Text("voicemeal.app")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(theme.accent)
+                }
+                .padding(.bottom, 60)
+            }
+        }
+        .frame(width: 1080, height: 1920)
+    }
+
+    private var macroBar: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(isEN ? "Macro Distribution" : "Makro Dağılımı")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.8))
+
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    Rectangle()
+                        .fill(Color(hex: "E74C3C"))
+                        .frame(width: geo.size.width * proteinPct)
+                    Rectangle()
+                        .fill(Color(hex: "F39C12"))
+                        .frame(width: geo.size.width * carbsPct)
+                    Rectangle()
+                        .fill(Color(hex: "2ECC71"))
+                        .frame(width: geo.size.width * fatPct)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .frame(height: 36)
+
+            HStack(spacing: 24) {
+                macroLegend(color: Color(hex: "E74C3C"), label: isEN ? "Protein" : "Protein", pct: proteinPct)
+                macroLegend(color: Color(hex: "F39C12"), label: isEN ? "Carbs" : "Karb.", pct: carbsPct)
+                macroLegend(color: Color(hex: "2ECC71"), label: isEN ? "Fat" : "Yağ", pct: fatPct)
+            }
+        }
+    }
+
+    private func macroLegend(color: Color, label: String, pct: Double) -> some View {
+        HStack(spacing: 8) {
+            Circle().fill(color).frame(width: 16, height: 16)
+            Text("\(label) \(Int((pct * 100).rounded()))%")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(.white.opacity(0.85))
+        }
+    }
+}

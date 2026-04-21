@@ -10,7 +10,9 @@ struct StatisticsView: View {
     @Query(sort: \DailySnapshot.date) private var snapshots: [DailySnapshot]
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
+    @Query(sort: \NutritionReport.weekStartDate, order: .reverse) private var nutritionReports: [NutritionReport]
     @Environment(GoalEngine.self) private var goalEngine
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var themeManager: ThemeManager
 
     @State private var statisticsService = StatisticsService()
@@ -19,6 +21,10 @@ struct StatisticsView: View {
     @State private var insightLoading = false
     @State private var scrollProxy: ScrollViewProxy?
     @State private var hasAppeared = false
+
+    @State private var isGeneratingReport = false
+    @State private var showReportSheet = false
+    @State private var mondayAutoGenAttempted = false
 
     @Environment(GroqService.self) private var groqService
 
@@ -140,6 +146,19 @@ struct StatisticsView: View {
                                 // Summary cards
                                 summaryCards
 
+                                // Nutrition Report Card (weekly only)
+                                NutritionReportCard(
+                                    report: reportContext.report,
+                                    weekKind: reportContext.weekKind,
+                                    daysOfData: reportContext.daysOfData,
+                                    avgProtein: statisticsService.weeklyAverageProtein,
+                                    avgCarbs: statisticsService.weeklyAverageCarbs,
+                                    avgFat: statisticsService.weeklyAverageFat,
+                                    isLoading: isGeneratingReport,
+                                    onTap: { showReportSheet = true }
+                                )
+                                .environmentObject(themeManager)
+
                                 // Charts
                                 CalorieChartView(stats: currentStats)
 
@@ -218,6 +237,110 @@ struct StatisticsView: View {
         .task {
             await loadWeeklyInsight()
         }
+        .task {
+            await autoGenerateMondayReportIfNeeded()
+        }
+        .sheet(isPresented: $showReportSheet) {
+            if let report = reportContext.report {
+                let cooldown = NutritionReportService.cooldownRemaining(for: report)
+                NutritionReportSheet(
+                    report: report,
+                    weekKind: reportContext.weekKind,
+                    avgProtein: statisticsService.weeklyAverageProtein,
+                    avgCarbs: statisticsService.weeklyAverageCarbs,
+                    avgFat: statisticsService.weeklyAverageFat,
+                    isCooldownActive: cooldown > 0,
+                    cooldownSecondsRemaining: cooldown,
+                    isRefreshing: isGeneratingReport,
+                    canRefresh: cooldown == 0 && reportContext.daysOfData >= 3,
+                    onRefresh: { Task { await refreshReport(force: true) } }
+                )
+                .environmentObject(themeManager)
+            }
+        }
+    }
+
+    // MARK: - Nutrition Report
+
+    private var reportContext: NutritionReportContext {
+        NutritionReportService.resolveContext(
+            today: .now,
+            allEntries: allEntries,
+            existingReports: nutritionReports,
+            language: groqService.appLanguage
+        )
+    }
+
+    private func autoGenerateMondayReportIfNeeded() async {
+        guard !mondayAutoGenAttempted else { return }
+        mondayAutoGenAttempted = true
+
+        let ctx = reportContext
+        guard ctx.weekKind == .lastWeek else { return }
+        guard ctx.report == nil else { return }
+        guard ctx.daysOfData >= 3 else { return }
+
+        await refreshReport(force: false)
+    }
+
+    private func refreshReport(force: Bool) async {
+        let ctx = reportContext
+        guard ctx.daysOfData >= 3 else {
+            FeedbackService.shared.addLog("nutrition_report_insufficient_data: days=\(ctx.daysOfData)")
+            return
+        }
+
+        if force, let existing = ctx.report {
+            let remaining = NutritionReportService.cooldownRemaining(for: existing)
+            if remaining > 0 {
+                FeedbackService.shared.addLog("nutrition_report_refresh_cooldown_hit: \(remaining)s")
+                return
+            }
+        }
+
+        guard let profile = profiles.first else { return }
+        isGeneratingReport = true
+
+        let payload = NutritionReportService.buildPayload(
+            entries: allEntries,
+            weekStart: ctx.weekStart,
+            weekEnd: ctx.weekEnd
+        )
+        let gapKind = CalorieGapKind.from(profile: profile)
+
+        do {
+            let result = try await groqService.generateNutritionReport(
+                entriesPayload: payload,
+                daysOfData: ctx.daysOfData,
+                gapKind: gapKind,
+                currentWeightKg: profile.currentWeightKg,
+                goalWeightKg: profile.goalWeightKg,
+                age: profile.age,
+                gender: profile.gender,
+                coachStyle: profile.coachStyle,
+                personalContext: profile.fullAIContext
+            )
+
+            _ = NutritionReportService.upsert(
+                payload: result,
+                weekStart: ctx.weekStart,
+                weekEnd: ctx.weekEnd,
+                gapKind: gapKind,
+                language: groqService.appLanguage,
+                daysOfData: ctx.daysOfData,
+                isComplete: ctx.weekKind == .lastWeek,
+                in: modelContext,
+                existingReports: nutritionReports
+            )
+
+            FeedbackService.shared.addLog(
+                "nutrition_report_generated: week=\(NutritionReportService.weekLabel(for: ctx.weekStart)) score=\(result.score) lang=\(groqService.appLanguage)"
+            )
+        } catch {
+            FeedbackService.shared.addErrorLog("nutrition_report_generation_failed: \(error.localizedDescription)")
+        }
+
+        isGeneratingReport = false
     }
 
     // MARK: - Custom Segmented Picker

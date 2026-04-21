@@ -30,6 +30,6 @@ struct VoiceMealApp: App {
             ContentView()
                 .environmentObject(ThemeManager.shared)
         }
-        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self])
+        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self, NutritionReport.self])
     }
 }

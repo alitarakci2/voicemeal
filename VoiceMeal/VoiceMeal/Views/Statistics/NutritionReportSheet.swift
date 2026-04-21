@@ -1,0 +1,398 @@
+//
+//  NutritionReportSheet.swift
+//  VoiceMeal
+//
+
+import SwiftUI
+import UIKit
+
+struct NutritionReportSheet: View {
+    let report: NutritionReport
+    let weekKind: NutritionReportWeekKind
+    let avgProtein: Double
+    let avgCarbs: Double
+    let avgFat: Double
+    let isCooldownActive: Bool
+    let cooldownSecondsRemaining: Int
+    let isRefreshing: Bool
+    let canRefresh: Bool
+    let onRefresh: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var themeManager: ThemeManager
+
+    @State private var shareURL: URL?
+    @State private var showShare = false
+
+    private var isEN: Bool { report.language == "en" }
+
+    private var weekLabel: String {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: isEN ? "en_US" : "tr_TR")
+        fmt.dateFormat = "d MMM"
+        let s = fmt.string(from: report.weekStartDate)
+        let e = fmt.string(from: report.weekEndDate)
+        return "\(s) – \(e)"
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    scoreHeader
+                    summarySection
+
+                    if !report.strengths.isEmpty {
+                        listSection(
+                            title: isEN ? "Strengths" : "Güçlü Yanlar",
+                            icon: "checkmark.seal.fill",
+                            iconColor: Color(hex: "2ECC71"),
+                            items: report.strengths
+                        )
+                    }
+
+                    if !report.improvements.isEmpty {
+                        listSection(
+                            title: isEN ? "Areas to Improve" : "Gelişim Alanları",
+                            icon: "target",
+                            iconColor: Color(hex: "F39C12"),
+                            items: report.improvements
+                        )
+                    }
+
+                    if !report.microInsights.isEmpty {
+                        microInsightsSection
+                    }
+
+                    if !report.weeklyPattern.isEmpty {
+                        patternSection
+                    }
+
+                    macroBarSection
+
+                    actionButtons
+                    generatedAtLine
+                    disclaimer
+
+                    Spacer(minLength: 20)
+                }
+                .padding()
+            }
+            .background(Theme.backgroundGradient.ignoresSafeArea())
+            .navigationTitle(isEN ? "Nutrition Report" : "Beslenme Karnesi")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(isEN ? "Close" : "Kapat") { dismiss() }
+                        .foregroundStyle(themeManager.current.accent)
+                }
+            }
+            .sheet(isPresented: $showShare) {
+                if let url = shareURL {
+                    ShareSheet(items: [url])
+                }
+            }
+        }
+    }
+
+    private var scoreHeader: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.08), lineWidth: 8)
+                    .frame(width: 88, height: 88)
+                Circle()
+                    .trim(from: 0, to: CGFloat(report.score) / 10.0)
+                    .stroke(
+                        AngularGradient(
+                            colors: [themeManager.current.accent, themeManager.current.accentLight, themeManager.current.accent],
+                            center: .center
+                        ),
+                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                    )
+                    .frame(width: 88, height: 88)
+                    .rotationEffect(.degrees(-90))
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(report.score)")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text("/10")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(weekKindLabel)
+                    .font(.caption)
+                    .foregroundStyle(Theme.textTertiary)
+                Text(weekLabel)
+                    .font(.title3.bold())
+                    .foregroundStyle(.white)
+                Text("\(report.daysOfData)/7 \(isEN ? "days logged" : "gün kayıtlı")")
+                    .font(.caption)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            Spacer()
+        }
+    }
+
+    private var summarySection: some View {
+        Text(report.summary)
+            .font(.system(size: 15))
+            .foregroundStyle(.white)
+            .lineSpacing(4)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+    }
+
+    private func listSection(title: String, icon: String, iconColor: Color, items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .foregroundStyle(iconColor)
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(items, id: \.self) { item in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("•").foregroundStyle(Theme.textSecondary)
+                        Text(item)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineSpacing(3)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var microInsightsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "leaf.fill")
+                    .foregroundStyle(Color(hex: "5DADE2"))
+                Text(isEN ? "Micronutrient Notes" : "Mikrobesin Notları")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+            }
+            Text(report.microInsights)
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.textSecondary)
+                .lineSpacing(3)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var patternSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .foregroundStyle(themeManager.current.accent)
+                Text(isEN ? "Weekly Pattern" : "Haftalık Örüntü")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+            }
+            Text(report.weeklyPattern)
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.textSecondary)
+                .lineSpacing(3)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var macroBarSection: some View {
+        let proteinKcal = avgProtein * 4
+        let carbsKcal = avgCarbs * 4
+        let fatKcal = avgFat * 9
+        let total = max(1, proteinKcal + carbsKcal + fatKcal)
+        let pP = proteinKcal / total
+        let pC = carbsKcal / total
+        let pF = fatKcal / total
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(isEN ? "Avg Macro Distribution" : "Ortalama Makro Dağılımı")
+                .font(.subheadline.bold())
+                .foregroundStyle(.white)
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    Rectangle()
+                        .fill(Color(hex: "E74C3C"))
+                        .frame(width: geo.size.width * pP)
+                    Rectangle()
+                        .fill(Color(hex: "F39C12"))
+                        .frame(width: geo.size.width * pC)
+                    Rectangle()
+                        .fill(Color(hex: "2ECC71"))
+                        .frame(width: geo.size.width * pF)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+            .frame(height: 14)
+
+            HStack(spacing: 14) {
+                legend(color: Color(hex: "E74C3C"), label: isEN ? "Protein \(Int(avgProtein))g" : "Protein \(Int(avgProtein))g")
+                legend(color: Color(hex: "F39C12"), label: isEN ? "Carbs \(Int(avgCarbs))g" : "Karb. \(Int(avgCarbs))g")
+                legend(color: Color(hex: "2ECC71"), label: isEN ? "Fat \(Int(avgFat))g" : "Yağ \(Int(avgFat))g")
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private func legend(color: Color, label: String) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Theme.textSecondary)
+        }
+    }
+
+    private var actionButtons: some View {
+        HStack(spacing: 12) {
+            Button(action: onRefresh) {
+                HStack(spacing: 6) {
+                    if isRefreshing {
+                        ProgressView().tint(.white).scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    Text(refreshButtonLabel)
+                        .font(.subheadline.bold())
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(canRefresh ? themeManager.current.accent : Color.white.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .disabled(!canRefresh || isRefreshing)
+
+            Button(action: prepareShare) {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text(isEN ? "Share" : "Paylaş")
+                        .font(.subheadline.bold())
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.white.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    private var refreshButtonLabel: String {
+        if isRefreshing {
+            return isEN ? "Refreshing…" : "Yenileniyor…"
+        }
+        if isCooldownActive {
+            let m = cooldownSecondsRemaining / 60
+            let s = cooldownSecondsRemaining % 60
+            return String(format: "%@ %02d:%02d", isEN ? "Cooldown" : "Bekleme", m, s)
+        }
+        return isEN ? "Refresh" : "Yenile"
+    }
+
+    private var generatedAtLine: some View {
+        HStack {
+            Spacer()
+            Text(
+                isEN
+                ? "Generated \(report.generatedAt.formatted(.dateTime.weekday(.wide).hour().minute()))"
+                : "Üretildi: \(report.generatedAt.formatted(.dateTime.weekday(.wide).hour().minute()))"
+            )
+            .font(.caption2)
+            .foregroundStyle(Theme.textTertiary)
+            Spacer()
+        }
+    }
+
+    private var disclaimer: some View {
+        Text(
+            isEN
+            ? "Micronutrient analysis is an AI estimate. Not medical advice."
+            : "Mikrobesin analizi AI tahminidir. Medikal öneri yerine geçmez."
+        )
+        .font(.caption2)
+        .foregroundStyle(Theme.textTertiary)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 4)
+    }
+
+    private var weekKindLabel: String {
+        switch weekKind {
+        case .thisWeek:   return isEN ? "This week" : "Bu hafta"
+        case .lastWeek:   return isEN ? "Last week" : "Geçen hafta"
+        case .inProgress: return isEN ? "In progress" : "Devam ediyor"
+        }
+    }
+
+    private func prepareShare() {
+        let view = ShareableReportView(
+            report: report,
+            weekLabel: weekLabel,
+            avgProtein: avgProtein,
+            avgCarbs: avgCarbs,
+            avgFat: avgFat,
+            theme: themeManager.current
+        )
+        guard let image = ImageExporter.render(view, size: CGSize(width: 1080, height: 1920), scale: 1.0) else {
+            return
+        }
+        let filename = NutritionReportService.shareFilename(for: report.weekStartDate)
+        guard let url = ImageExporter.writePNG(image, filename: filename) else { return }
+        shareURL = url
+        FeedbackService.shared.addLog("nutrition_report_shared: lang=\(report.language)")
+        showShare = true
+    }
+}
+
+// MARK: - UIKit Share Sheet bridge
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
