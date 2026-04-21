@@ -40,6 +40,7 @@ struct HomeView: View {
     @State var correctionQuestion = ""
 
     @State var scrollToTopTrigger = false
+    @State var voiceScrollTrigger = false
 
     @State var showCamera = false
     @State var capturedImage: UIImage?
@@ -174,6 +175,7 @@ struct HomeView: View {
                 }
 
                 mealEntrySection
+                    .id("voiceSection")
 
                 if showReviewCard && !reviewMeals.isEmpty {
                     mealReviewCard
@@ -230,6 +232,11 @@ struct HomeView: View {
         .onChange(of: scrollToTopTrigger) { _, _ in
             withAnimation {
                 proxy.scrollTo("top", anchor: .top)
+            }
+        }
+        .onChange(of: voiceScrollTrigger) { _, _ in
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                proxy.scrollTo("voiceSection", anchor: .top)
             }
         }
                 }

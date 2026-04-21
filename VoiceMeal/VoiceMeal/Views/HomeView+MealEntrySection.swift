@@ -327,6 +327,7 @@ extension HomeView {
     }
 
     func handleMicTap() {
+        voiceScrollTrigger.toggle()
         if speechService.isRecording {
             speechService.stopListening()
         } else {
