@@ -26,6 +26,9 @@ class FeedbackService: ObservableObject {
     var lastAction: String = ""
     var recentLogs: [String] = []
 
+    // Active voice session (nil when no voice capture in progress)
+    var currentVoiceSession: VoiceSession?
+
     func configureSentryScope() {
         SentrySDK.configureScope { [sessionID] scope in
             scope.setTag(value: sessionID, key: "session_id")
@@ -73,28 +76,33 @@ class FeedbackService: ObservableObject {
     }
 
     func sendReport(userMessage: String) async throws {
-        print("📧 [EmailJS] Sending report...")
-        print("📧 [EmailJS] ServiceID: \(serviceID)")
-        print("📧 [EmailJS] TemplateID: \(templateID)")
-        print("📧 [EmailJS] PublicKey: \(publicKey.prefix(4))...")
-
         SentrySDK.configureScope { scope in
             scope.setTag(value: "feedback_sent", key: "feedback")
         }
         _ = SentrySDK.capture(message: "📧 User Feedback [\(sessionID)]: \(userMessage.prefix(100))")
 
+        let systemInfo = buildSystemInfo()
+        let fullMessage = userMessage.isEmpty
+            ? systemInfo
+            : "\(userMessage)\n\n\(systemInfo)"
+        let subject = "[\(sessionID)] " + (userMessage.isEmpty
+            ? "User Report"
+            : String(userMessage.prefix(40)))
+
+        try await postToEmailJS(subject: subject, message: fullMessage)
+    }
+
+    /// Reusable system info block appended to every EmailJS report.
+    func buildSystemInfo() -> String {
         let device = UIDevice.current
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
-        let systemVersion = device.systemVersion
-        let deviceModel = device.model
-        let deviceName = device.name
 
-        let systemInfo = """
+        return """
         --- Rapor ID: \(sessionID) ---
         Sekme: \(currentTab)
-        iOS: \(systemVersion)
-        Cihaz: \(deviceModel)
+        iOS: \(device.systemVersion)
+        Cihaz: \(device.model)
         App: v\(appVersion) (build \(buildNumber))
         Tarih: \(Date().formatted())
 
@@ -104,21 +112,22 @@ class FeedbackService: ObservableObject {
         --- Sentry'de Ara ---
         session_id:\(sessionID)
         """
+    }
 
-        let fullMessage = userMessage.isEmpty
-            ? systemInfo
-            : "\(userMessage)\n\n\(systemInfo)"
+    /// Low-level EmailJS POST. Both `sendReport` and `sendVoiceReport` route through this.
+    func postToEmailJS(subject: String, message: String) async throws {
+        print("📧 [EmailJS] Sending: \(subject)")
 
-        let subject = "[\(sessionID)] " + (userMessage.isEmpty
-            ? "User Report"
-            : String(userMessage.prefix(40)))
+        let device = UIDevice.current
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
 
         let params: [String: String] = [
             "subject": subject,
-            "message": fullMessage,
+            "message": message,
             "current_tab": currentTab,
-            "ios_version": systemVersion,
-            "device": "\(deviceModel) - \(deviceName)",
+            "ios_version": device.systemVersion,
+            "device": "\(device.model) - \(device.name)",
             "app_version": "v\(appVersion) (\(buildNumber))",
             "date": Date().formatted(),
             "last_action": lastAction,
@@ -139,9 +148,6 @@ class FeedbackService: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        print("📧 [EmailJS] Request URL: \(url)")
-        print("📧 [EmailJS] Body: \(String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "nil")")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 

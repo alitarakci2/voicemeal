@@ -443,6 +443,12 @@ class GroqService {
             } catch let error where Self.isTransientError(error) {
                 retried = true
                 FeedbackService.shared.addLog("Groq retry (attempt 2)")
+                FeedbackService.shared.logVoiceEvent(
+                    icon: "🔁",
+                    message: "Groq retry (transient error)",
+                    data: ["error_type": Self.errorTypeTag(error)]
+                )
+                FeedbackService.shared.trackVoiceMetric(.retry)
                 let crumb = Breadcrumb()
                 crumb.level = .warning
                 crumb.category = "voice.parse.retry"

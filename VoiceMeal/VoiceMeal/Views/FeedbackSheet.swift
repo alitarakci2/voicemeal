@@ -17,6 +17,9 @@ struct FeedbackSheet: View {
     @StateObject private var speechService = SpeechService()
     @EnvironmentObject var themeManager: ThemeManager
     var appLanguage: String
+    /// When non-nil, the sheet becomes a voice-session report surface:
+    /// shows a context banner and routes send through `sendVoiceReport`.
+    var voiceSession: VoiceSession? = nil
 
     var body: some View {
         ZStack {
@@ -55,6 +58,10 @@ struct FeedbackSheet: View {
                 // SCROLLABLE CONTENT
                 ScrollView {
                     VStack(spacing: 16) {
+                        if let session = voiceSession, !sent {
+                            voiceContextBanner(session: session)
+                        }
+
                         if sent {
                             VStack(spacing: 16) {
                                 Image(systemName: "checkmark.circle.fill")
@@ -186,7 +193,14 @@ struct FeedbackSheet: View {
                             isSending = true
                             error = false
                             do {
-                                try await FeedbackService.shared.sendReport(userMessage: message)
+                                if let session = voiceSession {
+                                    try await FeedbackService.shared.sendVoiceReport(
+                                        userMessage: message,
+                                        session: session
+                                    )
+                                } else {
+                                    try await FeedbackService.shared.sendReport(userMessage: message)
+                                }
                                 sent = true
                             } catch {
                                 self.error = true
@@ -247,6 +261,49 @@ struct FeedbackSheet: View {
                 stopRecording()
             }
         }
+    }
+
+    // MARK: - Voice Context Banner
+
+    @ViewBuilder
+    private func voiceContextBanner(session: VoiceSession) -> some View {
+        let durationStr: String = {
+            let total = Int(session.durationSeconds)
+            let m = total / 60
+            let s = total % 60
+            return m > 0 ? "\(m)dk \(s)sn" : "\(s)sn"
+        }()
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "waveform.circle.fill")
+                .font(.title2)
+                .foregroundColor(themeManager.current.accent)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(appLanguage == "en"
+                     ? "Report last voice session"
+                     : "Son ses kaydı için sorun bildir")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Text(appLanguage == "en"
+                     ? "Session \(session.id) · \(durationStr) · \(session.groqCallCount) AI calls"
+                     : "Session \(session.id) · \(durationStr) · \(session.groqCallCount) AI çağrı")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text(appLanguage == "en"
+                     ? "Full transcript + meal details will be attached"
+                     : "Tüm transkript + yemek detayları eklenecek")
+                    .font(.caption2)
+                    .foregroundColor(.secondary.opacity(0.8))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(themeManager.current.accent.opacity(0.12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(themeManager.current.accent.opacity(0.3), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Actions

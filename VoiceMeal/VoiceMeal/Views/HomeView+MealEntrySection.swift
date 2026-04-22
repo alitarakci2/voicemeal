@@ -56,6 +56,8 @@ extension HomeView {
                             crumb.message = "User cancelled recording"
                             SentrySDK.addBreadcrumb(crumb)
                             FeedbackService.shared.addLog("Voice recording cancelled by user")
+                            FeedbackService.shared.logVoiceEvent(icon: "❌", message: "User cancelled recording")
+                            FeedbackService.shared.endVoiceSession(reason: .cancelled)
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 28))
@@ -164,6 +166,8 @@ extension HomeView {
             if showRetryButton && !originalSpeechText.isEmpty && !isAnalyzing {
                 Button {
                     FeedbackService.shared.addLog("Try Again tapped, transcript: \(originalSpeechText.prefix(50))")
+                    FeedbackService.shared.logVoiceEvent(icon: "🔄", message: "Try Again tapped")
+                    FeedbackService.shared.trackVoiceMetric(.tryAgain)
                     showRetryButton = false
                     runNormalMealParse(finalTranscript: originalSpeechText)
                 } label: {
@@ -197,7 +201,11 @@ extension HomeView {
                     .fontWeight(.bold)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Button { resetVoiceState() } label: {
+                Button {
+                    FeedbackService.shared.logVoiceEvent(icon: "❌", message: "User closed review card")
+                    FeedbackService.shared.endVoiceSession(reason: .cancelled)
+                    resetVoiceState()
+                } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title3)
                         .foregroundStyle(Theme.textTertiary)
@@ -315,6 +323,28 @@ extension HomeView {
                 }
                 .buttonStyle(.plain)
                 .disabled(isListening)
+
+                Button {
+                    if let current = FeedbackService.shared.currentVoiceSession {
+                        voiceReportSession = current
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("🐛")
+                        Text(groqService.appLanguage == "en"
+                             ? "Report issue with this session"
+                             : "Bu kayıtla ilgili sorun bildir")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(Theme.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
+                .disabled(isListening || FeedbackService.shared.currentVoiceSession == nil)
+                .accessibilityLabel(groqService.appLanguage == "en"
+                                    ? "Report issue, action button"
+                                    : "Sorun bildir, aksiyon butonu")
             }
             .padding(16)
         }
@@ -332,6 +362,12 @@ extension HomeView {
         showSavedConfirmation = false
         do {
             try speechService.startListening()
+            FeedbackService.shared.startVoiceSession()
+            FeedbackService.shared.logVoiceEvent(
+                icon: "🔧",
+                message: "Post-save correction started",
+                data: ["target_entry": entry.name]
+            )
         } catch {
             errorMessage = speechService.lastError ?? "mic_error".localized
         }
@@ -342,6 +378,12 @@ extension HomeView {
         errorMessage = nil
         do {
             try speechService.startListening()
+            FeedbackService.shared.logVoiceEvent(
+                icon: "🔧",
+                message: "Fix meal: \(meal.name)",
+                data: ["target_meal": meal.name]
+            )
+            FeedbackService.shared.trackVoiceMetric(.correction)
         } catch {
             errorMessage = speechService.lastError ?? "mic_error".localized
             fixingMealName = nil
@@ -402,6 +444,12 @@ extension HomeView {
         reviewMeals = meals
         manuallyEditedMealNames.insert(oldMeal.name)
         FeedbackService.shared.addLog("Inline amount edit: \(oldMeal.name) \(oldNumeric)→\(newNumericString), ratio \(String(format: "%.2f", ratio))")
+        FeedbackService.shared.logVoiceEvent(
+            icon: "✏️",
+            message: "Amount: \(oldMeal.name) \(oldNumeric)→\(newNumericString)",
+            data: ["ratio": String(format: "%.2f", ratio)]
+        )
+        FeedbackService.shared.trackVoiceMetric(.inlineEdit)
     }
 
     func commitCaloriesEdit(at index: Int, newCalories: Double) {
@@ -414,6 +462,11 @@ extension HomeView {
         reviewMeals = meals
         manuallyEditedMealNames.insert(oldMeal.name)
         FeedbackService.shared.addLog("Inline calories edit: \(oldMeal.name) → \(Int(newCalories))kcal (macros unchanged)")
+        FeedbackService.shared.logVoiceEvent(
+            icon: "✏️",
+            message: "Calories: \(oldMeal.name) → \(Int(newCalories))kcal"
+        )
+        FeedbackService.shared.trackVoiceMetric(.inlineEdit)
     }
 
     func deleteReviewMeal(at index: Int) {
@@ -435,6 +488,12 @@ extension HomeView {
         crumb.data = ["meal_name": removed.name, "remaining_count": meals.count]
         SentrySDK.addBreadcrumb(crumb)
         FeedbackService.shared.addLog("Meal removed from review: \(removed.name)")
+        FeedbackService.shared.logVoiceEvent(
+            icon: "🗑",
+            message: "Removed: \(removed.name)",
+            data: ["remaining": "\(meals.count)"]
+        )
+        FeedbackService.shared.trackVoiceMetric(.mealRemoved)
     }
 
     func handleMicTap() {
@@ -458,9 +517,18 @@ extension HomeView {
                 try speechService.startListening()
                 FeedbackService.shared.addLog("Voice recording started")
                 FeedbackService.shared.lastAction = "Meal entry"
+                if !preserveState {
+                    FeedbackService.shared.startVoiceSession()
+                }
+                FeedbackService.shared.logVoiceEvent(
+                    icon: "🎤",
+                    message: preserveState ? "Record started (continue)" : "Record started",
+                    data: ["preserve_state": "\(preserveState)"]
+                )
             } catch {
                 errorMessage = speechService.lastError ?? "mic_error".localized
                 print("❌ [HomeView] Mic start error: \(error)")
+                FeedbackService.shared.logVoiceEvent(icon: "❌", message: "Mic start error: \(error.localizedDescription)")
             }
         }
     }
@@ -504,14 +572,29 @@ extension HomeView {
             isAnalyzing = true
             errorMessage = nil
 
+            FeedbackService.shared.logVoiceEvent(
+                icon: "📝",
+                message: "Fix transcript: \(newText.prefix(80))",
+                data: ["target_meal": meal.name]
+            )
+            FeedbackService.shared.logVoiceEvent(icon: "📤", message: "Groq request (fix)")
+            FeedbackService.shared.trackVoiceMetric(.groqCall)
+
             Task {
                 do {
                     let response = try await groqService.parseMeals(transcript: fixTranscript, personalContext: profiles.first?.fullAIContext ?? "")
                     if let updatedMeal = response.meals.first {
                         reviewMeals[mealIndex] = updatedMeal
+                        FeedbackService.shared.logVoiceEvent(
+                            icon: "📥",
+                            message: "Groq fixed: \(updatedMeal.name) \(updatedMeal.amount) \(Int(updatedMeal.calories ?? 0))kcal"
+                        )
+                    } else {
+                        FeedbackService.shared.logVoiceEvent(icon: "📥", message: "Groq fix: no meal returned")
                     }
                 } catch {
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? "mic_error".localized
+                    FeedbackService.shared.logVoiceEvent(icon: "❌", message: "Groq fix error: \(error.localizedDescription)")
                 }
                 fixingMealName = nil
                 isAnalyzing = false
@@ -548,13 +631,24 @@ extension HomeView {
             errorMessage = nil
             correctionQuestion = ""
 
+            FeedbackService.shared.logVoiceEvent(
+                icon: "📝",
+                message: "Correction transcript: \(newText.prefix(80))",
+                data: ["target_entry": entry.name]
+            )
+            FeedbackService.shared.logVoiceEvent(icon: "📤", message: "Groq request (correction)")
+            FeedbackService.shared.trackVoiceMetric(.groqCall)
+            FeedbackService.shared.trackVoiceMetric(.correction)
+
             Task {
                 do {
                     let response = try await groqService.parseMeals(transcript: correctionTranscript, personalContext: profiles.first?.fullAIContext ?? "")
+                    FeedbackService.shared.logVoiceEvent(icon: "📥", message: "Groq correction applied")
                     applyCorrection(to: entry, from: response)
                     entryToCorrect = nil
                 } catch {
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? "mic_error".localized
+                    FeedbackService.shared.logVoiceEvent(icon: "❌", message: "Groq correction error: \(error.localizedDescription)")
                     entryToCorrect = nil
                 }
                 isAnalyzing = false
@@ -566,9 +660,18 @@ extension HomeView {
         if !clarificationQuestion.isEmpty && !originalSpeechText.isEmpty {
             transcript = originalSpeechText + ". " + newText
             clarificationQuestion = ""
+            FeedbackService.shared.logVoiceEvent(
+                icon: "📝",
+                message: "Clarification answer: \(newText.prefix(80))"
+            )
+            FeedbackService.shared.trackVoiceMetric(.clarification)
         } else {
             originalSpeechText = newText
             transcript = newText
+            FeedbackService.shared.logVoiceEvent(
+                icon: "📝",
+                message: "Transcript: \(newText.prefix(120))"
+            )
         }
 
         runNormalMealParse(finalTranscript: transcript)
@@ -579,26 +682,50 @@ extension HomeView {
         errorMessage = nil
         showRetryButton = false
 
+        FeedbackService.shared.logVoiceEvent(
+            icon: "📤",
+            message: "Groq request",
+            data: ["chars": "\(finalTranscript.count)"]
+        )
+        FeedbackService.shared.trackVoiceMetric(.groqCall)
+
         Task {
             do {
                 let response = try await groqService.parseMeals(transcript: finalTranscript, personalContext: profiles.first?.fullAIContext ?? "")
 
                 if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
                     addWater(ml: waterMl, source: "voice")
+                    FeedbackService.shared.logVoiceEvent(icon: "💧", message: "Water: \(waterMl)ml")
                 }
 
                 if response.isCorrection == true {
+                    FeedbackService.shared.logVoiceEvent(
+                        icon: "📥",
+                        message: "Groq: isCorrection → \(response.targetFoodName ?? "?")"
+                    )
                     handleCorrection(response)
                 } else if response.clarification_needed {
                     reviewMeals = response.meals
                     clarificationQuestion = response.clarification_question ?? ""
                     showReviewCard = true
                     FeedbackService.shared.addLog("Clarification needed: \(clarificationQuestion)")
+                    FeedbackService.shared.logVoiceEvent(
+                        icon: "🤔",
+                        message: "Clarification: \(clarificationQuestion.prefix(100))"
+                    )
                 } else if !response.meals.isEmpty {
                     reviewMeals = response.meals
                     showReviewCard = true
+                    let totalCal = response.meals.reduce(0) { $0 + Int($1.calories ?? 0) }
+                    FeedbackService.shared.logVoiceEvent(
+                        icon: "🖼",
+                        message: "Review card: \(response.meals.count) yemek, \(totalCal)kcal",
+                        data: ["meals": response.meals.map { $0.name }.joined(separator: ",")]
+                    )
                 } else if response.waterMl != nil {
                     showSavedConfirmation = true
+                    FeedbackService.shared.logVoiceEvent(icon: "✅", message: "Water-only saved")
+                    FeedbackService.shared.endVoiceSession(reason: .saved)
                     Task {
                         try? await Task.sleep(for: .seconds(2))
                         showSavedConfirmation = false
@@ -613,10 +740,19 @@ extension HomeView {
                     crumb.data = ["transcript_chars": finalTranscript.count]
                     SentrySDK.addBreadcrumb(crumb)
                     FeedbackService.shared.addLog("voice.parse.no_meal_detected: \(finalTranscript.count) chars")
+                    FeedbackService.shared.logVoiceEvent(
+                        icon: "❌",
+                        message: "No meal detected",
+                        data: ["chars": "\(finalTranscript.count)"]
+                    )
                 }
             } catch {
                 print("❌ [HomeView] Groq error: \(error)")
                 FeedbackService.shared.addErrorLog(error.localizedDescription)
+                FeedbackService.shared.logVoiceEvent(
+                    icon: "❌",
+                    message: "Groq error: \(error.localizedDescription)"
+                )
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? "Bir hata olu\u{015F}tu, tekrar deneyin"
                 clarificationQuestion = ""
                 reviewMeals = []
@@ -671,6 +807,12 @@ extension HomeView {
         try? modelContext.save()
         saveTodaySnapshot()
 
+        FeedbackService.shared.logVoiceEvent(
+            icon: "✅",
+            message: "Correction applied: \(entry.name) → \(entry.calories)kcal"
+        )
+        FeedbackService.shared.endVoiceSession(reason: .saved)
+
         showCorrected = true
         Task {
             try? await Task.sleep(for: .seconds(2))
@@ -713,6 +855,19 @@ extension HomeView {
         }
         let totalCal = meals.reduce(0) { $0 + Int($1.calories ?? 0) }
         FeedbackService.shared.addLog("Meal confirmed: \(meals.count) items, \(totalCal)kcal total")
+        FeedbackService.shared.logVoiceEvent(
+            icon: "✅",
+            message: "Saved: \(meals.count) items, \(totalCal)kcal",
+            data: ["edited_count": "\(manuallyEditedMealNames.count)"]
+        )
+        FeedbackService.shared.endVoiceSession(reason: .saved)
+
+        // One-tap problematic-session prompt (spec thresholds)
+        if let session = FeedbackService.shared.currentVoiceSession, session.isProblematic {
+            problematicSessionToReport = session
+            showProblematicPrompt = true
+        }
+
         if !manuallyEditedMealNames.isEmpty {
             let crumb = Breadcrumb()
             crumb.level = .info

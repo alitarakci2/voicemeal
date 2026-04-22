@@ -4,6 +4,7 @@
 //
 
 import AVFoundation
+import Sentry
 import SwiftData
 import SwiftUI
 
@@ -63,6 +64,12 @@ struct HomeView: View {
     @State var showPermissionAlert = false
     @State var showRetryButton = false
     @State var manuallyEditedMealNames: Set<String> = []
+    @State var voiceReportSession: VoiceSession?
+    @State var sessionBackgroundedAt: Date?
+    @State var problematicSessionToReport: VoiceSession?
+    @State var showProblematicPrompt = false
+    @State var showReportThanksToast = false
+    @EnvironmentObject var themeManager: ThemeManager
 
     @State var scrollToTopTrigger = false
     @State var voiceScrollTrigger = false
@@ -289,6 +296,7 @@ struct HomeView: View {
             speechService.onMaxDurationReached = {
                 errorMessage = L.maxRecordingDurationReached.localized
                 FeedbackService.shared.addLog("Voice recording auto-stopped: max duration reached")
+                FeedbackService.shared.logVoiceEvent(icon: "⏰", message: "Max duration reached — auto stop")
             }
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {
@@ -321,7 +329,16 @@ struct HomeView: View {
                 }
                 if let speechError = speechService.lastError {
                     errorMessage = speechError
+                    FeedbackService.shared.logVoiceEvent(
+                        icon: "❌",
+                        message: "Speech error: \(speechError)"
+                    )
                 } else if !speechService.transcript.isEmpty {
+                    FeedbackService.shared.logVoiceEvent(
+                        icon: "⏹",
+                        message: "Record stopped",
+                        data: ["chars": "\(speechService.transcript.count)"]
+                    )
                     sendToGroq()
                 }
             }
@@ -335,9 +352,28 @@ struct HomeView: View {
                     }
                     loadMorningTDEE()
                 }
-            } else if newPhase == .background && speechService.isRecording {
-                speechService.cancelListening()
-                FeedbackService.shared.addLog("Voice cancelled due to background transition")
+                // Abandonment check: if we backgrounded mid-review and stayed >= 60s away
+                if let bgAt = sessionBackgroundedAt {
+                    let elapsed = Date().timeIntervalSince(bgAt)
+                    if elapsed >= 60, FeedbackService.shared.currentVoiceSession != nil {
+                        FeedbackService.shared.logVoiceEvent(
+                            icon: "⏳",
+                            message: "Abandoned after \(Int(elapsed))s background"
+                        )
+                        FeedbackService.shared.endVoiceSession(reason: .abandoned)
+                    }
+                    sessionBackgroundedAt = nil
+                }
+            } else if newPhase == .background {
+                if speechService.isRecording {
+                    speechService.cancelListening()
+                    FeedbackService.shared.addLog("Voice cancelled due to background transition")
+                    FeedbackService.shared.logVoiceEvent(icon: "❌", message: "Cancelled: app backgrounded")
+                    FeedbackService.shared.endVoiceSession(reason: .cancelled)
+                } else if FeedbackService.shared.currentVoiceSession != nil && showReviewCard {
+                    // Arm the abandonment timer — finalized on foreground if >= 60s elapsed
+                    sessionBackgroundedAt = Date()
+                }
             }
         }
         .sensoryFeedback(.success, trigger: showSavedConfirmation) { _, newValue in newValue }
@@ -387,6 +423,17 @@ struct HomeView: View {
             EditFoodEntryView(entry: entry) {
                 saveTodaySnapshot()
             }
+        }
+        .sheet(item: $voiceReportSession) { session in
+            FeedbackSheet(
+                isPresented: Binding(
+                    get: { voiceReportSession != nil },
+                    set: { if !$0 { voiceReportSession = nil } }
+                ),
+                appLanguage: groqService.appLanguage,
+                voiceSession: session
+            )
+            .environmentObject(themeManager)
         }
         .alert("delete_confirm".localized, isPresented: $showDeleteAlert) {
             Button(L.delete.localized, role: .destructive) {
@@ -479,6 +526,14 @@ struct HomeView: View {
         .sheet(isPresented: $showBarcodeScanner) {
             BarcodeResultView()
         }
+        .modifier(
+            VoiceReportPromptModifier(
+                appLanguage: groqService.appLanguage,
+                showPrompt: $showProblematicPrompt,
+                session: $problematicSessionToReport,
+                showThanksToast: $showReportThanksToast
+            )
+        )
     }
 
     // MARK: - HealthKit
