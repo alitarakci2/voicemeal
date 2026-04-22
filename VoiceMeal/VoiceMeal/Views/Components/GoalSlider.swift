@@ -24,13 +24,16 @@ struct GoalSlider: View {
     let currentWeight: Double
     let goalDays: Int
 
+    @State private var localValue: Double = 0
+    @State private var isDragging: Bool = false
+
     private let trackHeight: CGFloat = 8
     private let thumbSize: CGFloat = 28
     private let labelOffset: CGFloat = 44
 
     private var weeklyChange: Double {
         guard goalDays > 0 else { return 0 }
-        return (currentWeight - value) / (Double(goalDays) / 7.0)
+        return (currentWeight - localValue) / (Double(goalDays) / 7.0)
     }
 
     private var absWeeklyChange: Double { abs(weeklyChange) }
@@ -65,7 +68,7 @@ struct GoalSlider: View {
     private var progress: Double {
         let span = range.upperBound - range.lowerBound
         guard span > 0 else { return 0 }
-        return min(max((value - range.lowerBound) / span, 0), 1)
+        return min(max((localValue - range.lowerBound) / span, 0), 1)
     }
 
     private var weeklyChangeText: String {
@@ -101,10 +104,10 @@ struct GoalSlider: View {
                     .frame(maxHeight: .infinity)
 
                 Capsule()
-                    .fill(levelColor)
+                    .fill(Theme.accent)
                     .frame(width: max(thumbX, thumbSize / 2), height: trackHeight)
                     .frame(maxHeight: .infinity)
-                    .animation(.easeOut(duration: 0.2), value: levelColor)
+                    .animation(nil, value: localValue)
 
                 Circle()
                     .fill(Color.white)
@@ -112,26 +115,43 @@ struct GoalSlider: View {
                     .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
                     .overlay(
                         Circle()
-                            .stroke(levelColor, lineWidth: 2)
+                            .stroke(Theme.accent, lineWidth: 2)
                     )
                     .offset(x: thumbX - thumbSize / 2)
+                    .animation(nil, value: localValue)
 
                 floatingLabel
                     .fixedSize()
                     .offset(x: thumbX, y: -labelOffset)
                     .alignmentGuide(.leading) { d in d[HorizontalAlignment.center] }
+                    .animation(nil, value: localValue)
             }
             .frame(height: max(thumbSize, trackHeight))
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { g in
-                        updateValue(fromX: g.location.x, trackWidth: trackWidth)
+                        isDragging = true
+                        updateLocal(fromX: g.location.x, trackWidth: trackWidth)
+                    }
+                    .onEnded { _ in
+                        if value != localValue {
+                            value = localValue
+                        }
+                        isDragging = false
                     }
             )
         }
         .frame(height: thumbSize + labelOffset + 8)
         .padding(.top, labelOffset + 4)
+        .onAppear {
+            localValue = value
+        }
+        .onChange(of: value) { _, newValue in
+            if !isDragging && newValue != localValue {
+                localValue = newValue
+            }
+        }
         .sensoryFeedback(trigger: aggressivenessLevel) { _, new in
             switch new {
             case .safe, .moderate: return .impact(weight: .light)
@@ -148,9 +168,11 @@ struct GoalSlider: View {
             case .increment:
                 let next = min(value + step, range.upperBound)
                 value = next
+                localValue = next
             case .decrement:
                 let next = max(value - step, range.lowerBound)
                 value = next
+                localValue = next
             @unknown default:
                 break
             }
@@ -158,7 +180,7 @@ struct GoalSlider: View {
     }
 
     private var accessibilityValueText: String {
-        let kgText = String(format: "%.1f", value) + " " + "kg".localized
+        let kgText = String(format: "%.1f", localValue) + " " + "kg".localized
         let weekly = weeklyChangeText
         if accessibilityLevelText.isEmpty {
             return "\(kgText), \(weekly)"
@@ -168,7 +190,7 @@ struct GoalSlider: View {
 
     private var floatingLabel: some View {
         VStack(spacing: 2) {
-            Text("\(String(format: "%.1f", value)) \("kg".localized)")
+            Text("\(String(format: "%.1f", localValue)) \("kg".localized)")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
 
@@ -195,10 +217,9 @@ struct GoalSlider: View {
                 .frame(width: 8, height: 5)
                 .offset(y: 5)
         }
-        .animation(.easeOut(duration: 0.2), value: aggressivenessLevel)
     }
 
-    private func updateValue(fromX x: CGFloat, trackWidth: CGFloat) {
+    private func updateLocal(fromX x: CGFloat, trackWidth: CGFloat) {
         let usable = trackWidth - thumbSize
         guard usable > 0 else { return }
         let clampedX = min(max(0, x - thumbSize / 2), usable)
@@ -207,8 +228,8 @@ struct GoalSlider: View {
         let raw = range.lowerBound + Double(ratio) * span
         let stepped = (raw / step).rounded() * step
         let clamped = min(max(range.lowerBound, stepped), range.upperBound)
-        if clamped != value {
-            value = clamped
+        if clamped != localValue {
+            localValue = clamped
         }
     }
 }
