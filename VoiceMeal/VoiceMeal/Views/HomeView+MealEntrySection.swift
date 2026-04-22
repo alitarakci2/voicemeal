@@ -18,32 +18,60 @@ extension HomeView {
             HStack {
                 Spacer()
 
-                Button {
-                    handleMicTap()
-                } label: {
-                    VStack(spacing: 10) {
-                        Image(systemName: speechService.isRecording ? "mic.circle.fill" : "mic.circle.fill")
-                            .font(.system(size: 64))
-                            .foregroundStyle(speechService.isRecording ? Theme.red : Theme.accent)
-                            .padding(28)
-                            .background(
-                                (speechService.isRecording ? Theme.red : Theme.accent).opacity(0.1)
-                            )
-                            .clipShape(Circle())
+                ZStack(alignment: .topTrailing) {
+                    Button {
+                        handleMicTap()
+                    } label: {
+                        VStack(spacing: 10) {
+                            Image(systemName: "mic.circle.fill")
+                                .font(.system(size: 64))
+                                .foregroundStyle(speechService.isRecording ? Theme.red : Theme.accent)
+                                .padding(28)
+                                .background(
+                                    (speechService.isRecording ? Theme.red : Theme.accent).opacity(0.1)
+                                )
+                                .clipShape(Circle())
+                                .symbolEffect(.pulse, options: .repeating, isActive: speechService.isRecording)
 
-                        Text(speechService.isRecording
-                             ? "listening".localized
-                             : "voice_record".localized)
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.white)
+                            Text(speechService.isRecording
+                                 ? "listening".localized
+                                 : "voice_record".localized)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isAnalyzing)
+                    .sensoryFeedback(.impact, trigger: speechService.isRecording)
+
+                    if speechService.isRecording {
+                        Button {
+                            speechService.cancelListening()
+                            originalSpeechText = ""
+                            errorMessage = nil
+                            showRetryButton = false
+                            let crumb = Breadcrumb()
+                            crumb.level = .info
+                            crumb.category = "voice.cancelled"
+                            crumb.message = "User cancelled recording"
+                            SentrySDK.addBreadcrumb(crumb)
+                            FeedbackService.shared.addLog("Voice recording cancelled by user")
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundStyle(.white, Theme.red)
+                                .shadow(radius: 3)
+                        }
+                        .buttonStyle(.plain)
+                        .offset(x: 4, y: -4)
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityLabel(L.cancel.localized)
                     }
                 }
-                .buttonStyle(.plain)
-                .disabled(isAnalyzing)
-                .sensoryFeedback(.impact, trigger: speechService.isRecording)
 
                 Spacer()
             }
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: speechService.isRecording)
 
             if isAnalyzing {
                 ProgressView(L.analyzing.localized)
@@ -177,61 +205,19 @@ extension HomeView {
 
             ForEach(Array(reviewMeals.enumerated()), id: \.offset) { index, meal in
                 VStack(spacing: 0) {
-                    HStack(alignment: .top, spacing: 10) {
-                        Text(mealEmoji(for: meal.name))
-                            .font(.title3)
-                            .frame(width: 32)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(meal.name.capitalized)
-                                .font(Theme.bodyFont)
-                                .fontWeight(.medium)
-                                .foregroundStyle(Theme.textPrimary)
-
-                            if !meal.amount.isEmpty {
-                                Text(meal.amount)
-                                    .font(Theme.captionFont)
-                                    .foregroundStyle(Theme.textSecondary)
-                            }
-
-                            HStack(spacing: 6) {
-                                Text("\(Int(meal.calories ?? 0)) kcal")
-                                    .font(Theme.captionFont)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                Text("P:\(Int(meal.protein ?? 0))g")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Theme.blue.opacity(0.8))
-                                Text("K:\(Int(meal.carbs ?? 0))g")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Theme.orange.opacity(0.8))
-                                Text("Y:\(Int(meal.fat ?? 0))g")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Theme.green.opacity(0.8))
-                            }
-                        }
-
-                        Spacer()
-
-                        Button { startFixingReviewMeal(meal) } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "mic.fill")
-                                    .font(.system(size: 10))
-                                Text(L.fixMeal.localized)
-                                    .font(.caption)
-                            }
-                            .foregroundStyle(Theme.accent)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Theme.accent.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .opacity(isListening ? 0.4 : 1.0)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isListening)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    MealReviewRow(
+                        meal: meal,
+                        emoji: mealEmoji(for: meal.name),
+                        isListening: isListening,
+                        onAmountCommit: { newNumericString in
+                            commitAmountEdit(at: index, newNumericString: newNumericString)
+                        },
+                        onCaloriesCommit: { newCalories in
+                            commitCaloriesEdit(at: index, newCalories: newCalories)
+                        },
+                        onFix: { startFixingReviewMeal(meal) },
+                        onDelete: { deleteReviewMeal(at: index) }
+                    )
 
                     if index < reviewMeals.count - 1 {
                         Divider().overlay(Theme.cardBorder.opacity(0.2)).padding(.horizontal, 16)
@@ -362,6 +348,84 @@ extension HomeView {
         showReviewCard = false
         originalSpeechText = ""
         showRetryButton = false
+        manuallyEditedMealNames = []
+    }
+
+    // MARK: - Inline edit helpers
+
+    static func numericPrefix(of s: String) -> String {
+        var result = ""
+        for ch in s {
+            if ch.isNumber || ch == "." || ch == "," {
+                result.append(ch)
+            } else if !result.isEmpty {
+                break
+            }
+        }
+        return result
+    }
+
+    static func amountUnit(of s: String) -> String {
+        let numeric = numericPrefix(of: s)
+        guard let range = s.range(of: numeric) else { return s }
+        return String(s[range.upperBound...])
+    }
+
+    func commitAmountEdit(at index: Int, newNumericString: String) {
+        var meals = reviewMeals
+        guard meals.indices.contains(index) else { return }
+        let oldMeal = meals[index]
+        let oldNumeric = Self.numericPrefix(of: oldMeal.amount)
+        let unit = Self.amountUnit(of: oldMeal.amount)
+        let sanitizedNew = newNumericString.replacingOccurrences(of: ",", with: ".")
+        let sanitizedOld = oldNumeric.replacingOccurrences(of: ",", with: ".")
+
+        guard let newVal = Double(sanitizedNew), newVal > 0,
+              let oldVal = Double(sanitizedOld), oldVal > 0 else { return }
+        if newVal == oldVal { return }
+
+        let ratio = newVal / oldVal
+        meals[index].amount = "\(newNumericString)\(unit)"
+        if let cal = oldMeal.calories { meals[index].calories = cal * ratio }
+        if let p = oldMeal.protein { meals[index].protein = p * ratio }
+        if let c = oldMeal.carbs { meals[index].carbs = c * ratio }
+        if let f = oldMeal.fat { meals[index].fat = f * ratio }
+        reviewMeals = meals
+        manuallyEditedMealNames.insert(oldMeal.name)
+        FeedbackService.shared.addLog("Inline amount edit: \(oldMeal.name) \(oldNumeric)→\(newNumericString), ratio \(String(format: "%.2f", ratio))")
+    }
+
+    func commitCaloriesEdit(at index: Int, newCalories: Double) {
+        var meals = reviewMeals
+        guard meals.indices.contains(index) else { return }
+        let oldMeal = meals[index]
+        guard newCalories >= 0 else { return }
+        if let existing = oldMeal.calories, abs(existing - newCalories) < 0.5 { return }
+        meals[index].calories = newCalories
+        reviewMeals = meals
+        manuallyEditedMealNames.insert(oldMeal.name)
+        FeedbackService.shared.addLog("Inline calories edit: \(oldMeal.name) → \(Int(newCalories))kcal (macros unchanged)")
+    }
+
+    func deleteReviewMeal(at index: Int) {
+        var meals = reviewMeals
+        guard meals.indices.contains(index) else { return }
+        let removed = meals.remove(at: index)
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            reviewMeals = meals
+            if meals.isEmpty {
+                showReviewCard = false
+                clarificationQuestion = ""
+            }
+        }
+        manuallyEditedMealNames.remove(removed.name)
+        let crumb = Breadcrumb()
+        crumb.level = .info
+        crumb.category = "voice.review.meal_removed"
+        crumb.message = "User removed meal from review card"
+        crumb.data = ["meal_name": removed.name, "remaining_count": meals.count]
+        SentrySDK.addBreadcrumb(crumb)
+        FeedbackService.shared.addLog("Meal removed from review: \(removed.name)")
     }
 
     func handleMicTap() {
@@ -640,6 +704,17 @@ extension HomeView {
         }
         let totalCal = meals.reduce(0) { $0 + Int($1.calories ?? 0) }
         FeedbackService.shared.addLog("Meal confirmed: \(meals.count) items, \(totalCal)kcal total")
+        if !manuallyEditedMealNames.isEmpty {
+            let crumb = Breadcrumb()
+            crumb.level = .info
+            crumb.category = "voice.review.manual_edit"
+            crumb.message = "Meals saved with inline edits"
+            crumb.data = [
+                "edited_count": manuallyEditedMealNames.count,
+                "total_count": meals.count
+            ]
+            SentrySDK.addBreadcrumb(crumb)
+        }
         saveTodaySnapshot()
         NotificationCenter.default.post(name: .foodEntrySaved, object: nil)
         showSavedConfirmation = true
@@ -647,5 +722,168 @@ extension HomeView {
             try? await Task.sleep(for: .seconds(2))
             showSavedConfirmation = false
         }
+    }
+}
+
+// MARK: - MealReviewRow
+
+private struct MealReviewRow: View {
+    let meal: ParsedMeal
+    let emoji: String
+    let isListening: Bool
+    let onAmountCommit: (String) -> Void
+    let onCaloriesCommit: (Double) -> Void
+    let onFix: () -> Void
+    let onDelete: () -> Void
+
+    @State private var amountText: String = ""
+    @State private var caloriesText: String = ""
+    @FocusState private var focusedField: Field?
+
+    private enum Field { case amount, calories }
+
+    private var unitDisplay: String {
+        HomeView.amountUnit(of: meal.amount).trimmingCharacters(in: .whitespaces)
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text(emoji)
+                .font(.title3)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(meal.name.capitalized)
+                    .font(Theme.bodyFont)
+                    .fontWeight(.medium)
+                    .foregroundStyle(Theme.textPrimary)
+
+                HStack(spacing: 6) {
+                    TextField("0", text: $amountText)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .amount)
+                        .frame(width: 54)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(Theme.cardBackground.opacity(0.6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.cardBorder.opacity(0.4), lineWidth: 1))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textPrimary)
+                        .onSubmit { commitAmount() }
+                    if !unitDisplay.isEmpty {
+                        Text(unitDisplay)
+                            .font(Theme.captionFont)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    TextField("0", text: $caloriesText)
+                        .keyboardType(.numberPad)
+                        .focused($focusedField, equals: .calories)
+                        .frame(width: 54)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(Theme.cardBackground.opacity(0.6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.cardBorder.opacity(0.4), lineWidth: 1))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .font(Theme.captionFont.bold())
+                        .foregroundStyle(.white)
+                        .onSubmit { commitCalories() }
+                    Text("kcal")
+                        .font(Theme.captionFont)
+                        .foregroundStyle(Theme.textSecondary)
+                    Text("P:\(Int(meal.protein ?? 0))g")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Theme.blue.opacity(0.8))
+                    Text("K:\(Int(meal.carbs ?? 0))g")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Theme.orange.opacity(0.8))
+                    Text("Y:\(Int(meal.fat ?? 0))g")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Theme.green.opacity(0.8))
+                }
+            }
+
+            Spacer()
+
+            VStack(spacing: 6) {
+                Button(action: onFix) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 10))
+                        Text(L.fixMeal.localized)
+                            .font(.caption)
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .opacity(isListening ? 0.4 : 1.0)
+                }
+                .buttonStyle(.plain)
+                .disabled(isListening)
+
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.red.opacity(0.8))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Theme.red.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .opacity(isListening ? 0.4 : 1.0)
+                }
+                .buttonStyle(.plain)
+                .disabled(isListening)
+                .accessibilityLabel(L.delete.localized)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(L.done.localized) {
+                    if focusedField == .amount { commitAmount() }
+                    if focusedField == .calories { commitCalories() }
+                    focusedField = nil
+                }
+            }
+        }
+        .onAppear {
+            amountText = HomeView.numericPrefix(of: meal.amount)
+            caloriesText = "\(Int(meal.calories ?? 0))"
+        }
+        .onChange(of: meal.amount) { _, newValue in
+            if focusedField != .amount {
+                amountText = HomeView.numericPrefix(of: newValue)
+            }
+        }
+        .onChange(of: meal.calories) { _, newValue in
+            if focusedField != .calories {
+                caloriesText = "\(Int(newValue ?? 0))"
+            }
+        }
+    }
+
+    private func commitAmount() {
+        let trimmed = amountText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else {
+            amountText = HomeView.numericPrefix(of: meal.amount)
+            return
+        }
+        onAmountCommit(trimmed)
+    }
+
+    private func commitCalories() {
+        let trimmed = caloriesText.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
+        guard let val = Double(trimmed), val >= 0 else {
+            caloriesText = "\(Int(meal.calories ?? 0))"
+            return
+        }
+        onCaloriesCommit(val)
     }
 }

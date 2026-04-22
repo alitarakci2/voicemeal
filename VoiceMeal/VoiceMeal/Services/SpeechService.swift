@@ -15,6 +15,8 @@ class SpeechService: ObservableObject {
     private nonisolated(unsafe) var audioEngine = AVAudioEngine()
     private nonisolated(unsafe) var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private nonisolated(unsafe) var recognitionTask: SFSpeechRecognitionTask?
+    private var maxDurationTask: Task<Void, Never>?
+    var onMaxDurationReached: (() -> Void)?
     private nonisolated(unsafe) var speechRecognizer: SFSpeechRecognizer? = {
         let appLang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
             .string(forKey: "appLanguage")
@@ -98,6 +100,17 @@ class SpeechService: ObservableObject {
         isRecording = true
         transcript = ""
 
+        maxDurationTask?.cancel()
+        maxDurationTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(60))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self, self.isRecording else { return }
+                self.onMaxDurationReached?()
+                self.stopListening()
+            }
+        }
+
         recognitionTask = speechRecognizer?.recognitionTask(with: request) { [weak self] result, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -125,6 +138,8 @@ class SpeechService: ObservableObject {
     }
 
     func stopListening() {
+        maxDurationTask?.cancel()
+        maxDurationTask = nil
         if audioEngine.isRunning {
             audioEngine.stop()
         }
@@ -136,6 +151,35 @@ class SpeechService: ObservableObject {
         recognitionTask?.cancel()
         recognitionTask = nil
         isRecording = false
+        deactivateAudioSession()
+    }
+
+    func cancelListening() {
+        maxDurationTask?.cancel()
+        maxDurationTask = nil
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+        if audioEngine.inputNode.numberOfInputs > 0 {
+            audioEngine.inputNode.removeTap(onBus: 0)
+        }
+        recognitionRequest?.endAudio()
+        recognitionRequest = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        transcript = ""
+        isRecording = false
+        deactivateAudioSession()
+    }
+
+    private func deactivateAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            #if DEBUG
+            print("⚠️ [SpeechService] AudioSession deactivate failed: \(error.localizedDescription)")
+            #endif
+        }
     }
 }
 

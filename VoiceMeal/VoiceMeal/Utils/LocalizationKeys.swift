@@ -367,6 +367,9 @@ enum L {
 
     // Sprint B — Voice resilience
     static let tryAgain = "try_again"
+
+    // Sprint C — Voice UX polish
+    static let maxRecordingDurationReached = "max_recording_duration_reached"
 }
 // swiftlint:enable type_name
 

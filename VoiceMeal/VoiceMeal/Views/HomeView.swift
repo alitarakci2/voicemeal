@@ -62,6 +62,7 @@ struct HomeView: View {
     @State var correctionQuestion = ""
     @State var showPermissionAlert = false
     @State var showRetryButton = false
+    @State var manuallyEditedMealNames: Set<String> = []
 
     @State var scrollToTopTrigger = false
     @State var voiceScrollTrigger = false
@@ -284,6 +285,10 @@ struct HomeView: View {
                     reviewSavedAtRaw = 0
                 }
             }
+            speechService.onMaxDurationReached = {
+                errorMessage = L.maxRecordingDurationReached.localized
+                FeedbackService.shared.addLog("Voice recording auto-stopped: max duration reached")
+            }
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {
                 await healthKitService.requestPermission()
@@ -320,8 +325,8 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: scenePhase) {
-            if scenePhase == .active {
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
                 Task {
                     await refreshHealthKit()
                     if SnapshotService.snapshotNeedsUpdate(for: .now, modelContext: modelContext) {
@@ -329,8 +334,12 @@ struct HomeView: View {
                     }
                     loadMorningTDEE()
                 }
+            } else if newPhase == .background && speechService.isRecording {
+                speechService.cancelListening()
+                FeedbackService.shared.addLog("Voice cancelled due to background transition")
             }
         }
+        .sensoryFeedback(.success, trigger: showSavedConfirmation) { _, newValue in newValue }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             Task {
                 saveYesterdaySnapshot()
