@@ -90,7 +90,7 @@ extension HomeView {
     }
 
     var errorSection: some View {
-        Group {
+        VStack(spacing: 10) {
             if let error = errorMessage {
                 VStack(spacing: 6) {
                     HStack(spacing: 6) {
@@ -111,26 +111,6 @@ extension HomeView {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .opacity(0.7)
-
-                    if !originalSpeechText.isEmpty && !isAnalyzing {
-                        Button {
-                            runNormalMealParse(finalTranscript: originalSpeechText)
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text(L.tryAgain.localized)
-                                    .font(.caption.bold())
-                            }
-                            .foregroundColor(.orange)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.orange.opacity(0.12))
-                            .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 4)
-                    }
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
@@ -142,6 +122,30 @@ extension HomeView {
                 )
                 .padding(.horizontal)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            if showRetryButton && !originalSpeechText.isEmpty && !isAnalyzing {
+                Button {
+                    FeedbackService.shared.addLog("Try Again tapped, transcript: \(originalSpeechText.prefix(50))")
+                    showRetryButton = false
+                    runNormalMealParse(finalTranscript: originalSpeechText)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text(L.tryAgain.localized)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Theme.accent)
+                    .clipShape(Capsule())
+                    .shadow(color: Theme.accent.opacity(0.3), radius: 6, y: 2)
+                }
+                .buttonStyle(.plain)
+                .transition(.scale.combined(with: .opacity))
             }
         }
     }
@@ -357,6 +361,7 @@ extension HomeView {
         reviewMeals = []
         showReviewCard = false
         originalSpeechText = ""
+        showRetryButton = false
     }
 
     func handleMicTap() {
@@ -499,6 +504,7 @@ extension HomeView {
     func runNormalMealParse(finalTranscript: String) {
         isAnalyzing = true
         errorMessage = nil
+        showRetryButton = false
 
         Task {
             do {
@@ -542,6 +548,9 @@ extension HomeView {
                 clarificationQuestion = ""
                 reviewMeals = []
                 showReviewCard = false
+                if !originalSpeechText.isEmpty {
+                    showRetryButton = true
+                }
             }
             isAnalyzing = false
         }

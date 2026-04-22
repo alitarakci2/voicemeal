@@ -61,6 +61,7 @@ struct HomeView: View {
     @State var entryToCorrect: FoodEntry?
     @State var correctionQuestion = ""
     @State var showPermissionAlert = false
+    @State var showRetryButton = false
 
     @State var scrollToTopTrigger = false
     @State var voiceScrollTrigger = false
