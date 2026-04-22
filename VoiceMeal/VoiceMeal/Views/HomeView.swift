@@ -18,10 +18,32 @@ struct HomeView: View {
     @State var isAnalyzing = false
     @State var errorMessage: String?
     @State var showSavedConfirmation = false
-    @State var clarificationQuestion = ""
-    @State var reviewMeals: [ParsedMeal] = []
-    @State var showReviewCard = false
-    @State var originalSpeechText = ""
+    @SceneStorage("voice.clarificationQuestion") var clarificationQuestion = ""
+    @SceneStorage("voice.reviewMealsJSON") private var reviewMealsJSON: String = ""
+    @SceneStorage("voice.showReviewCard") var showReviewCard = false
+    @SceneStorage("voice.originalSpeechText") var originalSpeechText = ""
+    @SceneStorage("voice.reviewSavedAt") private var reviewSavedAtRaw: Double = 0
+
+    var reviewMeals: [ParsedMeal] {
+        get {
+            guard !reviewMealsJSON.isEmpty,
+                  let data = reviewMealsJSON.data(using: .utf8),
+                  let meals = try? JSONDecoder().decode([ParsedMeal].self, from: data) else {
+                return []
+            }
+            return meals
+        }
+        nonmutating set {
+            if newValue.isEmpty {
+                reviewMealsJSON = ""
+                reviewSavedAtRaw = 0
+            } else if let data = try? JSONEncoder().encode(newValue), data.count < 1_000_000,
+                      let json = String(data: data, encoding: .utf8) {
+                reviewMealsJSON = json
+                reviewSavedAtRaw = Date().timeIntervalSince1970
+            }
+        }
+    }
     @State var fixingMealName: String?
     @State var showGoalInfo = false
     @State var showWeightBanner = false
@@ -251,6 +273,16 @@ struct HomeView: View {
             }
         }
         .task {
+            if reviewSavedAtRaw > 0 {
+                let saved = Date(timeIntervalSince1970: reviewSavedAtRaw)
+                if !Calendar.current.isDateInToday(saved) {
+                    reviewMealsJSON = ""
+                    clarificationQuestion = ""
+                    showReviewCard = false
+                    originalSpeechText = ""
+                    reviewSavedAtRaw = 0
+                }
+            }
             permissionGranted = await speechService.requestPermissions()
             if healthKitService.isAvailable {
                 await healthKitService.requestPermission()

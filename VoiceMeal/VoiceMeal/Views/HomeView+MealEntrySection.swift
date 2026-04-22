@@ -111,6 +111,26 @@ extension HomeView {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .opacity(0.7)
+
+                    if !originalSpeechText.isEmpty && !isAnalyzing {
+                        Button {
+                            runNormalMealParse(finalTranscript: originalSpeechText)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text(L.tryAgain.localized)
+                                    .font(.caption.bold())
+                            }
+                            .foregroundColor(.orange)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.orange.opacity(0.12))
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
+                    }
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
@@ -473,12 +493,16 @@ extension HomeView {
             transcript = newText
         }
 
+        runNormalMealParse(finalTranscript: transcript)
+    }
+
+    func runNormalMealParse(finalTranscript: String) {
         isAnalyzing = true
         errorMessage = nil
 
         Task {
             do {
-                let response = try await groqService.parseMeals(transcript: transcript, personalContext: profiles.first?.fullAIContext ?? "")
+                let response = try await groqService.parseMeals(transcript: finalTranscript, personalContext: profiles.first?.fullAIContext ?? "")
 
                 if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
                     addWater(ml: waterMl, source: "voice")
@@ -502,13 +526,14 @@ extension HomeView {
                     }
                 } else {
                     errorMessage = L.mealNotDetected.localized
+                    originalSpeechText = ""
                     let crumb = Breadcrumb()
                     crumb.level = .info
                     crumb.category = "voice.parse.no_meal_detected"
                     crumb.message = "Transcript parsed but no meal or water detected"
-                    crumb.data = ["transcript_chars": transcript.count]
+                    crumb.data = ["transcript_chars": finalTranscript.count]
                     SentrySDK.addBreadcrumb(crumb)
-                    FeedbackService.shared.addLog("voice.parse.no_meal_detected: \(transcript.count) chars")
+                    FeedbackService.shared.addLog("voice.parse.no_meal_detected: \(finalTranscript.count) chars")
                 }
             } catch {
                 print("❌ [HomeView] Groq error: \(error)")
@@ -517,7 +542,6 @@ extension HomeView {
                 clarificationQuestion = ""
                 reviewMeals = []
                 showReviewCard = false
-                originalSpeechText = ""
             }
             isAnalyzing = false
         }

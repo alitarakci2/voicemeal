@@ -396,6 +396,7 @@
 "save_failed" = "Kaydedilemedi, tekrar dene";
 "permission_required_title" = "İzin Gerekli";
 "permission_required_message" = "Sesli kayıt için mikrofon ve konuşma tanıma izni gerekiyor. Ayarlar'dan etkinleştirebilirsin.";
+"try_again" = "Tekrar Dene";
 
 /* Units */
 "kg" = "kg";

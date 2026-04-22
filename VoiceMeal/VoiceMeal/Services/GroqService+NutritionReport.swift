@@ -100,6 +100,7 @@ extension GroqService {
 
         var request = URLRequest(url: nutritionEndpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

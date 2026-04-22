@@ -364,6 +364,9 @@ enum L {
     static let saveFailed = "save_failed"
     static let permissionRequiredTitle = "permission_required_title"
     static let permissionRequiredMessage = "permission_required_message"
+
+    // Sprint B — Voice resilience
+    static let tryAgain = "try_again"
 }
 // swiftlint:enable type_name
 

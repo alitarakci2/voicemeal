@@ -435,6 +435,80 @@ class GroqService {
 
     func parseMeals(transcript: String, personalContext: String = "") async throws -> MealParseResponse {
         let startTime = Date()
+        var retried = false
+        do {
+            let response: MealParseResponse
+            do {
+                response = try await parseMealsSingleAttempt(transcript: transcript, personalContext: personalContext)
+            } catch let error where Self.isTransientError(error) {
+                retried = true
+                FeedbackService.shared.addLog("Groq retry (attempt 2)")
+                let crumb = Breadcrumb()
+                crumb.level = .warning
+                crumb.category = "voice.parse.retry"
+                crumb.message = "Transient error, retrying once"
+                crumb.data = ["error_type": Self.errorTypeTag(error)]
+                SentrySDK.addBreadcrumb(crumb)
+                try await Task.sleep(for: .seconds(1))
+                response = try await parseMealsSingleAttempt(transcript: transcript, personalContext: personalContext)
+            }
+            let elapsed = Date().timeIntervalSince(startTime)
+            FeedbackService.shared.addLog("Groq parseMeals: \(String(format: "%.1f", elapsed))s\(retried ? " (retried)" : "")")
+            let completed = Breadcrumb()
+            completed.level = .info
+            completed.category = "voice.parse.completed"
+            completed.message = "Groq parseMeals completed"
+            completed.data = [
+                "latency_ms": Int(elapsed * 1000),
+                "transcript_chars": transcript.count,
+                "meal_count": response.meals.count,
+                "had_clarification": response.clarification_needed,
+                "had_water": response.waterMl != nil,
+                "had_retry": retried,
+                "success": true
+            ]
+            SentrySDK.addBreadcrumb(completed)
+            return response
+        } catch {
+            let failed = Breadcrumb()
+            failed.level = .error
+            failed.category = "voice.parse.failed"
+            failed.message = "Groq parseMeals failed"
+            failed.data = [
+                "error_type": Self.errorTypeTag(error),
+                "retry_attempted": retried,
+                "transcript_chars": transcript.count
+            ]
+            SentrySDK.addBreadcrumb(failed)
+            throw error
+        }
+    }
+
+    private static func isTransientError(_ error: Error) -> Bool {
+        guard let groq = error as? GroqError else { return false }
+        switch groq {
+        case .timeout, .networkError: return true
+        case .apiError(let code) where code >= 500: return true
+        default: return false
+        }
+    }
+
+    private static func errorTypeTag(_ error: Error) -> String {
+        guard let groq = error as? GroqError else { return "unknown" }
+        switch groq {
+        case .missingAPIKey: return "missing_api_key"
+        case .timeout: return "timeout"
+        case .networkError: return "network"
+        case .emptyResponse: return "empty_response"
+        case .invalidJSON: return "json_decode"
+        case .apiError(let code):
+            if code >= 500 { return "5xx" }
+            if code >= 400 { return "4xx" }
+            return "http_\(code)"
+        }
+    }
+
+    private func parseMealsSingleAttempt(transcript: String, personalContext: String) async throws -> MealParseResponse {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
             throw GroqError.missingAPIKey
@@ -446,11 +520,13 @@ class GroqService {
                 ["role": "system", "content": languageInstruction(for: appLanguage) + "\n\n" + systemPrompt(personalContext: personalContext)],
                 ["role": "user", "content": transcript]
             ],
-            "temperature": 0.3
+            "temperature": 0.15,
+            "response_format": ["type": "json_object"]
         ]
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -503,10 +579,7 @@ class GroqService {
         }
 
         do {
-            let result = try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
-            let elapsed = Date().timeIntervalSince(startTime)
-            FeedbackService.shared.addLog("Groq parseMeals: \(String(format: "%.1f", elapsed))s")
-            return result
+            return try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
         } catch {
             SentrySDK.capture(error: error)
             #if DEBUG
@@ -881,6 +954,7 @@ class GroqService {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -1105,6 +1179,7 @@ class GroqService {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -1297,6 +1372,7 @@ class GroqService {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -1430,6 +1506,7 @@ class GroqService {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -1544,6 +1621,7 @@ class GroqService {
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 25
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

@@ -369,6 +369,7 @@
 "save_failed" = "Save failed, try again";
 "permission_required_title" = "Permission Required";
 "permission_required_message" = "Voice recording requires microphone and speech recognition permissions. You can enable them in Settings.";
+"try_again" = "Try Again";
 
 /* Units */
 "kg" = "kg";
