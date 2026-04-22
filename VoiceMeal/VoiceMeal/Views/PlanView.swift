@@ -469,8 +469,13 @@ struct PlanView: View {
                             Text("\(String(format: "%.1f", newGoalWeightKg)) kg")
                                 .foregroundStyle(Theme.textSecondary)
                         }
-                        Slider(value: $newGoalWeightKg, in: 30...200, step: 0.5)
-                            .tint(Theme.accent)
+                        GoalSlider(
+                            value: $newGoalWeightKg,
+                            range: 30...200,
+                            step: 0.5,
+                            currentWeight: profiles.first?.currentWeightKg ?? newGoalWeightKg,
+                            goalDays: newGoalDays
+                        )
 
                         Stepper(String(format: "goal_duration".localized, newGoalDays), value: $newGoalDays, in: 14...365, step: 7)
                             .font(Theme.captionFont)
@@ -572,8 +577,13 @@ struct PlanView: View {
                             .font(Theme.bodyFont)
                             .foregroundStyle(Theme.textSecondary)
                     }
-                    Slider(value: $goalWeightKg, in: 30...200, step: 0.5)
-                        .tint(Theme.accent)
+                    GoalSlider(
+                        value: $goalWeightKg,
+                        range: 30...200,
+                        step: 0.5,
+                        currentWeight: profiles.first?.currentWeightKg ?? goalWeightKg,
+                        goalDays: goalDays
+                    )
 
                     Stepper(String(format: "goal_duration".localized, goalDays), value: $goalDays, in: 14...365, step: 7)
                         .font(Theme.captionFont)

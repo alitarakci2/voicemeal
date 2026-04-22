@@ -418,6 +418,7 @@
 "lbs" = "lbs";
 "cm" = "cm";
 "kcal" = "kcal";
+"kg_per_week_format" = "%@ kg/week";
 
 /* Tabs */
 "tab_record" = "Record";

@@ -192,6 +192,7 @@ enum L {
     static let weightGainTooFast = "weight_gain_too_fast"
     static let weightGainFast = "weight_gain_fast"
     static let deficitCapped = "deficit_capped"
+    static let kgPerWeekFormat = "kg_per_week_format"
     static let language = "language"
     static let systemDefault = "system_default"
     static let languageRestart = "language_restart"

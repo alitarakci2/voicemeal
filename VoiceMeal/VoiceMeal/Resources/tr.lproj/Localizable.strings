@@ -445,6 +445,7 @@
 "lbs" = "lbs";
 "cm" = "cm";
 "kcal" = "kcal";
+"kg_per_week_format" = "%@ kg/hafta";
 
 /* Tabs */
 "tab_record" = "Kayıt";
