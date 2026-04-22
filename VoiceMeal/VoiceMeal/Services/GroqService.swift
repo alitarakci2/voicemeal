@@ -638,6 +638,56 @@ class GroqService {
         }
     }
 
+    // MARK: - Insight prompt versioning + length telemetry
+
+    // Bump when LENGTH CONSTRAINT or prompt shape changes. Mismatched caches re-generate.
+    static let dailyInsightPromptVersion = 2
+    static let weeklyInsightPromptVersion = 2
+    static let programInsightPromptVersion = 2
+    static let nutritionReportPromptVersion = 2
+
+    private func modeTag(for gapKind: CalorieGapKind) -> String {
+        switch gapKind {
+        case .deficit:  return "deficit"
+        case .surplus:  return "surplus"
+        case .maintain: return "maintain"
+        case .observe:  return "observe"
+        }
+    }
+
+    func logInsightLength(
+        insightType: String,
+        text: String,
+        targetMin: Int,
+        targetMax: Int,
+        language: String,
+        mode: String
+    ) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let charCount = trimmed.count
+        let sentenceCount = trimmed
+            .split(whereSeparator: { ".!?".contains($0) })
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .count
+        let withinTarget = charCount >= targetMin && charCount <= targetMax
+        let crumb = Breadcrumb()
+        crumb.level = .info
+        crumb.category = "ai.insight"
+        crumb.message = "insight.generated"
+        crumb.data = [
+            "insight_type": insightType,
+            "char_count": charCount,
+            "target_char_min": targetMin,
+            "target_char_max": targetMax,
+            "sentence_count": sentenceCount,
+            "within_target": withinTarget,
+            "language": language,
+            "mode": mode
+        ]
+        SentrySDK.addBreadcrumb(crumb)
+    }
+
     // MARK: - Daily Insight
 
     private func insightSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
@@ -727,9 +777,9 @@ class GroqService {
             return """
             \(expertBase)
 
-            You are also a personal fitness coach. \
-            Analyze the user's CURRENT status. \
-            ONLY 2-3 sentences, English, friendly, you may use emojis.
+            LENGTH CONSTRAINT: Write EXACTLY 2 meaningful sentences, 15-25 words each. Both sentences combined: 30-50 words, 120-180 characters. Do NOT write single-word sentences, greetings, or filler. Structure: direct observation + actionable tip. Always end with a complete sentence; never cut off mid-sentence.
+
+            You are also a personal fitness coach. Analyze the user's CURRENT status. English, friendly tone, may use emojis, plain text (no lists).
 
             Time period rules:
             - Morning: Plan the day, motivate, what to watch out for
@@ -738,16 +788,14 @@ class GroqService {
             - Night: Day summary, prep for tomorrow, bedtime advice
 
             \(modeRulesEN)
-            Write maximum 3-4 complete sentences. Never cut off mid-sentence. Always end with a complete sentence.
-            Never make lists, write plain text.
             """
         } else {
             return """
             \(expertBase)
 
-            Aynı zamanda kişisel bir fitness koçusun. \
-            Kullanıcının o ANKİ durumunu analiz et. \
-            SADECE 2-3 cümle, Türkçe, samimi, emoji kullanabilirsin.
+            UZUNLUK KURALI: TAM OLARAK 2 anlamlı cümle yaz, her biri 12-20 kelime. İki cümle toplam: 25-45 kelime, 120-180 karakter. Tek kelimelik cümleler, selamlaşma veya boş dolgu YAZMA. Yapı: doğrudan gözlem + somut öneri. Her zaman tam cümleyle bitir; asla yarıda kesme.
+
+            Aynı zamanda kişisel bir fitness koçusun. Kullanıcının o ANKİ durumunu analiz et. Türkçe, samimi ton, emoji kullanabilirsin, düz metin (liste yapma).
 
             Zaman dilimi kuralları:
             - Sabah: Günü planla, motivasyon ver, neye dikkat etmeli
@@ -756,8 +804,6 @@ class GroqService {
             - Gece: Günün özeti, yarına hazırlık, uyku öncesi öneri
 
             \(modeRulesTR)
-            Maksimum 3-4 tam cümle yaz. Asla cümleyi yarıda kesme. Her zaman tam cümleyle bitir.
-            Asla liste yapma, düz metin yaz.
             """
         }
     }
@@ -966,7 +1012,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.5,
-            "max_tokens": 350
+            "max_tokens": 150
         ]
 
         var request = URLRequest(url: endpoint)
@@ -1004,7 +1050,16 @@ class GroqService {
 
         let elapsed = Date().timeIntervalSince(startTime)
         FeedbackService.shared.addLog("Groq dailyInsight: \(String(format: "%.1f", elapsed))s")
-        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        logInsightLength(
+            insightType: "daily",
+            text: trimmedContent,
+            targetMin: 120,
+            targetMax: 180,
+            language: lang,
+            mode: modeTag(for: dailyGapKind)
+        )
+        return trimmedContent
     }
 
     // MARK: - Weekly Insight
@@ -1038,13 +1093,9 @@ class GroqService {
             return """
             \(expertBase)
 
-            You are also a personal fitness coach. \
-            Analyze the user's weekly statistics including the day-by-day breakdown. \
-            Write a 3-4 sentence weekly assessment in English. \
-            Include: highlight the best/worst days and why, compare to previous week if data exists, \
-            identify patterns (e.g. weekends vs weekdays), and give ONE actionable tip for next week. \
-            Use scientific but conversational language. \
-            You may use emojis. Never make lists, write plain text.
+            LENGTH CONSTRAINT: Write 3-4 sentences in ONE paragraph, 200-300 characters total. Each sentence must be meaningful (12-20 words, no single-word sentences). No greetings, no bullet points, no headings. Always end with a complete sentence.
+
+            You are also a personal fitness coach. Analyze the user's weekly stats with the day-by-day breakdown. Cover (compactly): best/worst day + why, comparison to previous week if data exists, one pattern (weekends vs weekdays), and ONE actionable tip for next week. Scientific but conversational. Emojis ok. Plain text, no lists.
 
             MODE: \(modeHintEN)
             """
@@ -1052,13 +1103,9 @@ class GroqService {
             return """
             \(expertBase)
 
-            Aynı zamanda kişisel bir fitness koçusun. \
-            Kullanıcının haftalık istatistiklerini gün gün analiz et. \
-            3-4 cümlelik bir haftalık değerlendirme yaz. \
-            Şunları dahil et: en iyi/en kötü günleri ve nedenlerini belirt, önceki haftayla karşılaştır (veri varsa), \
-            kalıpları belirle (hafta içi vs hafta sonu), ve gelecek hafta için BİR somut ipucu ver. \
-            Bilimsel ama sohbet dili kullan. \
-            Emoji kullanabilirsin. Asla liste yapma, düz metin yaz.
+            UZUNLUK KURALI: TEK paragrafta 3-4 cümle yaz, toplam 200-300 karakter. Her cümle anlamlı olmalı (10-18 kelime, tek kelimelik cümle yazma). Selamlaşma, madde işareti veya başlık yok. Her zaman tam cümleyle bitir.
+
+            Aynı zamanda kişisel bir fitness koçusun. Kullanıcının haftalık istatistiklerini gün gün analiz et. Şunları kısaca kapsa: en iyi/kötü gün + neden, önceki haftayla karşılaştırma (veri varsa), bir örüntü (hafta içi vs hafta sonu) ve gelecek hafta için TEK somut öneri. Bilimsel ama sohbet dili. Emoji olabilir. Düz metin, liste yok.
 
             MOD: \(modeHintTR)
             """
@@ -1194,7 +1241,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.5,
-            "max_tokens": 400
+            "max_tokens": 260
         ]
 
         var request = URLRequest(url: endpoint)
@@ -1232,65 +1279,98 @@ class GroqService {
 
         let elapsed = Date().timeIntervalSince(startTime)
         FeedbackService.shared.addLog("Groq weeklyInsight: \(String(format: "%.1f", elapsed))s")
-        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        logInsightLength(
+            insightType: "weekly",
+            text: trimmedContent,
+            targetMin: 200,
+            targetMax: 300,
+            language: lang,
+            mode: modeTag(for: weeklyGapKind)
+        )
+        return trimmedContent
     }
     // MARK: - Program Insight
 
-    private func programInsightSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
+    private func programModeHintEN(gapKind: CalorieGapKind) -> String {
+        switch gapKind {
+        case .deficit:  return "Program goal: weight loss (calorie deficit). Success = consistent deficit."
+        case .surplus:  return "Program goal: weight/muscle gain (calorie surplus). Success = consistent surplus. Never frame deficit as success. Never use the word 'deficit'."
+        case .maintain: return "Program goal: weight maintenance (calorie balance). Success = staying near TDEE. Don't frame deficit or surplus as success."
+        case .observe:  return "User is in OBSERVE mode — no program goal, logging only. Do NOT use 'program', 'success', 'deficit', 'surplus', 'target'. Frame feedback around awareness, consistency of logging, and nutritional patterns."
+        }
+    }
+
+    private func programModeHintTR(gapKind: CalorieGapKind) -> String {
+        switch gapKind {
+        case .deficit:  return "Program hedefi: kilo verme (kalori açığı). Başarı = istikrarlı açık."
+        case .surplus:  return "Program hedefi: kilo/kas alma (kalori fazlası). Başarı = istikrarlı fazla. Açığı başarı olarak SUNMA. 'Açık' kelimesini kullanma."
+        case .maintain: return "Program hedefi: kilo koruma (kalori dengesi). Başarı = TDEE'ye yakın kalmak. Açık veya fazlayı başarı olarak sunma."
+        case .observe:  return "Kullanıcı GÖZLEM modunda — program hedefi yok, sadece kayıt. 'Program', 'başarı', 'açık', 'fazla', 'hedef' kullanma. Yorumu farkındalık, kayıt tutarlılığı ve beslenme örüntüleri üzerine kur."
+        }
+    }
+
+    private func programOngoingSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
         let expertBase = buildNutritionExpertPrompt(
             language: appLanguage == "en" ? "English" : "Turkish",
             locale: userLocale,
             personalContext: personalContext
         )
 
-        let modeHintEN: String = {
-            switch gapKind {
-            case .deficit:  return "Program goal: weight loss (calorie deficit). Success = consistent deficit."
-            case .surplus:  return "Program goal: weight/muscle gain (calorie surplus). Success = consistent surplus. Never frame deficit as success. Never use the word 'deficit'."
-            case .maintain: return "Program goal: weight maintenance (calorie balance). Success = staying near TDEE. Don't frame deficit or surplus as success."
-            case .observe:  return "User is in OBSERVE mode — no program goal, logging only. Do NOT use 'program', 'success', 'deficit', 'surplus', 'target'. Frame feedback around awareness, consistency of logging, and nutritional patterns."
-            }
-        }()
-
-        let modeHintTR: String = {
-            switch gapKind {
-            case .deficit:  return "Program hedefi: kilo verme (kalori açığı). Başarı = istikrarlı açık."
-            case .surplus:  return "Program hedefi: kilo/kas alma (kalori fazlası). Başarı = istikrarlı fazla. Açığı başarı olarak SUNMA. 'Açık' kelimesini kullanma."
-            case .maintain: return "Program hedefi: kilo koruma (kalori dengesi). Başarı = TDEE'ye yakın kalmak. Açık veya fazlayı başarı olarak sunma."
-            case .observe:  return "Kullanıcı GÖZLEM modunda — program hedefi yok, sadece kayıt. 'Program', 'başarı', 'açık', 'fazla', 'hedef' kullanma. Yorumu farkındalık, kayıt tutarlılığı ve beslenme örüntüleri üzerine kur."
-            }
-        }()
-
         if appLanguage == "en" {
             return """
             \(expertBase)
 
-            You are also a personal fitness coach. \
-            Analyze the user's program summary and write \
-            a 2-3 sentence assessment in English. \
-            Be motivating but realistic. \
-            Add an important suggestion if applicable. \
-            You may use emojis. Write plain text, no lists.
+            LENGTH CONSTRAINT: Write 3-4 sentences in ONE paragraph, 200-300 characters total. Each sentence must be meaningful (12-20 words, no single-word sentences). No greetings, no bullet points. Always end with a complete sentence.
 
-            MODE: \(modeHintEN)
+            You are also a personal fitness coach. The user's program is IN PROGRESS. Analyze progress so far: are they on track, what's working, what to adjust for the rest of the program. Motivating but realistic. Add ONE actionable suggestion. Plain text, emojis ok, no lists.
+
+            MODE: \(programModeHintEN(gapKind: gapKind))
             """
         } else {
             return """
             \(expertBase)
 
-            Aynı zamanda kişisel bir fitness koçusun. \
-            Kullanıcının program özetini analiz et ve \
-            2-3 cümlelik Türkçe bir değerlendirme yap. \
-            Motive edici ama gerçekçi ol. \
-            Varsa önemli bir öneri ekle. \
-            Emoji kullanabilirsin. Düz metin yaz, liste yapma.
+            UZUNLUK KURALI: TEK paragrafta 3-4 cümle yaz, toplam 200-300 karakter. Her cümle anlamlı olmalı (10-18 kelime, tek kelimelik cümle yazma). Selamlaşma, madde işareti yok. Her zaman tam cümleyle bitir.
 
-            MOD: \(modeHintTR)
+            Aynı zamanda kişisel bir fitness koçusun. Kullanıcının programı DEVAM EDİYOR. Şu ana kadarki ilerlemeyi analiz et: yolunda mı, neler işliyor, programın kalan kısmı için ne ayarlamalı. Motive edici ama gerçekçi. TEK somut öneri ekle. Düz metin, emoji olabilir, liste yok.
+
+            MOD: \(programModeHintTR(gapKind: gapKind))
             """
         }
     }
 
-    func generateProgramInsight(summary: ProgramSummary, coachStyle: CoachStyle = .supportive, personalContext: String = "") async throws -> String {
+    private func programCompletedSystemPrompt(personalContext: String = "", gapKind: CalorieGapKind = .deficit) -> String {
+        let expertBase = buildNutritionExpertPrompt(
+            language: appLanguage == "en" ? "English" : "Turkish",
+            locale: userLocale,
+            personalContext: personalContext
+        )
+
+        if appLanguage == "en" {
+            return """
+            \(expertBase)
+
+            LENGTH CONSTRAINT: Write 6-8 sentences in ONE paragraph, 400-550 characters total. Each sentence must be meaningful (10-18 words, no single-word sentences). No headings, no bullet points. Always end with a complete sentence.
+
+            You are also a personal fitness coach. The user has COMPLETED their program — this is a milestone assessment. Cover: overall outcome vs. goal, what they did consistently well, what was hardest, one pattern that stood out, and ONE concrete next step (continue / maintenance / new goal). Celebratory but honest tone — acknowledge effort even if numbers fell short. Emojis ok, plain text, no lists.
+
+            MODE: \(programModeHintEN(gapKind: gapKind))
+            """
+        } else {
+            return """
+            \(expertBase)
+
+            UZUNLUK KURALI: TEK paragrafta 6-8 cümle yaz, toplam 400-550 karakter. Her cümle anlamlı olmalı (10-16 kelime, tek kelimelik cümle yazma). Başlık, madde işareti yok. Her zaman tam cümleyle bitir.
+
+            Aynı zamanda kişisel bir fitness koçusun. Kullanıcı programı TAMAMLADI — bu bir kilometre taşı değerlendirmesi. Şunları kapsa: hedefe göre genel sonuç, istikrarlı yaptığı şey, en zoru neydi, öne çıkan bir örüntü ve TEK somut sonraki adım (devam / koruma / yeni hedef). Kutlayıcı ama dürüst ton — rakamlar tutmasa bile emeği takdir et. Emoji olabilir, düz metin, liste yok.
+
+            MOD: \(programModeHintTR(gapKind: gapKind))
+            """
+        }
+    }
+
+    func generateProgramInsight(summary: ProgramSummary, isCompleted: Bool = false, coachStyle: CoachStyle = .supportive, personalContext: String = "") async throws -> String {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else { throw GroqError.missingAPIKey }
 
@@ -1377,11 +1457,15 @@ class GroqService {
         case .gaining: programGapKind = .surplus
         case .maintenance: programGapKind = .maintain
         }
-        var systemPrompt = languageInstruction(for: lang) + "\n\n" + programInsightSystemPrompt(personalContext: personalContext, gapKind: programGapKind) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
+        let builtPrompt = isCompleted
+            ? programCompletedSystemPrompt(personalContext: personalContext, gapKind: programGapKind)
+            : programOngoingSystemPrompt(personalContext: personalContext, gapKind: programGapKind)
+        var systemPrompt = languageInstruction(for: lang) + "\n\n" + builtPrompt + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
         }
 
+        let maxTokens = isCompleted ? 450 : 260
         let body: [String: Any] = [
             "model": model,
             "messages": [
@@ -1389,7 +1473,7 @@ class GroqService {
                 ["role": "user", "content": userPrompt]
             ],
             "temperature": 0.5,
-            "max_tokens": 350
+            "max_tokens": maxTokens
         ]
 
         var request = URLRequest(url: endpoint)
@@ -1425,7 +1509,18 @@ class GroqService {
             throw GroqError.emptyResponse
         }
 
-        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let targetMin = isCompleted ? 400 : 200
+        let targetMax = isCompleted ? 550 : 300
+        logInsightLength(
+            insightType: isCompleted ? "program_completed" : "program_ongoing",
+            text: trimmedContent,
+            targetMin: targetMin,
+            targetMax: targetMax,
+            language: lang,
+            mode: modeTag(for: programGapKind)
+        )
+        return trimmedContent
     }
 
     // MARK: - Photo Food Analysis

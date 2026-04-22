@@ -130,7 +130,27 @@ extension GroqService {
         FeedbackService.shared.addLog(
             "Groq nutritionReport: period=\(period.rawValue) \(String(format: "%.1f", elapsed))s score=\(parsed.score)"
         )
+        logNutritionReportLengths(payload: parsed, period: period, language: lang, gapKind: gapKind)
         return parsed
+    }
+
+    private func logNutritionReportLengths(
+        payload: NutritionReportPayload,
+        period: ReportPeriod,
+        language: String,
+        gapKind: CalorieGapKind
+    ) {
+        let mode = modeTag(for: gapKind)
+        let insightPrefix = "nutrition_report_\(period.rawValue)"
+        logInsightLength(insightType: "\(insightPrefix).summary", text: payload.summary, targetMin: 90, targetMax: 130, language: language, mode: mode)
+        logInsightLength(insightType: "\(insightPrefix).microInsights", text: payload.microInsights, targetMin: 180, targetMax: 260, language: language, mode: mode)
+        logInsightLength(insightType: "\(insightPrefix).weeklyPattern", text: payload.weeklyPattern, targetMin: 120, targetMax: 170, language: language, mode: mode)
+        for (idx, s) in payload.strengths.enumerated() {
+            logInsightLength(insightType: "\(insightPrefix).strength[\(idx)]", text: s, targetMin: 60, targetMax: 100, language: language, mode: mode)
+        }
+        for (idx, s) in payload.improvements.enumerated() {
+            logInsightLength(insightType: "\(insightPrefix).improvement[\(idx)]", text: s, targetMin: 60, targetMax: 100, language: language, mode: mode)
+        }
     }
 
     private func parseNutritionReportJSON(_ raw: String) throws -> NutritionReportPayload {
@@ -249,8 +269,26 @@ extension GroqService {
             : "Mevcut kilo: \(String(format: "%.1f", currentWeightKg)) kg, Hedef: \(String(format: "%.1f", goalWeightKg)) kg\nYaş: \(age), Cinsiyet: \(gender)"
 
         let returnRule = isEN
-            ? "Return JSON with keys: score (1-10), summary (1 sentence), strengths (array of 2-3 strings), improvements (array of 2-3 strings), microInsights (1-2 sentences, use \"likely/possibly/may\"), weeklyPattern (1-2 sentences describing the overall pattern across the period)."
-            : "Şu anahtarlarla JSON döndür: score (1-10), summary (1 cümle), strengths (2-3 madde dizi), improvements (2-3 madde dizi), microInsights (1-2 cümle, \"olabilir/muhtemelen/tahminen\" kullan), weeklyPattern (1-2 cümle, dönem boyunca genel örüntüyü anlat)."
+            ? """
+            LENGTH CONSTRAINT (all fields): Every string must be a complete sentence. No single-word entries, no filler.
+            Return JSON with keys:
+            - score (integer 1-10)
+            - summary (EXACTLY 1 sentence, 15-20 words, 90-130 characters)
+            - strengths (array of EXACTLY 2 strings, each 10-15 words, 60-100 characters)
+            - improvements (array of EXACTLY 2 strings, each 10-15 words, 60-100 characters)
+            - microInsights (1-2 sentences, 30-40 words total, 180-260 characters; use \"likely/possibly/may\")
+            - weeklyPattern (1-2 sentences, 20-25 words total, 120-170 characters; describes the overall pattern across the period)
+            """
+            : """
+            UZUNLUK KURALI (tüm alanlar): Her dize tam bir cümle olmalı. Tek kelimelik giriş veya dolgu yok.
+            Şu anahtarlarla JSON döndür:
+            - score (tam sayı 1-10)
+            - summary (TAM OLARAK 1 cümle, 12-18 kelime, 90-130 karakter)
+            - strengths (TAM OLARAK 2 dizeli dizi, her biri 8-13 kelime, 60-100 karakter)
+            - improvements (TAM OLARAK 2 dizeli dizi, her biri 8-13 kelime, 60-100 karakter)
+            - microInsights (1-2 cümle, toplam 25-35 kelime, 180-260 karakter; \"olabilir/muhtemelen/tahminen\" kullan)
+            - weeklyPattern (1-2 cümle, toplam 18-22 kelime, 120-170 karakter; dönem boyunca genel örüntüyü anlat)
+            """
 
         return """
         \(header)

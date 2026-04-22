@@ -29,6 +29,9 @@ final class NutritionReport {
     // Optional program context — only populated when periodType == .program.
     var programDay: Int = 0
     var programTotalDays: Int = 0
+    // Prompt version this report was generated with. Mismatch with GroqService.nutritionReportPromptVersion
+    // means the report is served from the old prompt shape — service layer filters it out on resolve.
+    var promptVersion: Int = 0
 
     init(
         weekStartDate: Date,

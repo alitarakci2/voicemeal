@@ -36,6 +36,7 @@ final class DailySnapshot {
     var morningTDEE: Double = 0
     var insightGeneratedWithTarget: Int = 0
     var trackingModeRaw: String = TrackingMode.goal.rawValue
+    var dailyInsightPromptVersion: Int = 0
     var savedAt: Date
 
     var trackingMode: TrackingMode {

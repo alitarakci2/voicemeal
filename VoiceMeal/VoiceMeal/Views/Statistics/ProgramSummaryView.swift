@@ -519,7 +519,9 @@ struct ProgramSummaryView: View {
         let calendar = Calendar.current
         let weekOfYear = calendar.component(.weekOfYear, from: .now)
         let year = calendar.component(.yearForWeekOfYear, from: .now)
-        let cacheKey = "programInsight_\(year)_\(weekOfYear)_\(groqService.appLanguage)"
+        let isCompleted = summary.daysRemaining == 0
+        let branchTag = isCompleted ? "completed" : "ongoing"
+        let cacheKey = "programInsight_v\(GroqService.programInsightPromptVersion)_\(branchTag)_\(year)_\(weekOfYear)_\(groqService.appLanguage)"
 
         if let cached = UserDefaults.standard.string(forKey: cacheKey) {
             insightText = cached
@@ -530,7 +532,12 @@ struct ProgramSummaryView: View {
 
         insightLoading = true
         do {
-            let insight = try await groqService.generateProgramInsight(summary: summary, coachStyle: coachStyle, personalContext: personalContext)
+            let insight = try await groqService.generateProgramInsight(
+                summary: summary,
+                isCompleted: isCompleted,
+                coachStyle: coachStyle,
+                personalContext: personalContext
+            )
             insightText = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)
         } catch {

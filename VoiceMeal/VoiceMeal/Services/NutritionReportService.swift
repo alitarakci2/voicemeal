@@ -289,10 +289,13 @@ enum NutritionReportService {
         language: String
     ) -> NutritionReport? {
         let cal = Calendar.current
+        // Filter out reports generated with an older prompt version — history stays in DB,
+        // but the UI and cooldown treat them as absent so a fresh report regenerates.
         return reports.first { r in
             r.periodType == period
                 && cal.isDate(r.effectivePeriodStart, inSameDayAs: start)
                 && r.language == language
+                && r.promptVersion >= GroqService.nutritionReportPromptVersion
         }
     }
 
@@ -453,10 +456,12 @@ enum NutritionReportService {
     ) -> NutritionReport {
         let gapKindRaw = gapKindRawValue(gapKind)
         let cal = Calendar.current
+        // Reuse only same-version rows; older-version rows remain as history and a new row is inserted.
         if let existing = existingReports.first(where: { r in
             r.periodType == period
                 && cal.isDate(r.effectivePeriodStart, inSameDayAs: periodStart)
                 && r.language == language
+                && r.promptVersion >= GroqService.nutritionReportPromptVersion
         }) {
             existing.score = payload.score
             existing.summary = payload.summary
@@ -477,6 +482,7 @@ enum NutritionReportService {
             }
             existing.programDay = programDay
             existing.programTotalDays = programTotalDays
+            existing.promptVersion = GroqService.nutritionReportPromptVersion
             try? context.save()
             return existing
         } else {
@@ -499,6 +505,7 @@ enum NutritionReportService {
                 programDay: programDay,
                 programTotalDays: programTotalDays
             )
+            report.promptVersion = GroqService.nutritionReportPromptVersion
             context.insert(report)
             try? context.save()
             return report

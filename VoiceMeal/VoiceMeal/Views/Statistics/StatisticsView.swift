@@ -645,7 +645,7 @@ struct StatisticsView: View {
         guard withData.count >= 3 else { return }
 
         let fingerprint = "\(withData.count)_\(statisticsService.totalDeficitThisWeek)_\(statisticsService.averageCaloriesThisWeek)"
-        let cacheKey = "weeklyInsight_\(year)_\(weekOfYear)_\(groqService.appLanguage)_\(fingerprint)"
+        let cacheKey = "weeklyInsight_v\(GroqService.weeklyInsightPromptVersion)_\(year)_\(weekOfYear)_\(groqService.appLanguage)_\(fingerprint)"
 
         if let cached = UserDefaults.standard.string(forKey: cacheKey) {
             weeklyInsight = cached

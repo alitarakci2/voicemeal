@@ -177,7 +177,8 @@ struct DailyInsightCard: View {
         let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext)
         if let insight = snapshot?.dailyInsight,
            let generatedDate = snapshot?.insightGeneratedAt,
-           Calendar.current.isDateInToday(generatedDate) {
+           Calendar.current.isDateInToday(generatedDate),
+           (snapshot?.dailyInsightPromptVersion ?? 0) >= GroqService.dailyInsightPromptVersion {
             insightText = insight
             generatedAt = generatedDate
         }
@@ -188,7 +189,8 @@ struct DailyInsightCard: View {
             let snapshot = SnapshotService.fetchSnapshot(for: .now, modelContext: modelContext)
             if let insight = snapshot?.dailyInsight,
                let generatedDate = snapshot?.insightGeneratedAt,
-               Calendar.current.isDateInToday(generatedDate) {
+               Calendar.current.isDateInToday(generatedDate),
+               (snapshot?.dailyInsightPromptVersion ?? 0) >= GroqService.dailyInsightPromptVersion {
                 insightText = insight
                 generatedAt = generatedDate
                 return
@@ -230,6 +232,7 @@ struct DailyInsightCard: View {
                 snapshot.dailyInsight = text
                 snapshot.insightGeneratedAt = .now
                 snapshot.insightGeneratedWithTarget = dailyCalorieTarget
+                snapshot.dailyInsightPromptVersion = GroqService.dailyInsightPromptVersion
                 if let s = sleep {
                     snapshot.sleepMinutes = s.totalMinutes
                     snapshot.deepSleepMinutes = s.deepSleepMinutes
