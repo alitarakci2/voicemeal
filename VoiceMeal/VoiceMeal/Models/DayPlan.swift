@@ -29,6 +29,7 @@ struct DayPlan: Identifiable {
     let consumedFat: Double
     let status: DayStatus
     let snapshotTargetDeficit: Int
+    var trackingMode: TrackingMode = .goal
 
     var caloriePercentage: Int {
         guard targetCalories > 0 else { return 0 }

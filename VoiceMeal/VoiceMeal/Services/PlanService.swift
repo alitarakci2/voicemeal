@@ -38,9 +38,11 @@ class PlanService {
 
             let target: (tdee: Int, calories: Int, protein: Int, carbs: Int, fat: Int)
             var snapTargetDeficit = 0
+            var dayTrackingMode: TrackingMode = profile.trackingMode
             if isToday {
                 target = (Int(goalEngine.tdee), goalEngine.dailyCalorieTarget, goalEngine.proteinTarget, goalEngine.carbTarget, goalEngine.fatTarget)
                 snapTargetDeficit = Int(goalEngine.cappedDailyDeficit)
+                dayTrackingMode = profile.trackingMode
             } else if current < today,
                       let snapshot = snapshotForDate(current, snapshots: snapshots),
                       snapshot.dailyCalorieTarget > 0 {
@@ -52,8 +54,10 @@ class PlanService {
                     fat: snapshot.fatTarget
                 )
                 snapTargetDeficit = snapshot.targetDeficit
+                dayTrackingMode = snapshot.trackingMode
             } else {
                 target = calculateTargets(profile: profile, activities: activities, vo2MaxAdjustment: vo2Adjustment)
+                dayTrackingMode = profile.trackingMode
             }
 
             let consumedCal = dayEntries.reduce(0) { $0 + $1.calories }
@@ -68,6 +72,8 @@ class PlanService {
                 status = .planned
             } else if dayEntries.isEmpty {
                 status = .missed
+            } else if dayTrackingMode == .observe {
+                status = .completed
             } else {
                 let actualDeficit = target.tdee - consumedCal
                 let targetDeficit = snapTargetDeficit > 0 ? snapTargetDeficit : target.tdee - target.calories
@@ -93,7 +99,8 @@ class PlanService {
                 consumedCarbs: current > today ? 0 : consumedC,
                 consumedFat: current > today ? 0 : consumedF,
                 status: status,
-                snapshotTargetDeficit: snapTargetDeficit
+                snapshotTargetDeficit: snapTargetDeficit,
+                trackingMode: dayTrackingMode
             )
             plans.append(plan)
 
@@ -160,7 +167,9 @@ class PlanService {
         let tdee = bmr * multiplier
 
         let rawDeficit: Double
-        if profile.goalDays > 0 {
+        if profile.isObserveMode {
+            rawDeficit = 0
+        } else if profile.goalDays > 0 {
             let weightDiff = profile.currentWeightKg - profile.goalWeightKg
             rawDeficit = (weightDiff * 7700) / Double(profile.goalDays)
         } else {

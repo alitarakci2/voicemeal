@@ -646,7 +646,7 @@ class GroqService {
     static let programInsightPromptVersion = 2
     static let nutritionReportPromptVersion = 2
 
-    private func modeTag(for gapKind: CalorieGapKind) -> String {
+    func modeTag(for gapKind: CalorieGapKind) -> String {
         switch gapKind {
         case .deficit:  return "deficit"
         case .surplus:  return "surplus"

@@ -235,6 +235,31 @@ struct PlanView: View {
         return rawDeficit > maxDeficit || rawDeficit < -maxSurplus
     }
 
+    private var newGoalWeeklyChange: Double {
+        guard let p = profiles.first, newGoalDays > 0 else { return 0 }
+        return (p.currentWeightKg - newGoalWeightKg) / (Double(newGoalDays) / 7.0)
+    }
+
+    private var isNewGoalSaveDisabled: Bool {
+        newGoalWeeklyChange > 1.5 || newGoalWeeklyChange < -1.5
+    }
+
+    private var isNewGoalDeficitCapped: Bool {
+        guard let p = profiles.first, newGoalDays > 0 else { return false }
+        let weightDiff = p.currentWeightKg - newGoalWeightKg
+        let rawDeficit = (weightDiff * 7700) / Double(newGoalDays)
+        let estimatedBMR: Double
+        if p.gender == "male" {
+            estimatedBMR = 10 * p.currentWeightKg + 6.25 * p.heightCm - 5 * Double(p.age) + 5
+        } else {
+            estimatedBMR = 10 * p.currentWeightKg + 6.25 * p.heightCm - 5 * Double(p.age) - 161
+        }
+        let estimatedTDEE = estimatedBMR * 1.5
+        let maxDeficit = estimatedTDEE * 0.35
+        let maxSurplus = estimatedTDEE * 0.20
+        return rawDeficit > maxDeficit || rawDeficit < -maxSurplus
+    }
+
     var body: some View {
         ZStack {
             Theme.backgroundGradient.ignoresSafeArea()
@@ -449,6 +474,30 @@ struct PlanView: View {
 
                         Stepper(String(format: "goal_duration".localized, newGoalDays), value: $newGoalDays, in: 14...365, step: 7)
                             .font(Theme.captionFont)
+
+                        if newGoalWeeklyChange > 1.0 {
+                            Label("unhealthy_pace".localized, systemImage: "light.beacon.max.fill")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.red)
+                        } else if newGoalWeeklyChange > 0.75 {
+                            Label("aggressive_goal".localized, systemImage: "exclamationmark.triangle.fill")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.orange)
+                        }
+                        if newGoalWeeklyChange < -1.0 {
+                            Label(L.weightGainTooFast.localized, systemImage: "light.beacon.max.fill")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.red)
+                        } else if newGoalWeeklyChange < -0.5 {
+                            Label(L.weightGainFast.localized, systemImage: "exclamationmark.triangle.fill")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.orange)
+                        }
+                        if isNewGoalDeficitCapped {
+                            Label(L.deficitCapped.localized, systemImage: "exclamationmark.triangle.fill")
+                                .font(Theme.captionFont)
+                                .foregroundStyle(Theme.orange)
+                        }
                     }
                 }
             }
@@ -463,6 +512,7 @@ struct PlanView: View {
                         switchToGoalMode(goalWeight: newGoalWeightKg, days: newGoalDays)
                         showGoalEntrySheet = false
                     }
+                    .disabled(isNewGoalSaveDisabled)
                 }
             }
         }
@@ -971,7 +1021,8 @@ struct DayRowView: View {
     }
 
     private var planGapKind: CalorieGapKind {
-        CalorieGapKind.from(signedTargetDeficit: planTargetDeficit)
+        if plan.trackingMode == .observe { return .observe }
+        return CalorieGapKind.from(signedTargetDeficit: planTargetDeficit)
     }
 
     private var deficitText: String {

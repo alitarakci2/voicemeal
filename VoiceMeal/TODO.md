@@ -34,6 +34,16 @@ Biriktirilen görevler. Ne zaman vakit olursa, buradan alıp nokta atış çalı
 
 ---
 
+## Refactor
+
+### DRY refactor: Goal validation logic (3 places)
+**Context:** Step3Goal (binary warning >1kg/week), Plan Settings + GoalEntrySheet (4-tier warning), both duplicated.
+**Goal:** Single GoalValidator helper, consistent thresholds across all 3 entry points.
+**Risk:** Changing Step3Goal binary → 4-tier may affect existing onboarding UX; needs design review.
+**Priority:** Low — V2 or post-launch polish.
+
+---
+
 ## Performans
 
 ### HomeView re-render optimization
