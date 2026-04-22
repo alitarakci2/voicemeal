@@ -544,6 +544,10 @@ struct HomeView: View {
     }
 
     func updateWidgetData() {
+        let descriptor = FetchDescriptor<UserProfile>()
+        let freshProfiles = (try? modelContext.fetch(descriptor)) ?? []
+        let isObserve = freshProfiles.first?.isObserveMode ?? profiles.first?.isObserveMode ?? false
+
         let remaining = goalEngine.dailyCalorieTarget - eatenCalories
         let startOfDay = Calendar.current.startOfDay(for: .now)
         let todayEntriesSorted = allEntries
@@ -566,7 +570,7 @@ struct HomeView: View {
             waterConsumed: isWaterTrackingEnabled ? todayWaterMl : 0,
             waterGoal: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
             lastUpdated: Date(),
-            isObserveMode: profiles.first?.isObserveMode ?? false
+            isObserveMode: isObserve
         )
         WidgetDataStore.shared.save(data)
         FeedbackService.shared.addLog("Widget updated: \(eatenCalories)kcal eaten, \(remaining)kcal left")

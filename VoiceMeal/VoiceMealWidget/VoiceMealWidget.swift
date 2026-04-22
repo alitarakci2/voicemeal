@@ -45,11 +45,12 @@ private let widgetLanguage: String = {
 
 private var isEN: Bool { widgetLanguage == "en" }
 
-private enum WidgetGapMode { case deficit, surplus, maintain }
+private enum WidgetGapMode { case deficit, surplus, maintain, observe }
 
-private func widgetGapMode(target: Int) -> WidgetGapMode {
-    if target > 50 { return .deficit }
-    if target < -50 { return .surplus }
+private func widgetMode(data: WidgetData) -> WidgetGapMode {
+    if data.isObserveMode { return .observe }
+    if data.targetDeficit > 50 { return .deficit }
+    if data.targetDeficit < -50 { return .surplus }
     return .maintain
 }
 
@@ -59,6 +60,7 @@ private func modeShortLabel(_ mode: WidgetGapMode) -> String {
     case .deficit:  return isEN ? "DEFICIT"  : "AÇIK"
     case .surplus:  return isEN ? "SURPLUS"  : "FAZLA"
     case .maintain: return isEN ? "BALANCE"  : "DENGE"
+    case .observe:  return isEN ? "TODAY"    : "BUGÜN"
     }
 }
 
@@ -68,6 +70,7 @@ private func modeInlineWord(_ mode: WidgetGapMode) -> String {
     case .deficit:  return isEN ? "deficit"  : "açık"
     case .surplus:  return isEN ? "surplus"  : "fazla"
     case .maintain: return isEN ? "balance"  : "denge"
+    case .observe:  return isEN ? "today"    : "bugün"
     }
 }
 
@@ -77,6 +80,7 @@ private func modeA11yWord(_ mode: WidgetGapMode) -> String {
     case .deficit:  return isEN ? "deficit"  : "açık"
     case .surplus:  return isEN ? "surplus"  : "fazla"
     case .maintain: return isEN ? "balance"  : "denge"
+    case .observe:  return isEN ? "today"    : "bugün"
     }
 }
 
@@ -123,6 +127,7 @@ private func modeColor(_ mode: WidgetGapMode, theme: WidgetTheme) -> Color {
     case .deficit:  return theme.accent
     case .surplus:  return surplusColor
     case .maintain: return maintainColor
+    case .observe:  return theme.accent
     }
 }
 
@@ -131,6 +136,7 @@ private func modeColorLight(_ mode: WidgetGapMode, theme: WidgetTheme) -> Color 
     case .deficit:  return theme.accentLight
     case .surplus:  return surplusColor.opacity(0.75)
     case .maintain: return maintainColor.opacity(0.75)
+    case .observe:  return theme.accentLight
     }
 }
 
@@ -213,13 +219,19 @@ struct CalorieSmallView: View {
 
     var body: some View {
         let theme = WidgetTheme.from(entry.data.theme)
-        let mode = widgetGapMode(target: entry.data.targetDeficit)
-        let value = abs(entry.data.actualDeficit)
+        let mode = widgetMode(data: entry.data)
+        let value = mode == .observe
+            ? entry.data.consumedCalories
+            : abs(entry.data.actualDeficit)
         let color = modeColor(mode, theme: theme)
         let light = modeColorLight(mode, theme: theme)
-        let progress = mode == .maintain
-            ? max(0, 1 - min(Double(value) / 500.0, 1.0))
-            : entry.data.deficitPercent
+        let progress: Double = {
+            switch mode {
+            case .observe:  return entry.data.caloriePercent
+            case .maintain: return max(0, 1 - min(Double(value) / 500.0, 1.0))
+            default:        return entry.data.deficitPercent
+            }
+        }()
 
         VStack(spacing: 6) {
             CalorieRingView(
@@ -261,13 +273,19 @@ struct CalorieMediumView: View {
 
     var body: some View {
         let theme = WidgetTheme.from(entry.data.theme)
-        let mode = widgetGapMode(target: entry.data.targetDeficit)
-        let value = abs(entry.data.actualDeficit)
+        let mode = widgetMode(data: entry.data)
+        let value = mode == .observe
+            ? entry.data.consumedCalories
+            : abs(entry.data.actualDeficit)
         let color = modeColor(mode, theme: theme)
         let light = modeColorLight(mode, theme: theme)
-        let progress = mode == .maintain
-            ? max(0, 1 - min(Double(value) / 500.0, 1.0))
-            : entry.data.deficitPercent
+        let progress: Double = {
+            switch mode {
+            case .observe:  return entry.data.caloriePercent
+            case .maintain: return max(0, 1 - min(Double(value) / 500.0, 1.0))
+            default:        return entry.data.deficitPercent
+            }
+        }()
         let proteinEaten = Int(entry.data.proteinEaten)
         let proteinTarget = Int(entry.data.proteinTarget)
 
@@ -378,13 +396,19 @@ struct CalorieLargeView: View {
 
     var body: some View {
         let theme = WidgetTheme.from(entry.data.theme)
-        let mode = widgetGapMode(target: entry.data.targetDeficit)
-        let value = abs(entry.data.actualDeficit)
+        let mode = widgetMode(data: entry.data)
+        let value = mode == .observe
+            ? entry.data.consumedCalories
+            : abs(entry.data.actualDeficit)
         let color = modeColor(mode, theme: theme)
         let light = modeColorLight(mode, theme: theme)
-        let progress = mode == .maintain
-            ? max(0, 1 - min(Double(value) / 500.0, 1.0))
-            : entry.data.deficitPercent
+        let progress: Double = {
+            switch mode {
+            case .observe:  return entry.data.caloriePercent
+            case .maintain: return max(0, 1 - min(Double(value) / 500.0, 1.0))
+            default:        return entry.data.deficitPercent
+            }
+        }()
         let proteinEaten = Int(entry.data.proteinEaten)
         let proteinTarget = Int(entry.data.proteinTarget)
 
@@ -517,11 +541,17 @@ struct CalorieLockCircularView: View {
     let entry: SimpleEntry
 
     var body: some View {
-        let mode = widgetGapMode(target: entry.data.targetDeficit)
-        let value = abs(entry.data.actualDeficit)
-        let progress = mode == .maintain
-            ? max(0, 1 - min(Double(value) / 500.0, 1.0))
-            : entry.data.deficitPercent
+        let mode = widgetMode(data: entry.data)
+        let value = mode == .observe
+            ? entry.data.consumedCalories
+            : abs(entry.data.actualDeficit)
+        let progress: Double = {
+            switch mode {
+            case .observe:  return entry.data.caloriePercent
+            case .maintain: return max(0, 1 - min(Double(value) / 500.0, 1.0))
+            default:        return entry.data.deficitPercent
+            }
+        }()
 
         ZStack {
             Circle()
@@ -548,8 +578,10 @@ struct CalorieLockRectView: View {
     let entry: SimpleEntry
 
     var body: some View {
-        let mode = widgetGapMode(target: entry.data.targetDeficit)
-        let value = abs(entry.data.actualDeficit)
+        let mode = widgetMode(data: entry.data)
+        let value = mode == .observe
+            ? entry.data.consumedCalories
+            : abs(entry.data.actualDeficit)
         let proteinEaten = Int(entry.data.proteinEaten)
         let proteinTarget = Int(entry.data.proteinTarget)
 
@@ -586,9 +618,14 @@ struct CalorieInlineView: View {
     let entry: SimpleEntry
 
     var body: some View {
-        let mode = widgetGapMode(target: entry.data.targetDeficit)
-        let value = abs(entry.data.actualDeficit)
-        Text("VoiceMeal · \(value) \(modeInlineWord(mode))")
+        let mode = widgetMode(data: entry.data)
+        if mode == .observe {
+            let kcal = isEN ? "kcal" : "kcal"
+            Text("VoiceMeal · \(entry.data.consumedCalories) \(kcal)")
+        } else {
+            let value = abs(entry.data.actualDeficit)
+            Text("VoiceMeal · \(value) \(modeInlineWord(mode))")
+        }
     }
 }
 
