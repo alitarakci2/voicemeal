@@ -43,6 +43,16 @@ struct StepAppTourView: View {
                 bodyEN: "Weekly and monthly statistics. Streak, consistency, best days.",
                 example: "🔥 5 günlük seri · %87 tutarlılık",
                 exampleEN: "🔥 5-day streak · 87% consistency"
+            ),
+            (
+                icon: "exclamationmark.bubble.fill",
+                iconColor: Color(hex: "FF9F43"),
+                title: "Bir Sorun mu Var?",
+                titleEN: "Something Wrong?",
+                body: "Telefonunu sallayarak bana anında geri bildirim gönderebilirsin.",
+                bodyEN: "Shake your phone anytime to send me instant feedback.",
+                example: "Beta sürümünde hatalar olabilir. Yardımın değerli 🙏",
+                exampleEN: "Beta versions may have bugs. Your help matters 🙏"
             )
         ]
     }

@@ -824,6 +824,13 @@ struct SettingsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
+                Text(isEN
+                     ? "💡 Tip: You can also shake your phone anywhere to send feedback."
+                     : "💡 İpucu: Herhangi bir yerde telefonu sallayarak da geri bildirim gönderebilirsin.")
+                    .font(.caption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Button {
                     showResetAlert = true
                 } label: {

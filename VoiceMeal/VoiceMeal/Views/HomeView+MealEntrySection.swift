@@ -114,6 +114,15 @@ extension HomeView {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+
+            Text(groqService.appLanguage == "en"
+                 ? "Said \"2 eggs\" but got \"3\"? Hard to correct?\nWe're in beta — shake your phone to report 🤝"
+                 : "\"2 yumurta\" dedim, \"3 yumurta\" mı yazdı? Düzeltmek zor mu oluyor?\nBeta sürümdeyiz — telefonu salla, bize bildir 🤝")
+                .font(.caption2)
+                .foregroundStyle(.secondary.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .padding(.top, 4)
         }
     }
 
