@@ -357,6 +357,13 @@ enum L {
 
     // Sprint 2 — ProgramSummaryView
     static let doneLower = "done_lower"
+
+    // Sprint A — Voice visibility
+    static let openSettings = "open_settings"
+    static let mealNotDetected = "meal_not_detected"
+    static let saveFailed = "save_failed"
+    static let permissionRequiredTitle = "permission_required_title"
+    static let permissionRequiredMessage = "permission_required_message"
 }
 // swiftlint:enable type_name
 

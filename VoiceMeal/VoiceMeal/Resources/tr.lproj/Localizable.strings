@@ -392,6 +392,10 @@
 "camera_simulator_error" = "Kamera simülatörde kullanılamaz";
 "mic_error" = "Mikrofon başlatılamadı";
 "mic_permission_denied" = "Mikrofon izni gerekli. Ayarlar'dan VoiceMeal için mikrofonu açabilirsin.";
+"meal_not_detected" = "Yemek algılanamadı, tekrar dene";
+"save_failed" = "Kaydedilemedi, tekrar dene";
+"permission_required_title" = "İzin Gerekli";
+"permission_required_message" = "Sesli kayıt için mikrofon ve konuşma tanıma izni gerekiyor. Ayarlar'dan etkinleştirebilirsin.";
 
 /* Units */
 "kg" = "kg";

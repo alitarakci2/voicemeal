@@ -38,6 +38,7 @@ struct HomeView: View {
     @State var showGoalUpdatedToast = false
     @State var entryToCorrect: FoodEntry?
     @State var correctionQuestion = ""
+    @State var showPermissionAlert = false
 
     @State var scrollToTopTrigger = false
     @State var voiceScrollTrigger = false
@@ -262,6 +263,15 @@ struct HomeView: View {
                 await NotificationService.shared.checkAndRescheduleWeightReminder(profile: p)
             }
         }
+        .onChange(of: errorMessage) { _, newValue in
+            guard let current = newValue else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(5))
+                if errorMessage == current {
+                    errorMessage = nil
+                }
+            }
+        }
         .onChange(of: speechService.isRecording) { oldValue, newValue in
             if oldValue && !newValue {
                 if let startedAt = recordingStartedAt {
@@ -399,6 +409,16 @@ struct HomeView: View {
                 )
                 .presentationBackground(Color(hex: "0A0A0F"))
             }
+        }
+        .alert(L.permissionRequiredTitle.localized, isPresented: $showPermissionAlert) {
+            Button(L.openSettings.localized) {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button(L.cancel.localized, role: .cancel) {}
+        } message: {
+            Text(L.permissionRequiredMessage.localized)
         }
         .alert("Kamera \u{0130}zni Gerekli", isPresented: $showCameraPermissionDenied) {
             Button("Ayarlar\u{0131} A\u{00E7}") {

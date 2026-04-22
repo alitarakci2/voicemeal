@@ -3,6 +3,7 @@
 //  VoiceMeal
 //
 
+import Sentry
 import SwiftData
 import SwiftUI
 
@@ -58,6 +59,18 @@ extension HomeView {
                 Text(speechService.isRecording ? "listening".localized : L.ready.localized)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(speechService.isRecording ? Theme.red : Theme.textSecondary)
+            }
+
+            if (speechService.isRecording || isAnalyzing) && !speechService.transcript.isEmpty {
+                Text(speechService.transcript)
+                    .font(.system(size: 14))
+                    .italic()
+                    .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, 24)
+                    .animation(nil, value: speechService.transcript)
             }
 
             if !correctionQuestion.isEmpty {
@@ -331,7 +344,10 @@ extension HomeView {
         if speechService.isRecording {
             speechService.stopListening()
         } else {
-            guard permissionGranted else { return }
+            guard permissionGranted else {
+                showPermissionAlert = true
+                return
+            }
             errorMessage = nil
             showSavedConfirmation = false
             let preserveState = !clarificationQuestion.isEmpty
@@ -484,6 +500,15 @@ extension HomeView {
                         try? await Task.sleep(for: .seconds(2))
                         showSavedConfirmation = false
                     }
+                } else {
+                    errorMessage = L.mealNotDetected.localized
+                    let crumb = Breadcrumb()
+                    crumb.level = .info
+                    crumb.category = "voice.parse.no_meal_detected"
+                    crumb.message = "Transcript parsed but no meal or water detected"
+                    crumb.data = ["transcript_chars": transcript.count]
+                    SentrySDK.addBreadcrumb(crumb)
+                    FeedbackService.shared.addLog("voice.parse.no_meal_detected: \(transcript.count) chars")
                 }
             } catch {
                 print("❌ [HomeView] Groq error: \(error)")
@@ -493,9 +518,6 @@ extension HomeView {
                 reviewMeals = []
                 showReviewCard = false
                 originalSpeechText = ""
-                DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-                    errorMessage = nil
-                }
             }
             isAnalyzing = false
         }
@@ -575,10 +597,18 @@ extension HomeView {
             modelContext.insert(entry)
             FeedbackService.shared.addLog("Meal saved: \(meal.name) - \(Int(meal.calories ?? 0))kcal")
         }
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = L.saveFailed.localized
+            SentrySDK.capture(error: error)
+            FeedbackService.shared.addErrorLog("Meal save failed: \(error.localizedDescription)")
+            return
+        }
         let totalCal = meals.reduce(0) { $0 + Int($1.calories ?? 0) }
         FeedbackService.shared.addLog("Meal confirmed: \(meals.count) items, \(totalCal)kcal total")
         saveTodaySnapshot()
+        NotificationCenter.default.post(name: .foodEntrySaved, object: nil)
         showSavedConfirmation = true
         Task {
             try? await Task.sleep(for: .seconds(2))

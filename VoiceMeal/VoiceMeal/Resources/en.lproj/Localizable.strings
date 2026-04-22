@@ -365,6 +365,10 @@
 "camera_simulator_error" = "Camera not available in simulator";
 "mic_error" = "Microphone failed to start";
 "mic_permission_denied" = "Microphone access required. Enable it for VoiceMeal in Settings.";
+"meal_not_detected" = "No food detected, try again";
+"save_failed" = "Save failed, try again";
+"permission_required_title" = "Permission Required";
+"permission_required_message" = "Voice recording requires microphone and speech recognition permissions. You can enable them in Settings.";
 
 /* Units */
 "kg" = "kg";
