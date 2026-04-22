@@ -172,6 +172,7 @@ final class UserProfile {
     var notification2Minute: Int
     var preferredProteinsJSON: String
     var programStartWeightKg: Double = 0
+    var trackingModeRaw: String = TrackingMode.goal.rawValue
     var waterGoalOverrideMl: Int?
     var isWaterTrackingEnabled: Bool = false
     var useMetric: Bool = true
@@ -200,6 +201,15 @@ final class UserProfile {
     /// falls back to account creation date for existing users.
     var effectiveProgramStart: Date {
         programStartDate ?? createdAt
+    }
+
+    var trackingMode: TrackingMode {
+        get { TrackingMode(rawValue: trackingModeRaw) ?? .goal }
+        set { trackingModeRaw = newValue.rawValue }
+    }
+
+    var isObserveMode: Bool {
+        trackingMode == .observe
     }
 
     var cookingLocation: CookingLocation {

@@ -18,6 +18,7 @@ struct TDEEWarningBanner: View {
         case .surplus:  return "banner_no_workout_body_surplus"
         case .maintain: return "banner_no_workout_body_maintain"
         case .deficit:  return "banner_no_workout_body"
+        case .observe:  return "banner_no_workout_body"
         }
     }
 

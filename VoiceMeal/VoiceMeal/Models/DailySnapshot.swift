@@ -35,7 +35,13 @@ final class DailySnapshot {
     var waterGoalMl: Int = 0
     var morningTDEE: Double = 0
     var insightGeneratedWithTarget: Int = 0
+    var trackingModeRaw: String = TrackingMode.goal.rawValue
     var savedAt: Date
+
+    var trackingMode: TrackingMode {
+        get { TrackingMode(rawValue: trackingModeRaw) ?? .goal }
+        set { trackingModeRaw = newValue.rawValue }
+    }
 
     init(
         date: Date,

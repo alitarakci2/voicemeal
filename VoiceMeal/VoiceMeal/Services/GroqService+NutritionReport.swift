@@ -273,6 +273,8 @@ extension GroqService {
                 return "User is in a BULKING phase (calorie surplus, weight/muscle gain). Never suggest eating less. Never use the word 'deficit'. Frame around eating enough, quality of surplus sources, protein for muscle building."
             case .maintain:
                 return "User is in a MAINTENANCE phase (calorie balance). Frame around consistency, avoiding big swings, balanced macros."
+            case .observe:
+                return "User is in OBSERVE mode — no weight goal, just logging. Do NOT use words like 'deficit', 'surplus', 'target', 'goal', 'cutting', 'bulking'. Frame feedback around awareness, patterns, nutritional quality, balance — no judgment about calorie totals."
             }
         } else {
             switch gapKind {
@@ -282,6 +284,8 @@ extension GroqService {
                 return "Kullanıcı KİLO/KAS ALMA (kalori fazlası) modunda. Asla daha az yemeyi önerme. 'Açık' kelimesini kullanma. Yeterli yemek, fazla kalorinin kalitesi, kas için protein üzerine yorum yap."
             case .maintain:
                 return "Kullanıcı KİLO KORUMA (kalori dengesi) modunda. İstikrar, büyük sapmalardan kaçınma, dengeli makro üzerine yorum yap."
+            case .observe:
+                return "Kullanıcı SADECE GÖZLEM modunda — kilo hedefi yok, sadece kayıt tutuyor. 'Açık', 'fazla', 'hedef', 'kilo verme', 'kilo alma' gibi kelimeleri KULLANMA. Farkındalık, örüntüler, besin kalitesi, denge üzerine yorum yap — kalori toplamı için yargı yapma."
             }
         }
     }

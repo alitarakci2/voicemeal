@@ -20,6 +20,8 @@ struct BestDayCard: View {
             return data.filter { $0.deficit < 0 }.min { $0.deficit < $1.deficit }
         case .maintain:
             return data.min { abs($0.deficit) < abs($1.deficit) }
+        case .observe:
+            return nil
         }
     }
 
@@ -28,6 +30,7 @@ struct BestDayCard: View {
         case .deficit:  return L.bestDeficitDay.localized
         case .surplus:  return L.bestSurplusDay.localized
         case .maintain: return L.bestBalanceDay.localized
+        case .observe:  return ""
         }
     }
 
@@ -36,6 +39,7 @@ struct BestDayCard: View {
         case .deficit:  return "🔥"
         case .surplus:  return "💪"
         case .maintain: return "⚖️"
+        case .observe:  return ""
         }
     }
 
@@ -44,6 +48,7 @@ struct BestDayCard: View {
         case .deficit:  return .orange
         case .surplus:  return Color(hex: "5E9FFF")
         case .maintain: return .green
+        case .observe:  return .white
         }
     }
 

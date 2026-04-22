@@ -9,6 +9,7 @@ enum CalorieGapKind {
     case deficit   // cutting: target is to eat below TDEE
     case surplus   // bulking: target is to eat above TDEE
     case maintain  // holding: target is ~zero balance
+    case observe   // no goal: just logging, no judgment
 
     static func from(signedTargetDeficit: Int, threshold: Int = 50) -> CalorieGapKind {
         if signedTargetDeficit > threshold { return .deficit }
@@ -17,6 +18,7 @@ enum CalorieGapKind {
     }
 
     static func from(profile: UserProfile, threshold: Double = 0.5) -> CalorieGapKind {
+        if profile.isObserveMode { return .observe }
         let diff = profile.currentWeightKg - profile.goalWeightKg
         if diff > threshold { return .deficit }
         if diff < -threshold { return .surplus }
@@ -32,6 +34,7 @@ enum CalorieGapCopy {
         case .deficit:  return String(format: L.deficitApproxFormat.localized, v)
         case .surplus:  return String(format: L.surplusApproxFormat.localized, v)
         case .maintain: return String(format: L.maintainApproxFormat.localized, v)
+        case .observe:  return String(format: L.observeKcalApproxFormat.localized, v)
         }
     }
 
@@ -44,6 +47,7 @@ enum CalorieGapCopy {
         case .maintain:
             if v < 50 { return L.kcalOnTarget.localized }
             return String(format: L.maintainValueFormat.localized, v)
+        case .observe:  return String(format: L.observeKcalValueFormat.localized, v)
         }
     }
 
@@ -56,6 +60,7 @@ enum CalorieGapCopy {
         case .maintain:
             if v < 50 { return L.kcalOnTarget.localized }
             return String(format: L.kcalMaintainFormat.localized, v)
+        case .observe:  return String(format: L.observeKcalValueFormat.localized, v)
         }
     }
 
@@ -65,6 +70,7 @@ enum CalorieGapCopy {
         case .deficit:  return L.deficitShort.localized
         case .surplus:  return L.surplusShort.localized
         case .maintain: return L.balanceShort.localized
+        case .observe:  return L.observeShortLabel.localized
         }
     }
 
@@ -74,6 +80,7 @@ enum CalorieGapCopy {
         case .deficit:  return "calorie_deficit_label".localized
         case .surplus:  return "calorie_surplus_label".localized
         case .maintain: return "calorie_balance_label".localized
+        case .observe:  return L.observeCardTitle.localized
         }
     }
 
@@ -83,6 +90,7 @@ enum CalorieGapCopy {
         case .deficit:  return L.realDeficit.localized
         case .surplus:  return L.realSurplus.localized
         case .maintain: return L.realBalance.localized
+        case .observe:  return L.observeConsumedLabel.localized
         }
     }
 
@@ -109,6 +117,8 @@ enum CalorieGapCopy {
             if diff <= 100 { return .good }
             if diff <= 300 { return .warn }
             return .bad
+        case .observe:
+            return .good
         }
     }
 }

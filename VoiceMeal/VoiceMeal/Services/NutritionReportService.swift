@@ -510,6 +510,7 @@ enum NutritionReportService {
         case .deficit: return "deficit"
         case .surplus: return "surplus"
         case .maintain: return "maintain"
+        case .observe: return "observe"
         }
     }
 
@@ -517,6 +518,7 @@ enum NutritionReportService {
         switch raw {
         case "surplus": return .surplus
         case "maintain": return .maintain
+        case "observe": return .observe
         default: return .deficit
         }
     }

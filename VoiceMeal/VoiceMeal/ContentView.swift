@@ -47,6 +47,7 @@ struct ContentView: View {
             fatTarget: Double(goalEngine.fatTarget),
             deficit: realDeficit,
             targetDeficit: Int(goalEngine.cappedDailyDeficit),
+            isObserveMode: profiles.first?.isObserveMode ?? false,
             meals: meals
         )
     }

@@ -25,6 +25,60 @@ struct WidgetData: Codable {
     let waterConsumed: Int
     let waterGoal: Int
     let lastUpdated: Date
+    var isObserveMode: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case consumedCalories, targetCalories, remainingCalories, targetDeficit, actualDeficit
+        case proteinEaten, proteinTarget, lastMeals, theme, waterConsumed, waterGoal, lastUpdated
+        case isObserveMode
+    }
+
+    init(
+        consumedCalories: Int,
+        targetCalories: Int,
+        remainingCalories: Int,
+        targetDeficit: Int,
+        actualDeficit: Int,
+        proteinEaten: Double,
+        proteinTarget: Double,
+        lastMeals: [WidgetMealEntry],
+        theme: String,
+        waterConsumed: Int,
+        waterGoal: Int,
+        lastUpdated: Date,
+        isObserveMode: Bool = false
+    ) {
+        self.consumedCalories = consumedCalories
+        self.targetCalories = targetCalories
+        self.remainingCalories = remainingCalories
+        self.targetDeficit = targetDeficit
+        self.actualDeficit = actualDeficit
+        self.proteinEaten = proteinEaten
+        self.proteinTarget = proteinTarget
+        self.lastMeals = lastMeals
+        self.theme = theme
+        self.waterConsumed = waterConsumed
+        self.waterGoal = waterGoal
+        self.lastUpdated = lastUpdated
+        self.isObserveMode = isObserveMode
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        consumedCalories = try c.decode(Int.self, forKey: .consumedCalories)
+        targetCalories = try c.decode(Int.self, forKey: .targetCalories)
+        remainingCalories = try c.decode(Int.self, forKey: .remainingCalories)
+        targetDeficit = try c.decode(Int.self, forKey: .targetDeficit)
+        actualDeficit = try c.decode(Int.self, forKey: .actualDeficit)
+        proteinEaten = try c.decode(Double.self, forKey: .proteinEaten)
+        proteinTarget = try c.decode(Double.self, forKey: .proteinTarget)
+        lastMeals = try c.decode([WidgetMealEntry].self, forKey: .lastMeals)
+        theme = try c.decode(String.self, forKey: .theme)
+        waterConsumed = try c.decode(Int.self, forKey: .waterConsumed)
+        waterGoal = try c.decode(Int.self, forKey: .waterGoal)
+        lastUpdated = try c.decode(Date.self, forKey: .lastUpdated)
+        isObserveMode = try c.decodeIfPresent(Bool.self, forKey: .isObserveMode) ?? false
+    }
 
     var remainingCaloriesClamped: Int {
         max(0, remainingCalories)

@@ -30,6 +30,10 @@ struct StatisticsView: View {
 
     private var isEN: Bool { groqService.appLanguage == "en" }
 
+    private var isObserveMode: Bool {
+        profiles.first?.isObserveMode ?? false
+    }
+
     private var monthlyHasEnoughData: Bool {
         statisticsService.monthlyStats.filter { $0.hasData }.count >= 14
     }
@@ -402,9 +406,11 @@ struct StatisticsView: View {
     // MARK: - Custom Segmented Picker
 
     private var customSegmentedPicker: some View {
-        let labels = [L.weekly.localized, L.monthly.localized, L.program.localized]
+        let allLabels = [L.weekly.localized, L.monthly.localized, L.program.localized]
+        let count = isObserveMode ? 2 : 3
+        let labels = Array(allLabels.prefix(count))
         return HStack(spacing: 0) {
-            ForEach(0..<3, id: \.self) { i in
+            ForEach(0..<count, id: \.self) { i in
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         selectedRange = i
@@ -431,6 +437,11 @@ struct StatisticsView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
+        .onChange(of: isObserveMode) { _, newValue in
+            if newValue && selectedRange == 2 {
+                selectedRange = 1
+            }
+        }
     }
 
     private var trendEmoji: String {
@@ -657,7 +668,8 @@ struct StatisticsView: View {
                 previousWeekTotalDeficit: statisticsService.previousWeekTotalDeficit,
                 previousWeekDaysWithData: statisticsService.previousWeekDaysWithData,
                 coachStyle: profiles.first?.coachStyle ?? .supportive,
-                personalContext: profiles.first?.fullAIContext ?? ""
+                personalContext: profiles.first?.fullAIContext ?? "",
+                isObserveMode: isObserveMode
             )
             weeklyInsight = insight
             UserDefaults.standard.set(insight, forKey: cacheKey)

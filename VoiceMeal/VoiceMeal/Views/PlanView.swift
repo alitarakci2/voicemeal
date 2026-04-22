@@ -3,6 +3,7 @@
 //  VoiceMeal
 //
 
+import Sentry
 import SwiftData
 import SwiftUI
 
@@ -29,6 +30,12 @@ struct PlanView: View {
     @State private var goalDays = 90
     @State private var showSavedToast = false
     @State private var settingsLoaded = false
+
+    // Mode transitions (Blok 7)
+    @State private var showStopGoalConfirm = false
+    @State private var showGoalEntrySheet = false
+    @State private var newGoalWeightKg: Double = 65
+    @State private var newGoalDays: Int = 90
 
     private var dayPlans: [DayPlan] {
         _ = planService.refreshID
@@ -110,6 +117,10 @@ struct PlanView: View {
     private var profileGapKind: CalorieGapKind {
         guard let p = profiles.first else { return .deficit }
         return CalorieGapKind.from(profile: p)
+    }
+
+    private var isObserveMode: Bool {
+        profiles.first?.isObserveMode ?? false
     }
 
     // Completed past days only (excludes today's partial data)
@@ -395,7 +406,106 @@ struct PlanView: View {
 
     // MARK: - Plan Settings Card
 
+    @ViewBuilder
     private var planSettingsCard: some View {
+        Group {
+            if isObserveMode {
+                observePlanSettingsCard
+            } else {
+                goalPlanSettingsCard
+            }
+        }
+        .confirmationDialog(
+            L.stopGoalConfirmTitle.localized,
+            isPresented: $showStopGoalConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(L.stopGoalConfirmAction.localized, role: .destructive) {
+                switchToObserveMode()
+            }
+            Button(L.cancel.localized, role: .cancel) {}
+        } message: {
+            Text(L.stopGoalConfirmMessage.localized)
+        }
+        .sheet(isPresented: $showGoalEntrySheet) {
+            goalEntrySheet
+        }
+    }
+
+    private var goalEntrySheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("target_weight".localized)
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Text("\(String(format: "%.1f", newGoalWeightKg)) kg")
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        Slider(value: $newGoalWeightKg, in: 30...200, step: 0.5)
+                            .tint(Theme.accent)
+
+                        Stepper(String(format: "goal_duration".localized, newGoalDays), value: $newGoalDays, in: 14...365, step: 7)
+                            .font(Theme.captionFont)
+                    }
+                }
+            }
+            .navigationTitle(L.setGoalCTA.localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L.cancel.localized) { showGoalEntrySheet = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L.save.localized) {
+                        switchToGoalMode(goalWeight: newGoalWeightKg, days: newGoalDays)
+                        showGoalEntrySheet = false
+                    }
+                }
+            }
+        }
+    }
+
+    private func switchToObserveMode() {
+        guard let p = profiles.first else { return }
+        let previous = p.trackingMode
+        p.trackingMode = .observe
+        p.updatedAt = .now
+        try? modelContext.save()
+        logModeSwitch(from: previous, to: .observe)
+        NotificationCenter.default.post(name: .profileUpdated, object: nil)
+        planService.regeneratePlans()
+    }
+
+    private func switchToGoalMode(goalWeight: Double, days: Int) {
+        guard let p = profiles.first else { return }
+        let previous = p.trackingMode
+        p.trackingMode = .goal
+        p.goalWeightKg = goalWeight
+        p.goalDays = days
+        p.programStartDate = .now
+        p.programStartWeightKg = p.currentWeightKg
+        p.updatedAt = .now
+
+        goalWeightKg = goalWeight
+        goalDays = days
+
+        try? modelContext.save()
+        logModeSwitch(from: previous, to: .goal)
+        NotificationCenter.default.post(name: .profileUpdated, object: nil)
+        planService.regeneratePlans()
+    }
+
+    private func logModeSwitch(from: TrackingMode, to: TrackingMode) {
+        let crumb = Breadcrumb(level: .info, category: "user.trackingMode.switched")
+        crumb.message = "\(from.rawValue) -> \(to.rawValue)"
+        crumb.data = ["from": from.rawValue, "to": to.rawValue]
+        SentrySDK.addBreadcrumb(crumb)
+    }
+
+    private var goalPlanSettingsCard: some View {
         DisclosureGroup(isExpanded: $showPlanSettings) {
             VStack(spacing: 16) {
                 Divider()
@@ -472,6 +582,23 @@ struct PlanView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(isSaveDisabled)
+
+                Divider()
+                    .overlay(Theme.cardBorder)
+
+                Button {
+                    showStopGoalConfirm = true
+                } label: {
+                    Text(L.stopGoal.localized)
+                        .font(Theme.captionFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Theme.red.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
             }
             .padding(.top, 8)
         } label: {
@@ -503,6 +630,105 @@ struct PlanView: View {
         )
     }
 
+    private var observePlanSettingsCard: some View {
+        DisclosureGroup(isExpanded: $showPlanSettings) {
+            VStack(spacing: 16) {
+                Divider()
+                    .overlay(Theme.cardBorder)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(L.weeklySchedule.localized)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Theme.textPrimary)
+
+                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
+                }
+
+                Button {
+                    saveObservePlanSettings()
+                } label: {
+                    Text(L.save.localized)
+                        .font(Theme.bodyFont)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Theme.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+                .disabled(weeklySchedule == originalSchedule)
+
+                Divider()
+                    .overlay(Theme.cardBorder)
+
+                Button {
+                    newGoalWeightKg = profiles.first?.currentWeightKg ?? 65
+                    newGoalDays = 90
+                    showGoalEntrySheet = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "target")
+                        Text(L.setGoalCTA.localized)
+                    }
+                    .font(Theme.bodyFont)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Theme.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 8)
+        } label: {
+            HStack(spacing: 12) {
+                Text("\u{1F4DD}")
+                    .font(.title2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L.observePlanCardTitle.localized)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                    Text(L.observePlanCardSubtitle.localized)
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: showPlanSettings ? "chevron.up" : "chevron.down")
+                    .font(.caption)
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .padding(.vertical, 4)
+        }
+        .tint(Theme.textSecondary)
+        .padding(16)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private func saveObservePlanSettings() {
+        guard let p = profiles.first else { return }
+        p.weeklySchedule = weeklySchedule
+        p.updatedAt = .now
+        originalSchedule = weeklySchedule
+
+        try? modelContext.save()
+        NotificationCenter.default.post(name: .profileUpdated, object: nil)
+        planService.regeneratePlans()
+
+        showSavedToast = true
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            showSavedToast = false
+        }
+    }
+
     // MARK: - Plan Settings Load / Save
 
     private func loadPlanSettings() {
@@ -516,10 +742,16 @@ struct PlanView: View {
 
     private func savePlanSettings() {
         guard let p = profiles.first else { return }
+        let goalChanged = p.goalWeightKg != goalWeightKg || p.goalDays != goalDays
         p.goalWeightKg = goalWeightKg
         p.goalDays = goalDays
         p.weeklySchedule = weeklySchedule
         p.updatedAt = .now
+
+        if goalChanged {
+            p.programStartDate = .now
+            p.programStartWeightKg = p.currentWeightKg
+        }
 
         originalSchedule = weeklySchedule
 
@@ -659,6 +891,7 @@ struct PlanView: View {
                             case .deficit:  return weeklyAvgDeficit > 0 ? Theme.green : Theme.red
                             case .surplus:  return weeklyAvgDeficit < 0 ? Theme.green : Theme.red
                             case .maintain: return abs(weeklyAvgDeficit) <= 150 ? Theme.green : Theme.orange
+                            case .observe:  return Theme.textPrimary
                             }
                         }())
                     Text("\(Int(weeklyAvgProtein))g")
@@ -1227,6 +1460,7 @@ struct DayDetailSheetView: View {
             case .deficit:  return "calorie_deficit_card".localized
             case .surplus:  return "calorie_surplus_card".localized
             case .maintain: return "calorie_balance_card".localized
+            case .observe:  return L.observeCardTitle.localized
             }
         }()
 
@@ -1331,6 +1565,8 @@ struct DayDetailSheetView: View {
                 Label(String(format: L.balanceOffFormat.localized, abs(actual)), systemImage: "exclamationmark.triangle.fill")
                     .font(Theme.captionFont).fontWeight(.medium).foregroundStyle(color)
             }
+        case .observe:
+            EmptyView()
         }
     }
 

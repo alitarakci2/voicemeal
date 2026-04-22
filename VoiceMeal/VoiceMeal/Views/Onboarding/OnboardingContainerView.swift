@@ -12,7 +12,7 @@ struct OnboardingContainerView: View {
     @Binding var onboardingComplete: Bool
 
     @State private var step = 0 // 0 = HealthKit intro
-    private let totalSteps = 8
+    private let totalSteps = 9
 
     // Step 2 (Welcome)
     @State private var name = ""
@@ -21,10 +21,12 @@ struct OnboardingContainerView: View {
     @State private var age = 25
     @State private var heightCm = 175.0
     @State private var currentWeightKg = 80.0
-    // Step 4 (Goal)
+    // Step 4 (Mode select)
+    @State private var selectedMode: TrackingMode = .goal
+    // Step 5 (Goal)
     @State private var goalWeightKg = 75.0
     @State private var goalDays = 90
-    // Step 5 (Schedule)
+    // Step 6 (Schedule)
     @State private var weeklySchedule: [[String]] = [["walking"], ["rest"], ["walking"], ["rest"], ["walking"], ["rest"], ["rest"]]
     // Step 7 (Coach Style)
     @State private var selectedCoachStyle: CoachStyle = .supportive
@@ -120,12 +122,14 @@ struct OnboardingContainerView: View {
                 case 3:
                     Step2BodyView(gender: $gender, age: $age, heightCm: $heightCm, currentWeightKg: $currentWeightKg)
                 case 4:
-                    Step3GoalView(currentWeightKg: currentWeightKg, goalWeightKg: $goalWeightKg, goalDays: $goalDays)
+                    Step3ModeSelectView(selectedMode: $selectedMode)
                 case 5:
-                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
+                    Step3GoalView(currentWeightKg: currentWeightKg, goalWeightKg: $goalWeightKg, goalDays: $goalDays)
                 case 6:
-                    coachStyleView
+                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
                 case 7:
+                    coachStyleView
+                case 8:
                     Step7FoodHabitsView(
                         cookingLocation: $cookingLocation,
                         portionSize: $portionSize,
@@ -135,7 +139,7 @@ struct OnboardingContainerView: View {
                         mealFrequency: $mealFrequency,
                         appLanguage: appLanguage
                     )
-                case 8:
+                case 9:
                     StepReadyView(
                         appLanguage: appLanguage,
                         userName: name.trimmingCharacters(in: .whitespaces),
@@ -156,6 +160,9 @@ struct OnboardingContainerView: View {
                         Button {
                             if step == 2 {
                                 step = 0
+                            } else if step == 6 && selectedMode == .observe {
+                                // Schedule → ModeSelect (skip Goal)
+                                step = 4
                             } else {
                                 step -= 1
                             }
@@ -170,6 +177,9 @@ struct OnboardingContainerView: View {
                     Button {
                         if step == 0 {
                             requestHealthKitAndProceed()
+                        } else if step == 4 && selectedMode == .observe {
+                            // ModeSelect → Schedule (skip Goal)
+                            step = 6
                         } else if step < totalSteps {
                             step += 1
                         }
@@ -355,6 +365,10 @@ struct OnboardingContainerView: View {
             weeklySchedule: weeklySchedule
         )
         profile.programStartWeightKg = currentWeightKg
+        profile.trackingMode = selectedMode
+        if selectedMode == .goal {
+            profile.programStartDate = .now
+        }
         profile.coachStyleRaw = selectedCoachStyle.rawValue
         profile.cookingLocation = cookingLocation
         profile.portionSize = portionSize

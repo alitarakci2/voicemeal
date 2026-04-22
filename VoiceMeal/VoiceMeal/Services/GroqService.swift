@@ -674,6 +674,14 @@ class GroqService {
                 - Never use the word "deficit" or "surplus" as a goal framing — the goal is balance
                 - Never show TDEE as the eating target
                 """
+            case .observe:
+                return """
+                MODE: OBSERVE (no weight goal — user is just logging)
+                - The user has NO calorie target, NO deficit goal, NO surplus goal. They are tracking for awareness only.
+                - Do NOT use the words: "deficit", "surplus", "target", "goal", "cutting", "bulking", "should eat".
+                - Do NOT compare eaten vs TDEE as good/bad. Just note patterns (consistent times, protein balance, variety).
+                - Frame feedback around awareness, nutritional balance, hydration, consistency — never judgment on totals.
+                """
             }
         }()
 
@@ -703,6 +711,14 @@ class GroqService {
                 - Kullanıcı TDEE'nin belirgin altında veya üstündeyse nötr bir tonla belirt; hiçbiri "kötü" değil ama günlerce süren sapmalar birikir
                 - "Açık" veya "fazla"yı hedef çerçevesi olarak ASLA kullanma — hedef denge
                 - Asla TDEE'yi yeme hedefi olarak gösterme
+                """
+            case .observe:
+                return """
+                MOD: GÖZLEM (kilo hedefi yok — kullanıcı sadece kayıt tutuyor)
+                - Kullanıcının kalori hedefi, açık hedefi veya fazla hedefi YOK. Sadece farkındalık için kaydediyor.
+                - Şu kelimeleri KULLANMA: "açık", "fazla", "hedef", "kilo verme", "kilo alma", "şu kadar yemeli".
+                - Yenen ile TDEE'yi iyi/kötü olarak KIYASLAMA. Sadece örüntüleri belirt (tutarlı saatler, protein dengesi, çeşitlilik).
+                - Yorumu farkındalık, besin dengesi, su tüketimi, istikrar üzerine kur — toplam için yargı yapma.
                 """
             }
         }()
@@ -766,7 +782,8 @@ class GroqService {
         waterGoalMl: Int = 0,
         coachStyle: CoachStyle = .supportive,
         personalContext: String = "",
-        completedWorkouts: [(type: String, duration: Int, calories: Int)] = []
+        completedWorkouts: [(type: String, duration: Int, calories: Int)] = [],
+        isObserveMode: Bool = false
     ) async throws -> String {
         let startTime = Date()
         let apiKey = Config.groqAPIKey
@@ -936,7 +953,7 @@ class GroqService {
             appLanguage: lang
         )
 
-        let dailyGapKind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
+        let dailyGapKind: CalorieGapKind = isObserveMode ? .observe : CalorieGapKind.from(signedTargetDeficit: targetDeficit)
         var systemPrompt = languageInstruction(for: lang) + "\n\n" + insightSystemPrompt(personalContext: personalContext, gapKind: dailyGapKind) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
@@ -1004,6 +1021,7 @@ class GroqService {
             case .deficit:  return "User's goal is a weekly calorie DEFICIT (cutting). Best days = highest deficit days."
             case .surplus:  return "User's goal is a weekly calorie SURPLUS (bulking, gaining weight/muscle). Best days = highest SURPLUS days (eaten above TDEE). Never frame falling below TDEE as progress — that is the opposite of the goal. Never use the word 'deficit'."
             case .maintain: return "User's goal is MAINTENANCE (calorie balance). Best days = days closest to TDEE. Large swings in either direction are off-target. Don't frame deficit or surplus as progress."
+            case .observe:  return "User is in OBSERVE mode (no weight goal, logging only). Do NOT use 'deficit', 'surplus', 'target', 'best/worst day'. Focus on patterns (consistent logging, nutritional variety, hydration). No judgment on calorie totals."
             }
         }()
 
@@ -1012,6 +1030,7 @@ class GroqService {
             case .deficit:  return "Kullanıcının hedefi haftalık kalori AÇIĞI (kilo verme). En iyi günler = en yüksek açığın olduğu günler."
             case .surplus:  return "Kullanıcının hedefi haftalık kalori FAZLASI (kilo/kas alma). En iyi günler = TDEE'nin en çok ÜZERİNDE yenen günler. TDEE'nin altına düşmeyi ilerleme olarak SUNMA — hedefin tersi. 'Açık' kelimesini kullanma."
             case .maintain: return "Kullanıcının hedefi KORUMA (kalori dengesi). En iyi günler = TDEE'ye en yakın günler. Her iki yöndeki büyük sapmalar hedef dışıdır. Açık veya fazlayı ilerleme olarak sunma."
+            case .observe:  return "Kullanıcı GÖZLEM modunda (kilo hedefi yok, sadece kayıt). 'Açık', 'fazla', 'hedef', 'en iyi/kötü gün' kullanma. Örüntülere odaklan (tutarlı kayıt, besin çeşitliliği, su). Kalori toplamı için yargı yapma."
             }
         }()
 
@@ -1060,7 +1079,8 @@ class GroqService {
         previousWeekTotalDeficit: Int = 0,
         previousWeekDaysWithData: Int = 0,
         coachStyle: CoachStyle = .supportive,
-        personalContext: String = ""
+        personalContext: String = "",
+        isObserveMode: Bool = false
     ) async throws -> String {
         let startTime = Date()
         let apiKey = Config.groqAPIKey
@@ -1161,7 +1181,7 @@ class GroqService {
         )
         guard quality.shouldShowInsight else { return "" }
 
-        let weeklyGapKind = CalorieGapKind.from(signedTargetDeficit: targetDeficit)
+        let weeklyGapKind: CalorieGapKind = isObserveMode ? .observe : CalorieGapKind.from(signedTargetDeficit: targetDeficit)
         var systemPrompt = languageInstruction(for: lang) + "\n\n" + weeklyInsightSystemPrompt(personalContext: personalContext, gapKind: weeklyGapKind) + "\n\n" + coachPersonalityPrompt(for: coachStyle)
         if !quality.warningNote.isEmpty {
             systemPrompt = quality.warningNote + "\n\n" + systemPrompt
@@ -1228,6 +1248,7 @@ class GroqService {
             case .deficit:  return "Program goal: weight loss (calorie deficit). Success = consistent deficit."
             case .surplus:  return "Program goal: weight/muscle gain (calorie surplus). Success = consistent surplus. Never frame deficit as success. Never use the word 'deficit'."
             case .maintain: return "Program goal: weight maintenance (calorie balance). Success = staying near TDEE. Don't frame deficit or surplus as success."
+            case .observe:  return "User is in OBSERVE mode — no program goal, logging only. Do NOT use 'program', 'success', 'deficit', 'surplus', 'target'. Frame feedback around awareness, consistency of logging, and nutritional patterns."
             }
         }()
 
@@ -1236,6 +1257,7 @@ class GroqService {
             case .deficit:  return "Program hedefi: kilo verme (kalori açığı). Başarı = istikrarlı açık."
             case .surplus:  return "Program hedefi: kilo/kas alma (kalori fazlası). Başarı = istikrarlı fazla. Açığı başarı olarak SUNMA. 'Açık' kelimesini kullanma."
             case .maintain: return "Program hedefi: kilo koruma (kalori dengesi). Başarı = TDEE'ye yakın kalmak. Açık veya fazlayı başarı olarak sunma."
+            case .observe:  return "Kullanıcı GÖZLEM modunda — program hedefi yok, sadece kayıt. 'Program', 'başarı', 'açık', 'fazla', 'hedef' kullanma. Yorumu farkındalık, kayıt tutarlılığı ve beslenme örüntüleri üzerine kur."
             }
         }()
 

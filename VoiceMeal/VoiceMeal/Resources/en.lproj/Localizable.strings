@@ -372,6 +372,33 @@
 "try_again" = "Try Again";
 "max_recording_duration_reached" = "Maximum duration reached";
 
+/* Sprint D — Observe mode */
+"observe_kcal_approx_format" = "~%d kcal";
+"observe_kcal_value_format" = "%d kcal";
+"observe_short_label" = "Kcal";
+"observe_card_title" = "Daily Calories";
+"observe_consumed_label" = "Calories consumed";
+
+/* Sprint D — Mode select (onboarding) */
+"mode_select_title" = "How do you want to use VoiceMeal?";
+"mode_select_subtitle" = "You can change this anytime.";
+"mode_goal_title" = "Set a Goal";
+"mode_goal_desc" = "Pick a weight goal, track calories";
+"mode_observe_title" = "Just Log";
+"mode_observe_desc" = "No goal — just log what you eat";
+
+/* Sprint D — Plan tab (observe card) */
+"observe_plan_card_title" = "Daily Routine";
+"observe_plan_card_subtitle" = "No weight goal — you're just logging";
+
+/* Sprint D — Mode transitions */
+"stop_goal" = "Stop my goal";
+"stop_goal_confirm_title" = "Stop goal?";
+"stop_goal_confirm_message" = "Your weight goal will be cancelled and you'll switch to observe-only mode. Daily calorie and deficit targets will be removed.";
+"stop_goal_confirm_action" = "Yes, stop it";
+"set_goal_cta" = "Set a goal";
+"set_goal_sheet_intro" = "A new starting point for your weight goal";
+
 /* Units */
 "kg" = "kg";
 "lbs" = "lbs";

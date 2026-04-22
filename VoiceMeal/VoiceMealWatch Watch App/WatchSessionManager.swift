@@ -31,6 +31,7 @@ class WatchSessionManager: NSObject {
     var fatTarget: Double = 0
     var deficit: Int = 0
     var targetDeficit: Int = 0
+    var isObserveMode: Bool = false
     var lastUpdate: Date?
 
     // Meal list
@@ -72,6 +73,7 @@ class WatchSessionManager: NSObject {
             self.fatTarget = data["fatTarget"] as? Double ?? 0
             self.deficit = data["deficit"] as? Int ?? 0
             self.targetDeficit = data["targetDeficit"] as? Int ?? 0
+            self.isObserveMode = data["isObserveMode"] as? Bool ?? false
 
             if let mealsData = data["meals"] as? [[String: Any]] {
                 self.meals = mealsData.map { m in

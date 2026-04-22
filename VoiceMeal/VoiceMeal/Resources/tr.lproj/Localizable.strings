@@ -399,6 +399,33 @@
 "try_again" = "Tekrar Dene";
 "max_recording_duration_reached" = "Maksimum süre doldu";
 
+/* Sprint D — Observe mode */
+"observe_kcal_approx_format" = "~%d kcal";
+"observe_kcal_value_format" = "%d kcal";
+"observe_short_label" = "Kcal";
+"observe_card_title" = "Günlük Kalori";
+"observe_consumed_label" = "Alınan kalori";
+
+/* Sprint D — Mode select (onboarding) */
+"mode_select_title" = "Nasıl kullanmak istersin?";
+"mode_select_subtitle" = "İstediğin zaman değiştirebilirsin.";
+"mode_goal_title" = "Hedef Belirle";
+"mode_goal_desc" = "Kilo hedefi seç, kalori takibi yap";
+"mode_observe_title" = "Sadece Kaydet";
+"mode_observe_desc" = "Hedef yok — sadece yediklerini kaydet";
+
+/* Sprint D — Plan tab (observe card) */
+"observe_plan_card_title" = "Günlük Tempo";
+"observe_plan_card_subtitle" = "Kilo hedefi yok — sadece kayıt tutuyorsun";
+
+/* Sprint D — Mode transitions */
+"stop_goal" = "Hedefimi durdur";
+"stop_goal_confirm_title" = "Hedefi durdur?";
+"stop_goal_confirm_message" = "Kilo hedefin iptal olur ve sadece gözlem moduna geçersin. Günlük kalori ve açık hedefi kaldırılır.";
+"stop_goal_confirm_action" = "Evet, durdur";
+"set_goal_cta" = "Hedef belirle";
+"set_goal_sheet_intro" = "Kilo hedefin için yeni bir başlangıç noktası";
+
 /* Units */
 "kg" = "kg";
 "lbs" = "lbs";

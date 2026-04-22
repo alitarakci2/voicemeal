@@ -7,7 +7,16 @@ import SwiftUI
 
 extension HomeView {
 
+    @ViewBuilder
     var dailyGoalCard: some View {
+        if profiles.first?.isObserveMode == true {
+            observeDailyCard
+        } else {
+            goalDailyCard
+        }
+    }
+
+    var goalDailyCard: some View {
         let remaining = goalEngine.dailyCalorieTarget - eatenCalories
         let targetDeficit = Int(goalEngine.cappedDailyDeficit)
         let actualDeficit = Int(goalEngine.tdee) - eatenCalories
@@ -138,6 +147,113 @@ extension HomeView {
                     lineWidth: 1
                 )
         )
+    }
+
+    var observeDailyCard: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(L.observeShortLabel.localized)
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
+                }
+                Spacer()
+                HStack(spacing: 14) {
+                    Button { Task { await refreshHealthKit() } } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                metricStatCard(
+                    title: L.observeConsumedLabel.localized,
+                    value: "\(eatenCalories)",
+                    unit: "kcal",
+                    color: .white
+                )
+
+                metricStatCard(
+                    title: "TDEE",
+                    value: "\(Int(goalEngine.tdee))",
+                    unit: "kcal",
+                    color: .white,
+                    tooltip: Tooltips.tdee
+                )
+            }
+
+            VStack(spacing: 8) {
+                HStack {
+                    InfoTooltipButton(tooltip: Tooltips.macros, size: 11)
+                    Spacer()
+                }
+                macroStatRow(label: "pro_short".localized, value: eatenProtein, color: Theme.blue)
+                macroStatRow(label: "carb_short".localized, value: eatenCarbs, color: Theme.orange)
+                macroStatRow(label: "fat_short".localized, value: eatenFat, color: Theme.fatColor)
+            }
+            .padding(.horizontal, 4)
+        }
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [
+                    Theme.gradientTop.opacity(0.7),
+                    Color(hex: "0D0D1A").opacity(0.8),
+                    Color(hex: "0A0A0F").opacity(0.6)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.03)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+    }
+
+    func macroStatRow(label: String, value: Double, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Text(String(label.prefix(3)))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.secondary)
+                .frame(width: 28, alignment: .leading)
+                .lineLimit(1)
+                .fixedSize()
+
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+
+            Spacer()
+
+            Text("\(Int(value))g")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.white)
+                .frame(alignment: .trailing)
+                .lineLimit(1)
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     func activityEmoji(for activity: String) -> String? {

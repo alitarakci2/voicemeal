@@ -233,7 +233,8 @@ struct HomeView: View {
                         waterGoalMl: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
                         coachStyle: profiles.first?.coachStyle ?? .supportive,
                         personalContext: profiles.first?.fullAIContext ?? "",
-                        completedWorkouts: goalEngine.completedWorkouts
+                        completedWorkouts: goalEngine.completedWorkouts,
+                        isObserveMode: profiles.first?.isObserveMode ?? false
                     )
 
                     if isWaterTrackingEnabled {
@@ -564,7 +565,8 @@ struct HomeView: View {
             theme: ThemeManager.shared.current.rawValue,
             waterConsumed: isWaterTrackingEnabled ? todayWaterMl : 0,
             waterGoal: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            isObserveMode: profiles.first?.isObserveMode ?? false
         )
         WidgetDataStore.shared.save(data)
         FeedbackService.shared.addLog("Widget updated: \(eatenCalories)kcal eaten, \(remaining)kcal left")
@@ -605,6 +607,7 @@ struct HomeView: View {
     }
 
     var shouldShowTdeeBanner: Bool {
+        if profiles.first?.isObserveMode == true { return false }
         guard goalEngine.isInBannerWindow,
               !tdeeWarningDismissed,
               !isTdeeWarningDismissedToday,

@@ -370,6 +370,33 @@ enum L {
 
     // Sprint C — Voice UX polish
     static let maxRecordingDurationReached = "max_recording_duration_reached"
+
+    // Sprint D — Observe mode
+    static let observeKcalApproxFormat = "observe_kcal_approx_format"
+    static let observeKcalValueFormat = "observe_kcal_value_format"
+    static let observeShortLabel = "observe_short_label"
+    static let observeCardTitle = "observe_card_title"
+    static let observeConsumedLabel = "observe_consumed_label"
+
+    // Sprint D — Mode select (onboarding)
+    static let modeSelectTitle = "mode_select_title"
+    static let modeSelectSubtitle = "mode_select_subtitle"
+    static let modeGoalTitle = "mode_goal_title"
+    static let modeGoalDesc = "mode_goal_desc"
+    static let modeObserveTitle = "mode_observe_title"
+    static let modeObserveDesc = "mode_observe_desc"
+
+    // Sprint D — Plan tab (observe card)
+    static let observePlanCardTitle = "observe_plan_card_title"
+    static let observePlanCardSubtitle = "observe_plan_card_subtitle"
+
+    // Sprint D — Mode transitions
+    static let stopGoal = "stop_goal"
+    static let stopGoalConfirmTitle = "stop_goal_confirm_title"
+    static let stopGoalConfirmMessage = "stop_goal_confirm_message"
+    static let stopGoalConfirmAction = "stop_goal_confirm_action"
+    static let setGoalCTA = "set_goal_cta"
+    static let setGoalSheetIntro = "set_goal_sheet_intro"
 }
 // swiftlint:enable type_name
 
