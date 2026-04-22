@@ -29,7 +29,25 @@ struct VoiceMealApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(ThemeManager.shared)
+                .task { @MainActor in
+                    NutritionReportMigrator.migrateLegacyReportsIfNeeded(context: sharedContainer.mainContext)
+                }
         }
-        .modelContainer(for: [FoodEntry.self, UserProfile.self, DailySnapshot.self, WaterEntry.self, NutritionReport.self])
+        .modelContainer(sharedContainer)
     }
+
+    private let sharedContainer: ModelContainer = {
+        let schema = Schema([
+            FoodEntry.self,
+            UserProfile.self,
+            DailySnapshot.self,
+            WaterEntry.self,
+            NutritionReport.self
+        ])
+        do {
+            return try ModelContainer(for: schema)
+        } catch {
+            fatalError("ModelContainer init failed: \(error)")
+        }
+    }()
 }

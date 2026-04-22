@@ -7,8 +7,11 @@ import SwiftUI
 
 struct NutritionReportCard: View {
     let report: NutritionReport?
-    let weekKind: NutritionReportWeekKind
+    let period: ReportPeriod
+    let kind: ReportPeriodKind
     let daysOfData: Int
+    let programDay: Int
+    let programTotalDays: Int
     let avgProtein: Double
     let avgCarbs: Double
     let avgFat: Double
@@ -22,12 +25,43 @@ struct NutritionReportCard: View {
         return Locale.current.language.languageCode?.identifier == "en"
     }
 
-    private var weekLabel: String {
-        switch weekKind {
-        case .thisWeek:   return isEN ? "This Week" : "Bu Hafta"
-        case .lastWeek:   return isEN ? "Last Week" : "Geçen Hafta"
-        case .inProgress: return isEN ? "This Week (in progress)" : "Bu Hafta (devam ediyor)"
+    private var periodLabel: String {
+        switch period {
+        case .week:
+            switch kind {
+            case .current:    return isEN ? "This Week" : "Bu Hafta"
+            case .previous:   return isEN ? "Last Week" : "Geçen Hafta"
+            case .inProgress: return isEN ? "This Week (in progress)" : "Bu Hafta (devam ediyor)"
+            default:          return isEN ? "This Week" : "Bu Hafta"
+            }
+        case .month:
+            switch kind {
+            case .current:    return isEN ? "This Month" : "Bu Ay"
+            case .previous:   return isEN ? "Last Month" : "Geçen Ay"
+            case .inProgress: return isEN ? "This Month (in progress)" : "Bu Ay (devam ediyor)"
+            default:          return isEN ? "This Month" : "Bu Ay"
+            }
+        case .program:
+            switch kind {
+            case .programNotStarted: return isEN ? "Program — Not Started" : "Program — Başlamadı"
+            case .programCompleted:  return isEN ? "Program — Completed" : "Program Tamamlandı"
+            default:
+                if programTotalDays > 0 {
+                    return isEN
+                        ? "Program — Day \(programDay) of \(programTotalDays)"
+                        : "Program — Gün \(programDay)/\(programTotalDays)"
+                }
+                return isEN ? "Program" : "Program"
+            }
         }
+    }
+
+    private var cardTitle: String {
+        isEN ? "Nutrition Report Card" : "Beslenme Karnesi"
+    }
+
+    private var minimumDays: Int {
+        NutritionReportService.minimumDays(for: period)
     }
 
     private var hasValid: Bool {
@@ -39,7 +73,9 @@ struct NutritionReportCard: View {
             VStack(alignment: .leading, spacing: 14) {
                 header
 
-                if isLoading {
+                if kind == .programNotStarted {
+                    programNotStartedState
+                } else if isLoading {
                     loadingState
                 } else if let r = report, r.hasValidScore {
                     scoreRow(report: r)
@@ -67,11 +103,11 @@ struct NutritionReportCard: View {
             Image(systemName: "doc.text.magnifyingglass")
                 .foregroundStyle(themeManager.current.accent)
                 .font(.system(size: 14))
-            Text(isEN ? "Nutrition Report Card" : "Beslenme Karnesi")
+            Text(cardTitle)
                 .font(.subheadline.bold())
                 .foregroundStyle(.white)
             Spacer()
-            Text(weekLabel)
+            Text(periodLabel)
                 .font(.caption)
                 .foregroundStyle(Theme.textTertiary)
                 .padding(.horizontal, 8)
@@ -106,7 +142,7 @@ struct NutritionReportCard: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(isEN ? "Weekly Score" : "Haftalık Skor")
+                Text(scoreHeaderLabel)
                     .font(.caption)
                     .foregroundStyle(Theme.textSecondary)
                 Text(scoreLabel(report.score))
@@ -119,6 +155,18 @@ struct NutritionReportCard: View {
             Image(systemName: "chevron.right")
                 .foregroundStyle(Theme.textTertiary)
                 .font(.system(size: 12, weight: .semibold))
+        }
+    }
+
+    private var scoreHeaderLabel: String {
+        switch period {
+        case .week:    return isEN ? "Weekly Score" : "Haftalık Skor"
+        case .month:   return isEN ? "Monthly Score" : "Aylık Skor"
+        case .program:
+            if kind == .programCompleted {
+                return isEN ? "Program — Final Score" : "Program — Final Skor"
+            }
+            return isEN ? "Program Score" : "Program Skoru"
         }
     }
 
@@ -194,13 +242,45 @@ struct NutritionReportCard: View {
                 Text(isEN ? "More data needed" : "Daha fazla kayıt gerekli")
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
-                Text(
-                    isEN
-                    ? "Log at least 3 days this week to get a score (\(daysOfData)/3)."
-                    : "Skor için bu hafta en az 3 gün kayıt gerekli (\(daysOfData)/3)."
-                )
+                Text(insufficientSubtitle)
                 .font(.caption)
                 .foregroundStyle(Theme.textSecondary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var insufficientSubtitle: String {
+        let need = minimumDays
+        switch period {
+        case .week:
+            return isEN
+                ? "Log at least \(need) days this week to get a score (\(daysOfData)/\(need))."
+                : "Skor için bu hafta en az \(need) gün kayıt gerekli (\(daysOfData)/\(need))."
+        case .month:
+            return isEN
+                ? "Log at least \(need) days this month to get a score (\(daysOfData)/\(need))."
+                : "Skor için bu ay en az \(need) gün kayıt gerekli (\(daysOfData)/\(need))."
+        case .program:
+            return isEN
+                ? "Log at least \(need) days in your program to get a score (\(daysOfData)/\(need))."
+                : "Skor için programda en az \(need) gün kayıt gerekli (\(daysOfData)/\(need))."
+        }
+    }
+
+    private var programNotStartedState: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "flag.checkered")
+                .foregroundStyle(Theme.textTertiary)
+                .font(.system(size: 20))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(isEN ? "No active program" : "Aktif program yok")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                Text(isEN ? "Create a program to get a program report." : "Rapor için önce bir program oluştur.")
+                    .font(.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
         }
@@ -210,10 +290,10 @@ struct NutritionReportCard: View {
     private func scoreLabel(_ score: Int) -> String {
         switch score {
         case 9...10: return isEN ? "Excellent" : "Mükemmel"
-        case 7...8:  return isEN ? "Strong week" : "Güçlü hafta"
-        case 5...6:  return isEN ? "Mixed week" : "Dalgalı hafta"
+        case 7...8:  return isEN ? "Strong" : "Güçlü"
+        case 5...6:  return isEN ? "Mixed" : "Dalgalı"
         case 3...4:  return isEN ? "Off track" : "Hedeften uzak"
-        default:     return isEN ? "Rough week" : "Zorlu hafta"
+        default:     return isEN ? "Rough" : "Zorlu"
         }
     }
 }

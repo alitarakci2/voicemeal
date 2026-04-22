@@ -8,7 +8,10 @@ import UIKit
 
 struct NutritionReportSheet: View {
     let report: NutritionReport
-    let weekKind: NutritionReportWeekKind
+    let period: ReportPeriod
+    let kind: ReportPeriodKind
+    let programDay: Int
+    let programTotalDays: Int
     let avgProtein: Double
     let avgCarbs: Double
     let avgFat: Double
@@ -26,14 +29,33 @@ struct NutritionReportSheet: View {
 
     private var isEN: Bool { report.language == "en" }
 
-    private var weekLabel: String {
+    private var periodLabel: String {
         let fmt = DateFormatter()
         fmt.locale = Locale(identifier: isEN ? "en_US" : "tr_TR")
-        fmt.dateFormat = "d MMM"
-        let s = fmt.string(from: report.weekStartDate)
-        let e = fmt.string(from: report.weekEndDate)
-        return "\(s) – \(e)"
+        switch period {
+        case .week:
+            fmt.dateFormat = "d MMM"
+            let s = fmt.string(from: report.effectivePeriodStart)
+            let e = fmt.string(from: report.effectivePeriodEnd)
+            return "\(s) – \(e)"
+        case .month:
+            fmt.dateFormat = "LLLL yyyy"
+            return fmt.string(from: report.effectivePeriodStart).capitalized
+        case .program:
+            if kind == .programCompleted {
+                return isEN ? "Program — Completed" : "Program Tamamlandı"
+            }
+            let day = programDay > 0 ? programDay : report.programDay
+            let total = programTotalDays > 0 ? programTotalDays : report.programTotalDays
+            if total > 0 {
+                return isEN ? "Day \(day) of \(total)" : "Gün \(day)/\(total)"
+            }
+            return isEN ? "Program" : "Program"
+        }
     }
+
+    // Back-compat for call sites / internal use.
+    private var weekLabel: String { periodLabel }
 
     var body: some View {
         NavigationStack {
@@ -123,13 +145,13 @@ struct NutritionReportSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(weekKindLabel)
+                Text(kindLabel)
                     .font(.caption)
                     .foregroundStyle(Theme.textTertiary)
-                Text(weekLabel)
+                Text(periodLabel)
                     .font(.title3.bold())
                     .foregroundStyle(.white)
-                Text("\(report.daysOfData)/7 \(isEN ? "days logged" : "gün kayıtlı")")
+                Text(daysLoggedLabel)
                     .font(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -212,7 +234,7 @@ struct NutritionReportSheet: View {
             HStack(spacing: 6) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .foregroundStyle(themeManager.current.accent)
-                Text(isEN ? "Weekly Pattern" : "Haftalık Örüntü")
+                Text(patternSectionTitle)
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
             }
@@ -359,18 +381,66 @@ struct NutritionReportSheet: View {
         .padding(.top, 4)
     }
 
-    private var weekKindLabel: String {
-        switch weekKind {
-        case .thisWeek:   return isEN ? "This week" : "Bu hafta"
-        case .lastWeek:   return isEN ? "Last week" : "Geçen hafta"
-        case .inProgress: return isEN ? "In progress" : "Devam ediyor"
+    private var kindLabel: String {
+        switch period {
+        case .week:
+            switch kind {
+            case .current:    return isEN ? "This week" : "Bu hafta"
+            case .previous:   return isEN ? "Last week" : "Geçen hafta"
+            case .inProgress: return isEN ? "In progress" : "Devam ediyor"
+            default:          return isEN ? "This week" : "Bu hafta"
+            }
+        case .month:
+            switch kind {
+            case .current:    return isEN ? "This month" : "Bu ay"
+            case .previous:   return isEN ? "Last month" : "Geçen ay"
+            case .inProgress: return isEN ? "In progress" : "Devam ediyor"
+            default:          return isEN ? "This month" : "Bu ay"
+            }
+        case .program:
+            switch kind {
+            case .programNotStarted: return isEN ? "No active program" : "Aktif program yok"
+            case .programCompleted:  return isEN ? "Program completed" : "Program tamamlandı"
+            default:                 return isEN ? "In progress" : "Devam ediyor"
+            }
+        }
+    }
+
+    private var daysLoggedLabel: String {
+        switch period {
+        case .week:
+            return isEN ? "\(report.daysOfData)/7 days logged" : "\(report.daysOfData)/7 gün kayıtlı"
+        case .month:
+            let totalDays = max(1, daysInMonth(for: report.effectivePeriodStart))
+            return isEN ? "\(report.daysOfData)/\(totalDays) days logged" : "\(report.daysOfData)/\(totalDays) gün kayıtlı"
+        case .program:
+            let total = programTotalDays > 0 ? programTotalDays : report.programTotalDays
+            if total > 0 {
+                return isEN
+                    ? "\(report.daysOfData) of \(total) program days logged"
+                    : "Program boyunca \(report.daysOfData)/\(total) gün kayıtlı"
+            }
+            return isEN ? "\(report.daysOfData) days logged" : "\(report.daysOfData) gün kayıtlı"
+        }
+    }
+
+    private func daysInMonth(for date: Date) -> Int {
+        Calendar.current.range(of: .day, in: .month, for: date)?.count ?? 30
+    }
+
+    private var patternSectionTitle: String {
+        switch period {
+        case .week:    return isEN ? "Weekly Pattern" : "Haftalık Örüntü"
+        case .month:   return isEN ? "Monthly Pattern" : "Aylık Örüntü"
+        case .program: return isEN ? "Program Pattern" : "Program Örüntüsü"
         }
     }
 
     private func prepareShare() {
         let view = ShareableReportView(
             report: report,
-            weekLabel: weekLabel,
+            periodTitle: cardHeaderTitle,
+            periodSubtitle: periodLabel,
             avgProtein: avgProtein,
             avgCarbs: avgCarbs,
             avgFat: avgFat,
@@ -379,11 +449,19 @@ struct NutritionReportSheet: View {
         guard let image = ImageExporter.render(view, size: CGSize(width: 1080, height: 1920), scale: 1.0) else {
             return
         }
-        let filename = NutritionReportService.shareFilename(for: report.weekStartDate)
+        let filename = NutritionReportService.shareFilename(
+            for: period,
+            periodStart: report.effectivePeriodStart,
+            programDay: programDay > 0 ? programDay : report.programDay
+        )
         guard let url = ImageExporter.writePNG(image, filename: filename) else { return }
         shareURL = url
-        FeedbackService.shared.addLog("nutrition_report_shared: lang=\(report.language)")
+        FeedbackService.shared.addLog("nutrition_report_shared: period=\(period.rawValue) lang=\(report.language)")
         showShare = true
+    }
+
+    private var cardHeaderTitle: String {
+        isEN ? "Nutrition Report Card" : "Beslenme Karnesi"
     }
 }
 

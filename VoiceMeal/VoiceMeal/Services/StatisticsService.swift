@@ -360,7 +360,7 @@ class StatisticsService {
 
     func programData(profile: UserProfile, snapshots: [DailySnapshot], entries: [FoodEntry]) -> ProgramSummary {
         let calendar = Self.localCalendar
-        let startDate = calendar.startOfDay(for: profile.createdAt)
+        let startDate = calendar.startOfDay(for: profile.effectiveProgramStart)
         let today = calendar.startOfDay(for: .now)
         let totalDays = max(1, (calendar.dateComponents([.day], from: startDate, to: today).day ?? 0) + 1)
 

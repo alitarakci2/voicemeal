@@ -22,9 +22,9 @@ struct StatisticsView: View {
     @State private var scrollProxy: ScrollViewProxy?
     @State private var hasAppeared = false
 
-    @State private var isGeneratingReport = false
-    @State private var showReportSheet = false
-    @State private var mondayAutoGenAttempted = false
+    @State private var generatingReportPeriod: ReportPeriod?
+    @State private var sheetPeriod: ReportPeriod?
+    @State private var autoGenAttemptedPeriods: Set<ReportPeriod> = []
 
     @Environment(GroqService.self) private var groqService
 
@@ -118,7 +118,9 @@ struct StatisticsView: View {
                             customSegmentedPicker
 
                             if selectedRange == 2 {
-                                // Program view
+                                // Program view — nutrition report first, then program summary
+                                nutritionReportCard(for: .program)
+
                                 if let profile = profiles.first {
                                     ProgramSummaryView(
                                         summary: statisticsService.programData(
@@ -146,18 +148,8 @@ struct StatisticsView: View {
                                 // Summary cards
                                 summaryCards
 
-                                // Nutrition Report Card (weekly only)
-                                NutritionReportCard(
-                                    report: reportContext.report,
-                                    weekKind: reportContext.weekKind,
-                                    daysOfData: reportContext.daysOfData,
-                                    avgProtein: statisticsService.weeklyAverageProtein,
-                                    avgCarbs: statisticsService.weeklyAverageCarbs,
-                                    avgFat: statisticsService.weeklyAverageFat,
-                                    isLoading: isGeneratingReport,
-                                    onTap: { showReportSheet = true }
-                                )
-                                .environmentObject(themeManager)
+                                // Nutrition Report Card (period-aware)
+                                nutritionReportCard(for: selectedRange == 0 ? .week : .month)
 
                                 // Charts
                                 CalorieChartView(stats: currentStats)
@@ -238,80 +230,136 @@ struct StatisticsView: View {
             await loadWeeklyInsight()
         }
         .task {
-            await autoGenerateMondayReportIfNeeded()
+            await autoGenerateAllPeriodsIfNeeded()
         }
-        .sheet(isPresented: $showReportSheet) {
-            if let report = reportContext.report {
-                let cooldown = NutritionReportService.cooldownRemaining(for: report)
-                NutritionReportSheet(
-                    report: report,
-                    weekKind: reportContext.weekKind,
-                    avgProtein: statisticsService.weeklyAverageProtein,
-                    avgCarbs: statisticsService.weeklyAverageCarbs,
-                    avgFat: statisticsService.weeklyAverageFat,
-                    isCooldownActive: cooldown > 0,
-                    cooldownSecondsRemaining: cooldown,
-                    isRefreshing: isGeneratingReport,
-                    canRefresh: cooldown == 0 && reportContext.daysOfData >= 3,
-                    onRefresh: { Task { await refreshReport(force: true) } }
-                )
-                .environmentObject(themeManager)
-            }
+        .sheet(item: $sheetPeriod) { period in
+            nutritionReportSheet(for: period)
         }
     }
 
     // MARK: - Nutrition Report
 
-    private var reportContext: NutritionReportContext {
+    private func reportContext(for period: ReportPeriod) -> NutritionReportContext {
         NutritionReportService.resolveContext(
+            for: period,
             today: .now,
+            profile: profiles.first,
             allEntries: allEntries,
             existingReports: nutritionReports,
             language: groqService.appLanguage
         )
     }
 
-    private func autoGenerateMondayReportIfNeeded() async {
-        guard !mondayAutoGenAttempted else { return }
-        mondayAutoGenAttempted = true
-
-        let ctx = reportContext
-        guard ctx.weekKind == .lastWeek else { return }
-        guard ctx.report == nil else { return }
-        guard ctx.daysOfData >= 3 else { return }
-
-        await refreshReport(force: false)
+    @ViewBuilder
+    private func nutritionReportCard(for period: ReportPeriod) -> some View {
+        let ctx = reportContext(for: period)
+        NutritionReportCard(
+            report: ctx.report,
+            period: period,
+            kind: ctx.kind,
+            daysOfData: ctx.daysOfData,
+            programDay: ctx.programDay,
+            programTotalDays: ctx.programTotalDays,
+            avgProtein: statisticsService.weeklyAverageProtein,
+            avgCarbs: statisticsService.weeklyAverageCarbs,
+            avgFat: statisticsService.weeklyAverageFat,
+            isLoading: generatingReportPeriod == period,
+            onTap: { sheetPeriod = period }
+        )
+        .environmentObject(themeManager)
     }
 
-    private func refreshReport(force: Bool) async {
-        let ctx = reportContext
-        guard ctx.daysOfData >= 3 else {
-            FeedbackService.shared.addLog("nutrition_report_insufficient_data: days=\(ctx.daysOfData)")
+    @ViewBuilder
+    private func nutritionReportSheet(for period: ReportPeriod) -> some View {
+        let ctx = reportContext(for: period)
+        if let report = ctx.report {
+            let cooldown = NutritionReportService.cooldownRemaining(for: report)
+            let meets = ctx.daysOfData >= NutritionReportService.minimumDays(for: period)
+            NutritionReportSheet(
+                report: report,
+                period: period,
+                kind: ctx.kind,
+                programDay: ctx.programDay,
+                programTotalDays: ctx.programTotalDays,
+                avgProtein: statisticsService.weeklyAverageProtein,
+                avgCarbs: statisticsService.weeklyAverageCarbs,
+                avgFat: statisticsService.weeklyAverageFat,
+                isCooldownActive: cooldown > 0,
+                cooldownSecondsRemaining: cooldown,
+                isRefreshing: generatingReportPeriod == period,
+                canRefresh: cooldown == 0 && meets && generatingReportPeriod != period,
+                onRefresh: { Task { await refreshReport(period: period, force: true) } }
+            )
+            .environmentObject(themeManager)
+        }
+    }
+
+    private func autoGenerateAllPeriodsIfNeeded() async {
+        for period in [ReportPeriod.week, .month, .program] {
+            guard !autoGenAttemptedPeriods.contains(period) else { continue }
+            autoGenAttemptedPeriods.insert(period)
+
+            let ctx = reportContext(for: period)
+
+            // Only auto-generate when the prior window has just closed (Monday / 1st of month /
+            // program completed) and we haven't already cached that report.
+            let shouldAuto: Bool
+            switch period {
+            case .week, .month:
+                shouldAuto = ctx.kind == .previous && ctx.report == nil
+            case .program:
+                shouldAuto = ctx.kind == .programCompleted && ctx.report == nil
+            }
+            guard shouldAuto else { continue }
+            guard ctx.daysOfData >= NutritionReportService.minimumDays(for: period) else { continue }
+
+            await refreshReport(period: period, force: false)
+        }
+    }
+
+    private func refreshReport(period: ReportPeriod, force: Bool) async {
+        let ctx = reportContext(for: period)
+
+        if period == .program && ctx.kind == .programNotStarted {
+            return
+        }
+
+        let minDays = NutritionReportService.minimumDays(for: period)
+        guard ctx.daysOfData >= minDays else {
+            FeedbackService.shared.addLog("nutrition_report_insufficient_data: period=\(period.rawValue) days=\(ctx.daysOfData) min=\(minDays)")
             return
         }
 
         if force, let existing = ctx.report {
             let remaining = NutritionReportService.cooldownRemaining(for: existing)
             if remaining > 0 {
-                FeedbackService.shared.addLog("nutrition_report_refresh_cooldown_hit: \(remaining)s")
+                FeedbackService.shared.addLog("nutrition_report_refresh_cooldown_hit: period=\(period.rawValue) seconds=\(remaining)")
                 return
             }
         }
 
         guard let profile = profiles.first else { return }
-        isGeneratingReport = true
+        generatingReportPeriod = period
 
         let payload = NutritionReportService.buildPayload(
             entries: allEntries,
-            weekStart: ctx.weekStart,
-            weekEnd: ctx.weekEnd
+            period: period,
+            periodStart: ctx.periodStart,
+            periodEnd: ctx.periodEnd,
+            programTotalDays: ctx.programTotalDays
         )
         let gapKind = CalorieGapKind.from(profile: profile)
+        let cal = Calendar.current
+        let spanDays = max(1, (cal.dateComponents([.day], from: ctx.periodStart, to: ctx.periodEnd).day ?? 0) + 1)
 
         do {
             let result = try await groqService.generateNutritionReport(
                 entriesPayload: payload,
+                period: period,
                 daysOfData: ctx.daysOfData,
+                totalDaysInPeriod: spanDays,
+                programDay: ctx.programDay,
+                programTotalDays: ctx.programTotalDays,
                 gapKind: gapKind,
                 currentWeightKg: profile.currentWeightKg,
                 goalWeightKg: profile.goalWeightKg,
@@ -323,24 +371,32 @@ struct StatisticsView: View {
 
             _ = NutritionReportService.upsert(
                 payload: result,
-                weekStart: ctx.weekStart,
-                weekEnd: ctx.weekEnd,
+                period: period,
+                periodStart: ctx.periodStart,
+                periodEnd: ctx.periodEnd,
                 gapKind: gapKind,
                 language: groqService.appLanguage,
                 daysOfData: ctx.daysOfData,
-                isComplete: ctx.weekKind == .lastWeek,
+                isComplete: ctx.kind == .previous || ctx.kind == .programCompleted,
+                programDay: ctx.programDay,
+                programTotalDays: ctx.programTotalDays,
                 in: modelContext,
                 existingReports: nutritionReports
             )
 
+            let periodLabel = period == .week
+                ? NutritionReportService.weekLabel(for: ctx.periodStart)
+                : period == .month
+                    ? NutritionReportService.monthLabel(for: ctx.periodStart)
+                    : "program-day-\(ctx.programDay)"
             FeedbackService.shared.addLog(
-                "nutrition_report_generated: week=\(NutritionReportService.weekLabel(for: ctx.weekStart)) score=\(result.score) lang=\(groqService.appLanguage)"
+                "nutrition_report_generated: period=\(period.rawValue) window=\(periodLabel) days=\(ctx.daysOfData) score=\(result.score) lang=\(groqService.appLanguage)"
             )
         } catch {
-            FeedbackService.shared.addErrorLog("nutrition_report_generation_failed: \(error.localizedDescription)")
+            FeedbackService.shared.addErrorLog("nutrition_report_generation_failed: period=\(period.rawValue) \(error.localizedDescription)")
         }
 
-        isGeneratingReport = false
+        generatingReportPeriod = nil
     }
 
     // MARK: - Custom Segmented Picker

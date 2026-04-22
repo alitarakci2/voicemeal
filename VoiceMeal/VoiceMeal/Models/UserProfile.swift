@@ -163,6 +163,7 @@ final class UserProfile {
     var goalDays: Int
     var intensityLevel: Double // deprecated - hidden in UI
     var weeklyScheduleJSON: String
+    var programStartDate: Date?
     var notification1Enabled: Bool
     var notification1Hour: Int
     var notification1Minute: Int
@@ -193,6 +194,12 @@ final class UserProfile {
     var coachStyle: CoachStyle {
         get { CoachStyle(rawValue: coachStyleRaw) ?? .supportive }
         set { coachStyleRaw = newValue.rawValue }
+    }
+
+    /// Single source of truth for program start. Uses explicit programStartDate when set,
+    /// falls back to account creation date for existing users.
+    var effectiveProgramStart: Date {
+        programStartDate ?? createdAt
     }
 
     var cookingLocation: CookingLocation {

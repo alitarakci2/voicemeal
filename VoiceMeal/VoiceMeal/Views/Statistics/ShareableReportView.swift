@@ -7,13 +7,22 @@ import SwiftUI
 
 struct ShareableReportView: View {
     let report: NutritionReport
-    let weekLabel: String
+    let periodTitle: String       // e.g. "Nutrition Report Card" / "Beslenme Karnesi"
+    let periodSubtitle: String    // period + range, e.g. "This Week · 14 Apr – 20 Apr"
     let avgProtein: Double
     let avgCarbs: Double
     let avgFat: Double
     let theme: AppTheme
 
     private var isEN: Bool { report.language == "en" }
+
+    private var scoreSubtitle: String {
+        switch report.periodType {
+        case .week:    return isEN ? "Weekly Score" : "Haftalık Skor"
+        case .month:   return isEN ? "Monthly Score" : "Aylık Skor"
+        case .program: return isEN ? "Program Score" : "Program Skoru"
+        }
+    }
 
     private var proteinKcal: Double { avgProtein * 4 }
     private var carbsKcal: Double { avgCarbs * 4 }
@@ -45,14 +54,15 @@ struct ShareableReportView: View {
                 }
 
                 VStack(spacing: 16) {
-                    Text(isEN ? "Nutrition Report Card" : "Beslenme Karnesi")
+                    Text(periodTitle)
                         .font(.system(size: 40, weight: .semibold))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
 
-                    Text(weekLabel)
+                    Text(periodSubtitle)
                         .font(.system(size: 26))
                         .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
                 }
 
                 ZStack {
@@ -80,7 +90,7 @@ struct ShareableReportView: View {
                                 .font(.system(size: 48, weight: .semibold))
                                 .foregroundStyle(.white.opacity(0.5))
                         }
-                        Text(isEN ? "Weekly Score" : "Haftalık Skor")
+                        Text(scoreSubtitle)
                             .font(.system(size: 22))
                             .foregroundStyle(.white.opacity(0.6))
                     }

@@ -22,6 +22,13 @@ final class NutritionReport {
     var generatedAt: Date
     var daysOfData: Int
     var isComplete: Bool
+    // Period-aware fields (introduced in v2; legacy week-only rows migrated via NutritionReportMigrator).
+    var periodTypeRaw: String = ReportPeriod.week.rawValue
+    var periodStartDate: Date = Date.distantPast
+    var periodEndDate: Date = Date.distantPast
+    // Optional program context — only populated when periodType == .program.
+    var programDay: Int = 0
+    var programTotalDays: Int = 0
 
     init(
         weekStartDate: Date,
@@ -35,7 +42,12 @@ final class NutritionReport {
         gapKindRaw: String,
         language: String,
         daysOfData: Int,
-        isComplete: Bool
+        isComplete: Bool,
+        periodType: ReportPeriod = .week,
+        periodStartDate: Date? = nil,
+        periodEndDate: Date? = nil,
+        programDay: Int = 0,
+        programTotalDays: Int = 0
     ) {
         self.id = UUID()
         self.weekStartDate = weekStartDate
@@ -51,6 +63,11 @@ final class NutritionReport {
         self.generatedAt = .now
         self.daysOfData = daysOfData
         self.isComplete = isComplete
+        self.periodTypeRaw = periodType.rawValue
+        self.periodStartDate = periodStartDate ?? weekStartDate
+        self.periodEndDate = periodEndDate ?? weekEndDate
+        self.programDay = programDay
+        self.programTotalDays = programTotalDays
     }
 
     var strengths: [String] {
@@ -62,7 +79,33 @@ final class NutritionReport {
     }
 
     var hasValidScore: Bool {
-        score >= 1 && score <= 10 && daysOfData >= 3
+        score >= 1 && score <= 10 && daysOfData >= minimumDaysForValidScore
+    }
+
+    var periodType: ReportPeriod {
+        ReportPeriod(rawValue: periodTypeRaw) ?? .week
+    }
+
+    /// Effective period start — falls back to `weekStartDate` for legacy rows not yet migrated.
+    var effectivePeriodStart: Date {
+        periodStartDate == .distantPast ? weekStartDate : periodStartDate
+    }
+
+    var effectivePeriodEnd: Date {
+        periodEndDate == .distantPast ? weekEndDate : periodEndDate
+    }
+
+    private var minimumDaysForValidScore: Int {
+        switch periodType {
+        case .week:    return 3
+        case .month:   return 7
+        case .program:
+            #if DEBUG
+            return 1
+            #else
+            return 3
+            #endif
+        }
     }
 
     private static func encode(_ list: [String]) -> String {
