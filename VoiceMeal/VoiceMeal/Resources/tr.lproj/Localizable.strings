@@ -426,6 +426,20 @@
 "set_goal_cta" = "Hedef belirle";
 "set_goal_sheet_intro" = "Kilo hedefin için yeni bir başlangıç noktası";
 
+/* Sprint D mini — Onboarding observe consistency */
+"ready_observe_title" = "Her şey hazır!";
+"ready_observe_subtitle" = "Sadece ne yediğini kaydet, VoiceMeal gerisini halleder.";
+"ready_observe_tdee_note" = "Günlük yaklaşık kalori bütçen (referans)";
+"observe_activity_title" = "Genel olarak ne kadar aktifsin?";
+"observe_activity_sedentary_title" = "Sedanter";
+"observe_activity_sedentary_desc" = "Masa başı iş, az yürüyüş";
+"observe_activity_lightly_title" = "Hafif Aktif";
+"observe_activity_lightly_desc" = "Haftada 1-2 gün hafif egzersiz, düzenli yürüyüş";
+"observe_activity_moderately_title" = "Orta Aktif";
+"observe_activity_moderately_desc" = "Haftada 3-5 gün egzersiz, aktif günlük yaşam";
+"observe_activity_very_title" = "Çok Aktif";
+"observe_activity_very_desc" = "Haftada 6-7 gün yoğun egzersiz, spor/fiziksel iş";
+
 /* Units */
 "kg" = "kg";
 "lbs" = "lbs";

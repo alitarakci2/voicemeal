@@ -72,6 +72,9 @@ struct OnboardingContainerView: View {
             bmr = 10 * currentWeightKg + 6.25 * heightCm - 5 * Double(age) - 161
         }
         let tdee = bmr * 1.5
+        if selectedMode == .observe {
+            return max(Int(tdee), gender == "male" ? 1500 : 1200)
+        }
         let weightDiff = currentWeightKg - goalWeightKg
         let rawDeficit = goalDays > 0 ? (weightDiff * 7700) / Double(goalDays) : 0
         let cappedDeficit = min(rawDeficit, tdee * 0.35)
@@ -126,7 +129,7 @@ struct OnboardingContainerView: View {
                 case 5:
                     Step3GoalView(currentWeightKg: currentWeightKg, goalWeightKg: $goalWeightKg, goalDays: $goalDays)
                 case 6:
-                    Step5ScheduleView(weeklySchedule: $weeklySchedule)
+                    Step5ScheduleView(weeklySchedule: $weeklySchedule, isObserveMode: selectedMode == .observe)
                 case 7:
                     coachStyleView
                 case 8:
@@ -143,7 +146,8 @@ struct OnboardingContainerView: View {
                     StepReadyView(
                         appLanguage: appLanguage,
                         userName: name.trimmingCharacters(in: .whitespaces),
-                        dailyTarget: estimatedDailyTarget
+                        dailyTarget: estimatedDailyTarget,
+                        isObserveMode: selectedMode == .observe
                     ) {
                         saveProfile()
                     }
@@ -163,6 +167,9 @@ struct OnboardingContainerView: View {
                             } else if step == 6 && selectedMode == .observe {
                                 // Schedule → ModeSelect (skip Goal)
                                 step = 4
+                            } else if step == 8 && selectedMode == .observe {
+                                // FoodHabits → Schedule (skip CoachStyle)
+                                step = 6
                             } else {
                                 step -= 1
                             }
@@ -180,6 +187,9 @@ struct OnboardingContainerView: View {
                         } else if step == 4 && selectedMode == .observe {
                             // ModeSelect → Schedule (skip Goal)
                             step = 6
+                        } else if step == 6 && selectedMode == .observe {
+                            // Schedule → FoodHabits (skip CoachStyle)
+                            step = 8
                         } else if step < totalSteps {
                             step += 1
                         }

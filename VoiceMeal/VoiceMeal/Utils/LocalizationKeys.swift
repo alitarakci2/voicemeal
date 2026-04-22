@@ -397,6 +397,20 @@ enum L {
     static let stopGoalConfirmAction = "stop_goal_confirm_action"
     static let setGoalCTA = "set_goal_cta"
     static let setGoalSheetIntro = "set_goal_sheet_intro"
+
+    // Sprint D mini — Onboarding observe consistency
+    static let readyObserveTitle = "ready_observe_title"
+    static let readyObserveSubtitle = "ready_observe_subtitle"
+    static let readyObserveTdeeNote = "ready_observe_tdee_note"
+    static let observeActivityTitle = "observe_activity_title"
+    static let observeActivitySedentaryTitle = "observe_activity_sedentary_title"
+    static let observeActivitySedentaryDesc = "observe_activity_sedentary_desc"
+    static let observeActivityLightlyTitle = "observe_activity_lightly_title"
+    static let observeActivityLightlyDesc = "observe_activity_lightly_desc"
+    static let observeActivityModeratelyTitle = "observe_activity_moderately_title"
+    static let observeActivityModeratelyDesc = "observe_activity_moderately_desc"
+    static let observeActivityVeryTitle = "observe_activity_very_title"
+    static let observeActivityVeryDesc = "observe_activity_very_desc"
 }
 // swiftlint:enable type_name
 

@@ -399,6 +399,20 @@
 "set_goal_cta" = "Set a goal";
 "set_goal_sheet_intro" = "A new starting point for your weight goal";
 
+/* Sprint D mini — Onboarding observe consistency */
+"ready_observe_title" = "All set!";
+"ready_observe_subtitle" = "Just log what you eat, VoiceMeal handles the rest.";
+"ready_observe_tdee_note" = "Approximate daily calorie budget (reference)";
+"observe_activity_title" = "How active are you overall?";
+"observe_activity_sedentary_title" = "Sedentary";
+"observe_activity_sedentary_desc" = "Desk job, little walking";
+"observe_activity_lightly_title" = "Lightly Active";
+"observe_activity_lightly_desc" = "1-2 light workouts per week, regular walking";
+"observe_activity_moderately_title" = "Moderately Active";
+"observe_activity_moderately_desc" = "3-5 workouts per week, active daily life";
+"observe_activity_very_title" = "Very Active";
+"observe_activity_very_desc" = "6-7 intense workouts per week, athletic/physical job";
+
 /* Units */
 "kg" = "kg";
 "lbs" = "lbs";

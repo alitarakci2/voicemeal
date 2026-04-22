@@ -7,6 +7,44 @@ import SwiftUI
 
 struct Step5ScheduleView: View {
     @Binding var weeklySchedule: [[String]]
+    var isObserveMode: Bool = false
+
+    private enum ActivityLevel: String, CaseIterable {
+        case sedentary, lightly, moderately, very
+
+        var titleKey: String {
+            switch self {
+            case .sedentary:   return L.observeActivitySedentaryTitle
+            case .lightly:     return L.observeActivityLightlyTitle
+            case .moderately:  return L.observeActivityModeratelyTitle
+            case .very:        return L.observeActivityVeryTitle
+            }
+        }
+
+        var descKey: String {
+            switch self {
+            case .sedentary:   return L.observeActivitySedentaryDesc
+            case .lightly:     return L.observeActivityLightlyDesc
+            case .moderately:  return L.observeActivityModeratelyDesc
+            case .very:        return L.observeActivityVeryDesc
+            }
+        }
+
+        var schedule: [[String]] {
+            switch self {
+            case .sedentary:
+                return [["rest"], ["rest"], ["rest"], ["rest"], ["rest"], ["rest"], ["rest"]]
+            case .lightly:
+                return [["walking"], ["rest"], ["walking"], ["rest"], ["rest"], ["walking"], ["rest"]]
+            case .moderately:
+                return [["weights"], ["walking"], ["running"], ["rest"], ["weights"], ["walking"], ["rest"]]
+            case .very:
+                return [["weights", "running"], ["running"], ["weights"], ["cycling", "walking"], ["weights"], ["running"], ["rest"]]
+            }
+        }
+    }
+
+    @State private var selectedLevel: ActivityLevel = .lightly
 
     private var dayNames: [String] {
         ["day_mon_short".localized, "day_tue_short".localized, "day_wed_short".localized,
@@ -44,6 +82,70 @@ struct Step5ScheduleView: View {
     }
 
     var body: some View {
+        if isObserveMode {
+            observeBody
+        } else {
+            goalBody
+        }
+    }
+
+    private var observeBody: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                Text(L.observeActivityTitle.localized)
+                    .font(Theme.titleFont)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 8)
+
+                VStack(spacing: 10) {
+                    ForEach(ActivityLevel.allCases, id: \.self) { level in
+                        Button {
+                            selectedLevel = level
+                            weeklySchedule = level.schedule
+                        } label: {
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(level.titleKey.localized)
+                                        .font(Theme.bodyFont)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.white)
+                                    Text(level.descKey.localized)
+                                        .font(Theme.captionFont)
+                                        .foregroundStyle(Theme.textSecondary)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                Spacer()
+                                Image(systemName: selectedLevel == level
+                                    ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(selectedLevel == level
+                                        ? Theme.accent : Theme.textTertiary)
+                                    .font(.system(size: 22))
+                            }
+                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                selectedLevel == level
+                                    ? Theme.accent.opacity(0.1)
+                                    : Theme.cardBackground
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(selectedLevel == level ? Theme.accent : Color.clear, lineWidth: 2)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding()
+        }
+        .onAppear {
+            weeklySchedule = selectedLevel.schedule
+        }
+    }
+
+    private var goalBody: some View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("schedule_title".localized)

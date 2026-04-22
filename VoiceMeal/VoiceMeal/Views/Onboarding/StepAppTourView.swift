@@ -23,16 +23,7 @@ struct StepAppTourView: View {
                 example: "\"3 haşlanmış yumurta ve bir dilim tam buğday ekmek yedim\"",
                 exampleEN: "\"I had 3 boiled eggs and a slice of whole wheat bread\""
             ),
-            (
-                icon: "camera.circle.fill",
-                iconColor: Color(hex: "FF9F43"),
-                title: "Fotoğrafla Kaydet",
-                titleEN: "Snap a Photo",
-                body: "Tabağının fotoğrafını çek. AI yemeği tanır ve analiz eder.",
-                bodyEN: "Take a photo of your plate. AI recognizes and analyzes your meal.",
-                example: "📸 → AI anlar → Kalori + makrolar",
-                exampleEN: "📸 → AI analyzes → Calories + macros"
-            ),
+            // V2: Camera card hidden until photo-based meal entry ships
             (
                 icon: "brain.head.profile",
                 iconColor: Color(hex: "5E9FFF"),
@@ -46,7 +37,7 @@ struct StepAppTourView: View {
             (
                 icon: "chart.bar.fill",
                 iconColor: Color(hex: "4CD964"),
-                title: "İlerleni Takip Et",
+                title: "İlerlemeni Takip Et",
                 titleEN: "Track Your Progress",
                 body: "Haftalık ve aylık istatistikler. Streak, tutarlılık, en iyi günler.",
                 bodyEN: "Weekly and monthly statistics. Streak, consistency, best days.",

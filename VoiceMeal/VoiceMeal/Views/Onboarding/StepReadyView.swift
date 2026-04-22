@@ -9,6 +9,7 @@ struct StepReadyView: View {
     var appLanguage: String
     var userName: String
     var dailyTarget: Int
+    var isObserveMode: Bool = false
     var onStart: () -> Void
     @EnvironmentObject var themeManager: ThemeManager
 
@@ -29,25 +30,27 @@ struct StepReadyView: View {
                         .font(.system(size: 72))
 
                     VStack(spacing: 8) {
-                        Text(appLanguage == "en"
-                             ? "You're all set, \(userName)!"
-                             : "Hazırsın, \(userName)!")
+                        Text(isObserveMode
+                             ? L.readyObserveTitle.localized
+                             : (appLanguage == "en" ? "You're all set, \(userName)!" : "Hazırsın, \(userName)!"))
                             .font(.title.bold())
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
 
-                        Text(appLanguage == "en"
-                             ? "Your program is ready"
-                             : "Programın oluşturuldu")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        if !isObserveMode {
+                            Text(appLanguage == "en"
+                                 ? "Your program is ready"
+                                 : "Programın oluşturuldu")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
                     }
 
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(appLanguage == "en"
-                                 ? "Daily calorie target"
-                                 : "Günlük kalori hedefin")
+                            Text(isObserveMode
+                                 ? L.readyObserveTdeeNote.localized
+                                 : (appLanguage == "en" ? "Daily calorie target" : "Günlük kalori hedefin"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text("\(dailyTarget) kcal")
@@ -67,6 +70,14 @@ struct StepReadyView: View {
                             .stroke(themeManager.current.accent.opacity(0.3), lineWidth: 1)
                     )
                     .padding(.horizontal, 32)
+
+                    if isObserveMode {
+                        Text(L.readyObserveSubtitle.localized)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
 
                     VStack(alignment: .leading, spacing: 0) {
                         Text(appLanguage == "en"
