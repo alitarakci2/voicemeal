@@ -157,6 +157,7 @@
 "weekly" = "Haftalık";
 "monthly" = "Aylık";
 "program" = "Program";
+"streak" = "Seri";
 "current_streak" = "Günlük Seri";
 "best_streak" = "En iyi";
 "streak_going" = "Hedefe ulaşıyorsun, devam et!";

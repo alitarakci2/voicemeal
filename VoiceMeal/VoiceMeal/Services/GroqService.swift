@@ -603,6 +603,15 @@ class GroqService {
         case evening  = "Akşam"    // 15:00 - 21:00
         case night    = "Gece"     // 21:00 - 06:00
 
+        var englishName: String {
+            switch self {
+            case .morning: return "Morning"
+            case .midday:  return "Midday"
+            case .evening: return "Evening"
+            case .night:   return "Night"
+            }
+        }
+
         static func from(date: Date) -> TimeOfDay {
             let hour = Calendar.current.component(.hour, from: date)
             switch hour {
@@ -935,7 +944,7 @@ class GroqService {
                 : "exceeded target, great job"
 
             userPrompt = """
-                Time: \(timeStr) (\(effectiveTimeOfDay.rawValue))
+                Time: \(timeStr) (\(effectiveTimeOfDay.englishName))
                 HRV: \(hrvText)
                 Sleep: \(sleepText)
                 \(activityLine)
@@ -1852,19 +1861,29 @@ enum GroqError: LocalizedError {
     case timeout
 
     var errorDescription: String? {
+        let lang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
+            .string(forKey: "appLanguage")
+            ?? UserDefaults.standard.string(forKey: "appLanguage")
+            ?? "tr"
+        let isEN = lang == "en"
         switch self {
-        case .missingAPIKey: "API anahtarı bulunamadı"
+        case .missingAPIKey:
+            return isEN ? "API key missing." : "API anahtarı bulunamadı"
         case .apiError(let code):
             switch code {
-            case 401: "API anahtarı geçersiz."
-            case 429: "Çok fazla istek. Biraz bekleyin."
-            case 500...599: "Groq sunucusu meşgul. Tekrar deneyin."
-            default: "Groq API hatası (HTTP \(code))"
+            case 401: return isEN ? "Invalid API key." : "API anahtarı geçersiz."
+            case 429: return isEN ? "Too many requests. Please wait." : "Çok fazla istek. Biraz bekleyin."
+            case 500...599: return isEN ? "Groq server is busy. Try again." : "Groq sunucusu meşgul. Tekrar deneyin."
+            default: return isEN ? "Groq API error (HTTP \(code))." : "Groq API hatası (HTTP \(code))"
             }
-        case .emptyResponse: "Boş yanıt alındı"
-        case .invalidJSON: "Yanıt işlenemedi. Tekrar deneyin."
-        case .networkError: "İnternet bağlantısı yok."
-        case .timeout: "Bağlantı zaman aşımına uğradı."
+        case .emptyResponse:
+            return isEN ? "Empty response from server." : "Boş yanıt alındı"
+        case .invalidJSON:
+            return isEN ? "Could not process response. Try again." : "Yanıt işlenemedi. Tekrar deneyin."
+        case .networkError:
+            return isEN ? "No internet connection." : "İnternet bağlantısı yok."
+        case .timeout:
+            return isEN ? "Request timed out." : "Bağlantı zaman aşımına uğradı."
         }
     }
 }

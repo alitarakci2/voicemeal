@@ -157,6 +157,7 @@
 "weekly" = "Weekly";
 "monthly" = "Monthly";
 "program" = "Program";
+"streak" = "Streak";
 "current_streak" = "Day Streak";
 "best_streak" = "Best";
 "streak_going" = "You're hitting your goal, keep going!";
@@ -591,7 +592,7 @@
 "macro_averages" = "Macro Averages";
 "percent_completed" = "% Completed";
 "program_coach" = "Program Coach";
-"program_summary_min_days" = "Log at least 7 days to see your program summary";
+"program_summary_min_days" = "Log at least 3 days to see your program summary";
 "real_weight_detail" = "Actual weight from Health";
 "start_label_format" = "Started %@";
 "total_deficit_label" = "Total Deficit";

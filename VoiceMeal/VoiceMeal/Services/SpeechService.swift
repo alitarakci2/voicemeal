@@ -35,6 +35,14 @@ class SpeechService: ObservableObject {
             : Locale(identifier: "tr-TR"))
     }()
 
+    private var isEN: Bool {
+        let lang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
+            .string(forKey: "appLanguage")
+            ?? UserDefaults.standard.string(forKey: "appLanguage")
+            ?? "tr"
+        return lang == "en"
+    }
+
     func requestPermissions() async -> Bool {
         let speechStatus = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
@@ -42,7 +50,9 @@ class SpeechService: ObservableObject {
             }
         }
         guard speechStatus == .authorized else {
-            lastError = "Mikrofon izni gerekli. Ayarlardan izin verin."
+            lastError = isEN
+                ? "Microphone permission required. Allow it from Settings."
+                : "Mikrofon izni gerekli. Ayarlardan izin verin."
             #if DEBUG
             print("❌ [SpeechService] Speech recognition not authorized: \(speechStatus.rawValue)")
             #endif
@@ -50,7 +60,9 @@ class SpeechService: ObservableObject {
         }
         let micGranted = await AVAudioApplication.requestRecordPermission()
         if !micGranted {
-            lastError = "Mikrofon izni gerekli. Ayarlardan izin verin."
+            lastError = isEN
+                ? "Microphone permission required. Allow it from Settings."
+                : "Mikrofon izni gerekli. Ayarlardan izin verin."
             #if DEBUG
             print("❌ [SpeechService] Microphone permission denied")
             #endif
@@ -64,7 +76,9 @@ class SpeechService: ObservableObject {
         recognitionTask = nil
 
         guard speechRecognizer?.isAvailable == true else {
-            lastError = "Ses tanıma şu an kullanılamıyor."
+            lastError = isEN
+                ? "Speech recognition unavailable."
+                : "Ses tanıma şu an kullanılamıyor."
             #if DEBUG
             print("❌ [SpeechService] Speech recognizer not available")
             #endif
@@ -76,7 +90,9 @@ class SpeechService: ObservableObject {
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
-            lastError = "Ses kaydı başlatılamadı."
+            lastError = isEN
+                ? "Could not start recording."
+                : "Ses kaydı başlatılamadı."
             #if DEBUG
             print("❌ [SpeechService] Audio session error: \(error)")
             #endif
@@ -123,11 +139,17 @@ class SpeechService: ObservableObject {
                     print("❌ [SpeechService] Recognition error: \(nsError.domain) \(nsError.code) - \(error.localizedDescription)")
                     #endif
                     if nsError.domain == "kAFAssistantErrorDomain" && nsError.code == 1110 {
-                        self.lastError = "Ses algılanamadı. Tekrar deneyin."
+                        self.lastError = self.isEN
+                            ? "No speech detected. Try again."
+                            : "Ses algılanamadı. Tekrar deneyin."
                     } else if nsError.domain == NSURLErrorDomain {
-                        self.lastError = "İnternet bağlantısı gerekli."
+                        self.lastError = self.isEN
+                            ? "Internet connection required."
+                            : "İnternet bağlantısı gerekli."
                     } else {
-                        self.lastError = "Ses tanıma hatası: \(error.localizedDescription)"
+                        self.lastError = self.isEN
+                            ? "Speech recognition error: \(error.localizedDescription)"
+                            : "Ses tanıma hatası: \(error.localizedDescription)"
                     }
                     self.stopListening()
                 } else if result?.isFinal ?? false {
@@ -187,8 +209,15 @@ enum SpeechError: LocalizedError {
     case recognitionUnavailable
 
     var errorDescription: String? {
+        let lang = UserDefaults(suiteName: "group.indio.VoiceMeal")?
+            .string(forKey: "appLanguage")
+            ?? UserDefaults.standard.string(forKey: "appLanguage")
+            ?? "tr"
         switch self {
-        case .recognitionUnavailable: "Ses tanıma şu an kullanılamıyor."
+        case .recognitionUnavailable:
+            return lang == "en"
+                ? "Speech recognition unavailable."
+                : "Ses tanıma şu an kullanılamıyor."
         }
     }
 }

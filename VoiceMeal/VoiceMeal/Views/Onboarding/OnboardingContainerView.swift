@@ -275,11 +275,11 @@ struct OnboardingContainerView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(style.displayName)
+                                    Text(appLanguage == "en" ? style.displayNameEn : style.displayName)
                                         .font(Theme.bodyFont)
                                         .fontWeight(.medium)
                                         .foregroundStyle(.white)
-                                    Text(style.description)
+                                    Text(appLanguage == "en" ? style.descriptionEn : style.description)
                                         .font(Theme.captionFont)
                                         .foregroundStyle(Theme.textSecondary)
                                 }
