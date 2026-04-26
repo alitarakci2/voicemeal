@@ -29,6 +29,8 @@ struct MealParseResponse: Codable {
     let correctedFat: Double?
     let correctedAmount: String?
     let waterMl: Int?
+    let isGuess: Bool?
+    let guessedFoodName: String?
 }
 
 struct PhotoAnalysisResponse: Codable {
@@ -209,7 +211,9 @@ class GroqService {
           "correctedCarbs": "number or null",
           "correctedFat": "number or null",
           "correctedAmount": "string or null",
-          "waterMl": "number or null"
+          "waterMl": "number or null",
+          "isGuess": "boolean or null",
+          "guessedFoodName": "string or null"
         }
         """
 
@@ -269,6 +273,16 @@ class GroqService {
             - Set clarification_needed: true
             - Set clarification_question with 3-4 specific options in parentheses
             - Include best-guess meal in meals array anyway
+
+            GUESS MODE (triggered when system prompt begins with \
+            "NOTE: This is the user's 2nd clarification attempt"):
+            - Do NOT ask another question
+            - Pick the most phonetically similar real food from the transcript
+            - Set isGuess: true, guessedFoodName: the food you chose
+            - Set clarification_question: \
+            "I think you meant '[food name]', is that right?"
+            - Set clarification_needed: false
+            - Fill meals[] with the guessed food and your best calorie estimate
 
             MULTI-FOOD RULE:
             When user mentions multiple foods:
@@ -419,6 +433,16 @@ class GroqService {
             - clarification_question'da 3-4 spesifik seçenek ver parantez içinde
             - Yine de meals dizisine en iyi tahminle ekle
 
+            TAHMİN MODU (sistem prompt "NOT: Bu kullanıcının 2. clarification \
+            denemesidir." ile başladığında tetiklenir):
+            - Başka SORU SORMA
+            - Transcript'e fonetik benzerliği en yüksek gerçek Türk yemeğini TAHMİN ET
+            - isGuess: true, guessedFoodName: tahmin ettiğin yemeğin adı
+            - clarification_question: \
+            "Sanırım '[yemek adı]' demek istediniz, doğru mu?"
+            - clarification_needed: false
+            - meals[]: tahmin ettiğin yemekle doldur, kalori tahminini ekle
+
             ÇOKLU YEMEK KURALI:
             Kullanıcı birden fazla yemek söylediğinde:
             1. TÜM yemekleri meals dizisine dahil et, en iyi tahminlerinle
@@ -503,13 +527,13 @@ class GroqService {
         return raw
     }
 
-    func parseMeals(transcript: String, personalContext: String = "") async throws -> MealParseResponse {
+    func parseMeals(transcript: String, personalContext: String = "", isSecondClarification: Bool = false) async throws -> MealParseResponse {
         let startTime = Date()
         var retried = false
         do {
             let response: MealParseResponse
             do {
-                response = try await parseMealsSingleAttempt(transcript: transcript, personalContext: personalContext)
+                response = try await parseMealsSingleAttempt(transcript: transcript, personalContext: personalContext, isSecondClarification: isSecondClarification)
             } catch let error where Self.isTransientError(error) {
                 retried = true
                 FeedbackService.shared.addLog("Groq retry (attempt 2)")
@@ -526,7 +550,7 @@ class GroqService {
                 crumb.data = ["error_type": Self.errorTypeTag(error)]
                 SentrySDK.addBreadcrumb(crumb)
                 try await Task.sleep(for: .seconds(1))
-                response = try await parseMealsSingleAttempt(transcript: transcript, personalContext: personalContext)
+                response = try await parseMealsSingleAttempt(transcript: transcript, personalContext: personalContext, isSecondClarification: isSecondClarification)
             }
             let elapsed = Date().timeIntervalSince(startTime)
             FeedbackService.shared.addLog("Groq parseMeals: \(String(format: "%.1f", elapsed))s\(retried ? " (retried)" : "")")
@@ -601,16 +625,27 @@ class GroqService {
         }
     }
 
-    private func parseMealsSingleAttempt(transcript: String, personalContext: String) async throws -> MealParseResponse {
+    private func parseMealsSingleAttempt(transcript: String, personalContext: String, isSecondClarification: Bool) async throws -> MealParseResponse {
         let apiKey = Config.groqAPIKey
         guard !apiKey.isEmpty else {
             throw GroqError.missingAPIKey
         }
 
+        let baseSystem = languageInstruction(for: appLanguage) + "\n\n" + systemPrompt(personalContext: personalContext)
+        let systemContent: String
+        if isSecondClarification {
+            let signal = appLanguage == "en"
+                ? "NOTE: This is the user's 2nd clarification attempt. Apply GUESS MODE immediately.\n\n"
+                : "NOT: Bu kullanıcının 2. clarification denemesidir. TAHMİN MODU'nu hemen uygula.\n\n"
+            systemContent = signal + baseSystem
+        } else {
+            systemContent = baseSystem
+        }
+
         let body: [String: Any] = [
             "model": model,
             "messages": [
-                ["role": "system", "content": languageInstruction(for: appLanguage) + "\n\n" + systemPrompt(personalContext: personalContext)],
+                ["role": "system", "content": systemContent],
                 ["role": "user", "content": transcript]
             ],
             "temperature": 0.15,

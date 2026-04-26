@@ -61,6 +61,8 @@ struct HomeView: View {
     @State var showGoalUpdatedToast = false
     @State var entryToCorrect: FoodEntry?
     @State var correctionQuestion = ""
+    @State var clarificationAttempt: Int = 0
+    @State var isGuessMode: Bool = false
     @State var showPermissionAlert = false
     @State var showRetryButton = false
     @State var manuallyEditedMealNames: Set<String> = []

@@ -39,6 +39,7 @@ enum VoiceSessionMetric {
     case correction
     case inlineEdit
     case mealRemoved
+    case guessUsed
 }
 
 final class VoiceSession: Identifiable {
@@ -58,6 +59,7 @@ final class VoiceSession: Identifiable {
     var correctionCount: Int = 0
     var inlineEditCount: Int = 0
     var mealRemovedCount: Int = 0
+    var guessUsedCount: Int = 0
 
     init() {
         self.id = UUID().uuidString.components(separatedBy: "-").first ?? "UNK"
@@ -166,6 +168,7 @@ extension FeedbackService {
         case .correction:    session.correctionCount += 1
         case .inlineEdit:    session.inlineEditCount += 1
         case .mealRemoved:   session.mealRemovedCount += 1
+        case .guessUsed:     session.guessUsedCount += 1
         }
     }
 
@@ -242,6 +245,7 @@ extension FeedbackService {
         Düzeltme: \(session.correctionCount)
         Inline edit: \(session.inlineEditCount)
         Meal removed: \(session.mealRemovedCount)
+        Tahmin modu: \(session.guessUsedCount)
 
         SENARYO
         ━━━━━━━━━━━━━━━

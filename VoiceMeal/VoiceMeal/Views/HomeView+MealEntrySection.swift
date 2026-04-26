@@ -305,11 +305,41 @@ extension HomeView {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
 
-                Text(L.tapMicAnswer.localized)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.textTertiary)
+                if isGuessMode {
+                    HStack(spacing: 10) {
+                        Button { confirmGuess() } label: {
+                            Label(groqService.appLanguage == "en" ? "Yes" : "Evet",
+                                  systemImage: "checkmark")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Theme.green)
+                                .clipShape(RoundedRectangle(cornerRadius: Radius.m))
+                        }
+                        .buttonStyle(.plain)
+
+                        Button { rejectGuess() } label: {
+                            Label(groqService.appLanguage == "en" ? "No" : "Hayır",
+                                  systemImage: "xmark")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Theme.danger)
+                                .clipShape(RoundedRectangle(cornerRadius: Radius.m))
+                        }
+                        .buttonStyle(.plain)
+                    }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 6)
+                } else {
+                    Text(L.tapMicAnswer.localized)
+                        .font(.caption2)
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 4)
+                }
             }
 
             if let fixing = fixingMealName {
@@ -442,6 +472,27 @@ extension HomeView {
         }
     }
 
+    func confirmGuess() {
+        FeedbackService.shared.logVoiceEvent(
+            icon: "🎯",
+            message: "Guess confirmed: \(reviewMeals.first?.name ?? "?")"
+        )
+        isGuessMode = false
+        clarificationQuestion = ""
+        clarificationAttempt = 0
+    }
+
+    func rejectGuess() {
+        FeedbackService.shared.logVoiceEvent(icon: "🎯", message: "Guess rejected")
+        FeedbackService.shared.endVoiceSession(reason: .cancelled)
+        isGuessMode = false
+        clarificationAttempt = 0
+        errorMessage = groqService.appLanguage == "en"
+            ? "Food not recognized. Try again or add manually."
+            : "Yemek tanınamadı. Tekrar deneyin veya manuel ekleyin."
+        resetVoiceState()
+    }
+
     func resetVoiceState() {
         clarificationQuestion = ""
         correctionQuestion = ""
@@ -452,6 +503,8 @@ extension HomeView {
         originalSpeechText = ""
         showRetryButton = false
         manuallyEditedMealNames = []
+        clarificationAttempt = 0
+        isGuessMode = false
     }
 
     // MARK: - Inline edit helpers
@@ -708,13 +761,16 @@ extension HomeView {
             return
         }
 
+        var isSecondClarif = false
         let transcript: String
         if !clarificationQuestion.isEmpty && !originalSpeechText.isEmpty {
+            clarificationAttempt += 1
+            isSecondClarif = clarificationAttempt >= 2
             transcript = originalSpeechText + ". " + newText
             clarificationQuestion = ""
             FeedbackService.shared.logVoiceEvent(
                 icon: "📝",
-                message: "Clarification answer: \(newText.prefix(80))"
+                message: "Clarification answer #\(clarificationAttempt): \(newText.prefix(80))"
             )
             FeedbackService.shared.trackVoiceMetric(.clarification)
         } else {
@@ -726,24 +782,24 @@ extension HomeView {
             )
         }
 
-        runNormalMealParse(finalTranscript: transcript)
+        runNormalMealParse(finalTranscript: transcript, isSecondClarification: isSecondClarif)
     }
 
-    func runNormalMealParse(finalTranscript: String) {
+    func runNormalMealParse(finalTranscript: String, isSecondClarification: Bool = false) {
         isAnalyzing = true
         errorMessage = nil
         showRetryButton = false
 
         FeedbackService.shared.logVoiceEvent(
             icon: "📤",
-            message: "Groq request",
+            message: "Groq request\(isSecondClarification ? " (2nd clarif → guess mode)" : "")",
             data: ["chars": "\(finalTranscript.count)"]
         )
         FeedbackService.shared.trackVoiceMetric(.groqCall)
 
         Task {
             do {
-                let response = try await groqService.parseMeals(transcript: finalTranscript, personalContext: profiles.first?.fullAIContext ?? "")
+                let response = try await groqService.parseMeals(transcript: finalTranscript, personalContext: profiles.first?.fullAIContext ?? "", isSecondClarification: isSecondClarification)
 
                 if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
                     addWater(ml: waterMl, source: "voice")
@@ -768,6 +824,15 @@ extension HomeView {
                 } else if !response.meals.isEmpty {
                     reviewMeals = response.meals
                     showReviewCard = true
+                    if response.isGuess == true {
+                        isGuessMode = true
+                        clarificationQuestion = response.clarification_question ?? ""
+                        FeedbackService.shared.trackVoiceMetric(.guessUsed)
+                        FeedbackService.shared.logVoiceEvent(
+                            icon: "🎯",
+                            message: "Guess: \(response.guessedFoodName ?? "unknown")"
+                        )
+                    }
                     let totalCal = response.meals.reduce(0) { $0 + Int($1.calories ?? 0) }
                     FeedbackService.shared.logVoiceEvent(
                         icon: "🖼",
