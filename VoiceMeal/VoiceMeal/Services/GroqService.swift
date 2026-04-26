@@ -247,22 +247,26 @@ class GroqService {
             Examples: "2 boiled eggs and soup" → parse both. \
             "eggs soup" → parse both. Do NOT require verbs.
 
-            MANDATORY CLARIFICATION - NEVER SKIP:
-            These food categories ALWAYS require clarification, no exceptions:
-            ALWAYS ASK: soup, meat, fish, salad, fruit, vegetable, rice dish, \
-            pastry, drink (except water), dessert, food, breakfast item
-            When ANY of these generic terms appear:
-            - Set clarification_needed: true (MANDATORY)
-            - Set clarification_question with specific options in parentheses
-            - Still include best-guess calories in meals array
-            - Confirm specific foods in the question
-            NEVER set clarification_needed: false for generic foods. This rule overrides everything.
+            CLARIFICATION RULE — SPECIFICITY FIRST:
+            Does the food name already include a specific type? YES → do NOT ask, proceed.
+            Specific = user named the exact variety, preparation method, or type together.
+            NO clarification needed (examples): lentil soup, tomato soup, tarhana soup, \
+            chicken broth, minestrone, french onion soup, ezogelin soup, \
+            chicken breast, ground beef, meatballs, grilled chicken, steak, chicken wings, \
+            salmon fillet, sea bass, sardines, tuna, mackerel, \
+            caesar salad, greek salad, garden salad, coleslaw, \
+            rice pilaf, bulgur pilaf, rice with chickpeas, brown rice, \
+            cheese pastry, spinach pie, croissant, cheese toast, \
+            rice pudding, chocolate cake, baklava, ice cream, yogurt.
+            - If amount is unclear, estimate with "~" prefix — do NOT ask
+            - NEVER ask about calories/protein/carbs — you calculate these
 
-            SPECIFIC FOODS (no clarification needed):
-            - If food name is SPECIFIC (lentil soup, chicken breast, apple, \
-            grilled salmon, Caesar salad), proceed with estimation
-            - If amount is unclear, estimate with "~" prefix, do NOT ask
-            - NEVER ask about calories/protein/carbs - you calculate these
+            ONLY ask when: user said a bare generic word with NO type specified \
+            (e.g., just "soup", just "meat", just "salad", just "dessert" — no other qualifier).
+            In that case:
+            - Set clarification_needed: true
+            - Set clarification_question with 3-4 specific options in parentheses
+            - Include best-guess meal in meals array anyway
 
             MULTI-FOOD RULE:
             When user mentions multiple foods:
@@ -332,22 +336,27 @@ class GroqService {
             Örnekler: "2 haşlanmış yumurta bir tabak çorba" → ikisini de parse et. \
             "yumurta çorba" → ikisini de parse et. Fiil ZORUNLU DEĞİL.
 
-            ZORUNLU AÇIKLAMA - ASLA ATLAMA:
-            Bu yemek kategorileri HER ZAMAN açıklama gerektirir, istisna yok:
-            HER ZAMAN SOR: çorba, et, balık, salata, meyve, sebze, \
-            pilav çeşidi, börek çeşidi, içecek (su hariç), tatlı, yemek, kahvaltılık
-            Bu genel terimlerden herhangi biri geçtiğinde:
-            - clarification_needed: true yap (ZORUNLU)
-            - clarification_question'da parantez içinde seçenekler ver
-            - Yine de meals dizisine en iyi tahminle ekle
-            - Spesifik yemekleri soruda onayla
-            Genel yemekler için ASLA clarification_needed: false yapma. Bu kural diğer her şeyi geçersiz kılar.
+            AÇIKLAMA KURALI — ÖNCE SPESİFİKLİK KONTROLÜ:
+            Yemek adı zaten spesifik türü içeriyor mu? EVET ise → SORMA, devam et.
+            Spesifik = kullanıcı tam çeşidini, pişirme şeklini veya türünü birlikte söyledi.
+            Açıklama GEREKMEZ (örnekler): tarhana çorbası, mercimek çorbası, \
+            ezogelin çorbası, domates çorbası, tavuk suyu çorbası, kremalı mantar çorbası, \
+            şehriye çorbası, yayla çorbası, \
+            tavuk göğsü, kıyma, köfte, ızgara köfte, tavuk but, tavuk kanat, biftek, \
+            somon, levrek, çipura, hamsi, ton balığı, uskumru, \
+            sezar salata, çoban salata, mevsim salata, \
+            bulgur pilavı, nohutlu pilav, bezelye pilavı, \
+            su böreği, peynirli börek, kol böreği, poğaça, peynirli tost, \
+            sütlaç, muhallebi, baklava, dondurma, yoğurt, çikolatalı pasta.
+            - Miktar belirsizse "~" ile tahmin et — SORMA
+            - ASLA kalori/protein/karbonhidrat sorma — bunları sen hesapla
 
-            SPESİFİK YEMEKLER (açıklama gerekmez):
-            - Yemek adı SPESİFİK ise (mercimek çorbası, tavuk göğsü, elma, \
-            ızgara somon, Sezar salatası), tahminine devam et
-            - Miktar belirsizse "~" ile tahmin et, SORMA
-            - ASLA kalori/protein/karbonhidrat sorma - bunları sen hesapla
+            SADECE şu durumda sor: kullanıcı TÜR BELİRTMEDEN sade genel kategoriyi söyledi \
+            (ör: sadece "çorba", sadece "et", sadece "salata", sadece "tatlı" — başka niteleyici yok).
+            Bu durumda:
+            - clarification_needed: true
+            - clarification_question'da 3-4 spesifik seçenek ver parantez içinde
+            - Yine de meals dizisine en iyi tahminle ekle
 
             ÇOKLU YEMEK KURALI:
             Kullanıcı birden fazla yemek söylediğinde:
@@ -460,6 +469,23 @@ class GroqService {
             }
             let elapsed = Date().timeIntervalSince(startTime)
             FeedbackService.shared.addLog("Groq parseMeals: \(String(format: "%.1f", elapsed))s\(retried ? " (retried)" : "")")
+
+            // Log conversation to voice session so it shows up in feedback emails
+            FeedbackService.shared.logVoiceEvent(
+                icon: "🗣",
+                message: "Sent: \(String(transcript.prefix(250)))"
+            )
+            let mealsSummary = response.meals
+                .map { "\($0.name) \(Int($0.calories ?? 0))kcal" }
+                .joined(separator: " | ")
+            FeedbackService.shared.logVoiceEvent(
+                icon: "📥",
+                message: "Got: \(mealsSummary.isEmpty ? "(empty)" : String(mealsSummary.prefix(200)))",
+                data: response.clarification_needed
+                    ? ["q": String((response.clarification_question ?? "").prefix(100))]
+                    : [:]
+            )
+
             let completed = Breadcrumb()
             completed.level = .info
             completed.category = "voice.parse.completed"
