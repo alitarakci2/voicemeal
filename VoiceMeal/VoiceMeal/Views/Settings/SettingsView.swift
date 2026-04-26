@@ -828,7 +828,7 @@ struct SettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 

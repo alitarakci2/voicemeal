@@ -426,7 +426,7 @@ struct StatisticsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
         .onChange(of: isObserveMode) { _, newValue in
             if newValue && selectedRange == 2 {
@@ -569,7 +569,7 @@ struct StatisticsView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -715,7 +715,7 @@ struct MetricSummaryCard: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 }

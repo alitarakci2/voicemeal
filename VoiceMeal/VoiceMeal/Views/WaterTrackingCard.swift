@@ -88,7 +88,7 @@ struct WaterTrackingCard: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Theme.cardBorder, lineWidth: 1)
+                                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
                         )
                 }
                 .buttonStyle(.plain)

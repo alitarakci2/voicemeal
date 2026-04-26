@@ -687,7 +687,7 @@ struct PlanView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -769,7 +769,7 @@ struct PlanView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -978,7 +978,7 @@ struct PlanView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 }
@@ -1354,7 +1354,7 @@ struct DayDetailSheetView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -1382,7 +1382,7 @@ struct DayDetailSheetView: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.l))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.l)
-                    .stroke(BrandColors.border, lineWidth: 0.5)
+                    .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
             )
         } else if dayEntries.isEmpty {
             Text(L.noFoodLog.localized)
@@ -1439,7 +1439,7 @@ struct DayDetailSheetView: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.l))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.l)
-                    .stroke(BrandColors.border, lineWidth: 0.5)
+                    .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
             )
         }
     }
@@ -1510,7 +1510,7 @@ struct DayDetailSheetView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -1605,7 +1605,7 @@ struct DayDetailSheetView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -1658,7 +1658,7 @@ struct DayDetailSheetView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 

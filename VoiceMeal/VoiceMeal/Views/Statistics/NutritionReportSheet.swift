@@ -169,7 +169,7 @@ struct NutritionReportSheet: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
             )
     }
 
@@ -200,7 +200,7 @@ struct NutritionReportSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -224,7 +224,7 @@ struct NutritionReportSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -248,7 +248,7 @@ struct NutritionReportSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 
@@ -293,7 +293,7 @@ struct NutritionReportSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 

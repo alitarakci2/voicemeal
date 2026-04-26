@@ -400,7 +400,7 @@ extension HomeView {
         .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.xl)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 

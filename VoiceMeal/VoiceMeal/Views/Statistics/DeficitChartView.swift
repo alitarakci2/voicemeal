@@ -93,7 +93,7 @@ struct DeficitChartView: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.l)
-                .stroke(BrandColors.border, lineWidth: 0.5)
+                .stroke(Theme.cardFrameBorder, lineWidth: 1.0)
         )
     }
 }

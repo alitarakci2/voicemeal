@@ -7,6 +7,9 @@ enum Theme {
     static var background: Color       { BrandColors.black }
     static var cardBackground: Color   { BrandColors.surface }
     static var cardBorder: Color       { BrandColors.border }
+    /// Subtle orange-tinted border for all primary content cards.
+    /// Use on cards; keep BrandColors.border for inputs, dividers, separators.
+    static var cardFrameBorder: Color  { BrandColors.indioOrange.opacity(0.18) }
 
     // Accents — INDIO ORANGE IS NOW PRIMARY
     static var accent: Color           { BrandColors.indioOrange }

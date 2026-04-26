@@ -58,8 +58,8 @@ struct ContentView: View {
     init() {
         // Brand canvas color: #0A0A0A
         let canvasColor = UIColor(red: 0.039, green: 0.039, blue: 0.039, alpha: 1.0)
-        // Emerald accent: #1D9E75
-        let accent = UIColor(red: 0.114, green: 0.620, blue: 0.459, alpha: 1.0)
+        // Indio orange: #FF6B1A
+        let accent = UIColor(red: 1.000, green: 0.420, blue: 0.102, alpha: 1.0)
         let normalColor = UIColor(white: 0.45, alpha: 1)
 
         // Tab bar
