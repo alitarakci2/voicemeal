@@ -338,6 +338,63 @@ class GroqService {
             Örnekler: "2 haşlanmış yumurta bir tabak çorba" → ikisini de parse et. \
             "yumurta çorba" → ikisini de parse et. Fiil ZORUNLU DEĞİL.
 
+            SES TANIMA DÜZELTME LİSTESİ:
+            Apple Speech Recognition bazı Türkçe yemek isimlerini yanlış tanıyabilir. \
+            Aşağıdaki yanlış yazılmış kelimeleri transcript'te gördüğünde otomatik olarak \
+            doğru karşılığıyla değiştir ve KULLANICIYA HİÇ SORMA. \
+            Sanki kullanıcı doğru kelimeyi söylemiş gibi davran.
+
+            ÇORBALAR:
+            parhana / parana / tarana → tarhana çorbası
+            mecimek / merçimek → mercimek
+            ezogelın / ezo gelin → ezogelin
+            ışkembe → işkembe
+
+            ET YEMEKLERİ:
+            köfde / kofte → köfte
+            kebab → kebap
+            şiş kebab → şiş kebap
+            iskendır / ıskender → İskender
+            dönır / doner → döner
+            lahmacın → lahmacun
+            çiğ köfde / çiğ kofte → çiğ köfte
+            tantunı → tantuni
+            köfte ızgara → ızgara köfte
+
+            HAMUR İŞLERİ:
+            menemın → menemen
+            manti → mantı
+            boreğı → böreği
+            sigara böreğı → sigara böreği
+            gozleme → gözleme
+            acma → açma
+            pogaca → poğaça
+
+            PİLAVLAR:
+            pillav → pilav
+            bulgur pilav → bulgur pilavı
+
+            SEBZE YEMEKLERİ:
+            ımam bayıldı → imam bayıldı
+            karnı yarık → karnıyarık
+            saksuka / şakşuga → şakşuka
+            mucver → mücver
+
+            TATLILAR:
+            kunefe → künefe
+            sütlach → sütlaç
+            sekerpare → şekerpare
+            asure → aşure
+            kazan dibi → kazandibi
+
+            KAHVALTI:
+            beyaz peynır → beyaz peynir
+            lor peynir → lor peyniri
+
+            İÇECEKLER:
+            salgam → şalgam suyu
+            sahlep → salep
+
             AÇIKLAMA KURALI — SPESİFİKLİK + TANINIRLIK KONTROLÜ:
             Adım 1 — Spesifik bir tür belirtildi mi?
               HAYIR (sadece "çorba", "et", "salata" gibi genel kelime) → hangi tür olduğunu sor.
