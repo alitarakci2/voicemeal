@@ -765,7 +765,14 @@ extension HomeView {
         let transcript: String
         if !clarificationQuestion.isEmpty && !originalSpeechText.isEmpty {
             clarificationAttempt += 1
-            isSecondClarif = clarificationAttempt >= 2
+            #if DEBUG
+            print("🔢 [COUNTER] clarificationAttempt → \(clarificationAttempt)")
+            print("   Triggered by: user clarification reply")
+            #endif
+            // TODO(V1.1): Re-enable after beta data analysis.
+            // All TAHMİN MODU code intact (counter, prompts, UI Yes/No, confirmGuess/rejectGuess).
+            // Disabled because Groq behavior is inconsistent — same input sometimes guesses, sometimes asks.
+            isSecondClarif = false
             transcript = originalSpeechText + ". " + newText
             clarificationQuestion = ""
             FeedbackService.shared.logVoiceEvent(
@@ -782,6 +789,15 @@ extension HomeView {
             )
         }
 
+        #if DEBUG
+        print("─────────────────────────────────────────")
+        print("🎤 [VOICE] Sending to Groq")
+        print("📝 [VOICE] Transcript: \"\(String(transcript.prefix(200)))\"")
+        print("🌍 [VOICE] App language: \(groqService.appLanguage)")
+        print("🔢 [VOICE] clarificationAttempt: \(clarificationAttempt)")
+        print("🎯 [VOICE] isSecondClarification: \(isSecondClarif)")
+        print("─────────────────────────────────────────")
+        #endif
         runNormalMealParse(finalTranscript: transcript, isSecondClarification: isSecondClarif)
     }
 
@@ -789,6 +805,12 @@ extension HomeView {
         isAnalyzing = true
         errorMessage = nil
         showRetryButton = false
+
+        #if DEBUG
+        print("📤 [GROQ] Sending to parseMeals()...")
+        print("   Transcript: \"\(String(finalTranscript.prefix(200)))\"")
+        print("   isSecondClarif: \(isSecondClarification)")
+        #endif
 
         FeedbackService.shared.logVoiceEvent(
             icon: "📤",
@@ -801,18 +823,48 @@ extension HomeView {
             do {
                 let response = try await groqService.parseMeals(transcript: finalTranscript, personalContext: profiles.first?.fullAIContext ?? "", isSecondClarification: isSecondClarification)
 
+                #if DEBUG
+                print("📥 [GROQ] Response received:")
+                print("   meals.count: \(response.meals.count)")
+                print("   meals: \(response.meals.map { $0.name }.joined(separator: ", "))")
+                print("   clarification_needed: \(response.clarification_needed)")
+                print("   clarification_question: \(response.clarification_question ?? "nil")")
+                print("   isGuess: \(String(describing: response.isGuess))")
+                print("   guessedFoodName: \(response.guessedFoodName ?? "nil")")
+                print("   isCorrection: \(String(describing: response.isCorrection))")
+                print("   waterMl: \(String(describing: response.waterMl))")
+                let isEmptyResponse = response.meals.isEmpty
+                    && !response.clarification_needed
+                    && (response.isGuess != true)
+                    && response.waterMl == nil
+                    && (response.isCorrection != true)
+                if isEmptyResponse {
+                    print("⚠️⚠️⚠️ [EMPTY RESPONSE] Possible bug!")
+                    print("   Transcript: \"\(String(finalTranscript.prefix(200)))\"")
+                    print("   User will see: NOTHING (falls to else branch)")
+                    print("⚠️⚠️⚠️")
+                }
+                #endif
+
                 if isWaterTrackingEnabled, let waterMl = response.waterMl, waterMl > 0 {
                     addWater(ml: waterMl, source: "voice")
                     FeedbackService.shared.logVoiceEvent(icon: "💧", message: "Water: \(waterMl)ml")
                 }
 
                 if response.isCorrection == true {
+                    #if DEBUG
+                    print("🟢 [UI] Branch: isCorrection → \(response.targetFoodName ?? "?")")
+                    #endif
                     FeedbackService.shared.logVoiceEvent(
                         icon: "📥",
                         message: "Groq: isCorrection → \(response.targetFoodName ?? "?")"
                     )
                     handleCorrection(response)
                 } else if response.clarification_needed {
+                    #if DEBUG
+                    print("🟡 [UI] Branch: Clarification → \(response.clarification_question ?? "nil")")
+                    print("   meals in response: \(response.meals.map { $0.name }.joined(separator: ", "))")
+                    #endif
                     reviewMeals = response.meals
                     clarificationQuestion = response.clarification_question ?? ""
                     showReviewCard = true
@@ -822,11 +874,23 @@ extension HomeView {
                         message: "Clarification: \(clarificationQuestion.prefix(100))"
                     )
                 } else if !response.meals.isEmpty {
+                    #if DEBUG
+                    print("🟢 [UI] Branch: Normal parse → review card (\(response.meals.count) meals)")
+                    #endif
                     reviewMeals = response.meals
                     showReviewCard = true
                     if response.isGuess == true {
+                        #if DEBUG
+                        print("🎯 [UI] Branch: Guess mode → Yes/No for \(response.guessedFoodName ?? "?")")
+                        #endif
                         isGuessMode = true
-                        clarificationQuestion = response.clarification_question ?? ""
+                        let providedQ = response.clarification_question ?? ""
+                        let guessName = response.guessedFoodName ?? ""
+                        clarificationQuestion = providedQ.isEmpty
+                            ? (groqService.appLanguage == "en"
+                                ? "I think you meant \"\(guessName)\", is that right?"
+                                : "Sanırım \"\(guessName)\" demek istediniz, doğru mu?")
+                            : providedQ
                         FeedbackService.shared.trackVoiceMetric(.guessUsed)
                         FeedbackService.shared.logVoiceEvent(
                             icon: "🎯",
@@ -840,6 +904,9 @@ extension HomeView {
                         data: ["meals": response.meals.map { $0.name }.joined(separator: ",")]
                     )
                 } else if response.waterMl != nil {
+                    #if DEBUG
+                    print("💧 [UI] Branch: Water-only saved")
+                    #endif
                     showSavedConfirmation = true
                     FeedbackService.shared.logVoiceEvent(icon: "✅", message: "Water-only saved")
                     FeedbackService.shared.endVoiceSession(reason: .saved)
@@ -848,8 +915,18 @@ extension HomeView {
                         showSavedConfirmation = false
                     }
                 } else {
+                    #if DEBUG
+                    print("🔴 [UI] Branch: Empty response → mealNotDetected")
+                    print("   meals empty: \(response.meals.isEmpty)")
+                    print("   clarification: \(response.clarification_needed)")
+                    print("   waterMl: \(String(describing: response.waterMl))")
+                    print("   isCorrection: \(String(describing: response.isCorrection))")
+                    #endif
                     errorMessage = L.mealNotDetected.localized
                     originalSpeechText = ""
+                    clarificationAttempt = 0
+                    isGuessMode = false
+                    FeedbackService.shared.endVoiceSession(reason: .abandoned)
                     let crumb = Breadcrumb()
                     crumb.level = .info
                     crumb.category = "voice.parse.no_meal_detected"

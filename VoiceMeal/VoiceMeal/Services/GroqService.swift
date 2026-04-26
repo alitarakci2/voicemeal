@@ -251,6 +251,32 @@ class GroqService {
             Examples: "2 boiled eggs and soup" → parse both. \
             "eggs soup" → parse both. Do NOT require verbs.
 
+            ═══════════════════════════════════════════════
+            CRITICAL RULE — DO/DON'T EXAMPLES
+            ═══════════════════════════════════════════════
+
+            Vague input (just "soup", "food", "I ate something"):
+
+            CORRECT response:
+            {"meals": [], "clarification_needed": true, "clarification_question": "Which soup? (lentil, tomato, chicken)", "isGuess": false}
+
+            WRONG response — NEVER DO THIS:
+            {"meals": [{"name": "Lentil Soup", "amount": "1 bowl"}], "clarification_needed": true, "clarification_question": "Which soup?", "isGuess": false}
+
+            REASON: User sees both "Lentil Soup" AND "Which soup?" question — confusing. \
+            Do not put a food you did not identify into meals. Only ASK, then fill \
+            meals after the answer arrives.
+
+            Specific input ("lentil soup", "two eggs"):
+
+            CORRECT response:
+            {"meals": [{"name": "Lentil Soup", "calories": 180, "protein": 9, "carbs": 25, "fat": 3, "amount": "1 bowl"}], "clarification_needed": false, "clarification_question": null, "isGuess": false}
+
+            EXCEPTION — GUESS MODE (only when isSecondClarification flag is active):
+            {"meals": [{"name": "Lentil Soup", ...}], "clarification_needed": false, "clarification_question": "I think you meant lentil soup, is that right?", "isGuess": true, "guessedFoodName": "Lentil Soup"}
+            This exception is ONLY active on the 2nd clarification attempt.
+            ═══════════════════════════════════════════════
+
             CLARIFICATION RULE — SPECIFICITY FIRST:
             Step 1 — Is a specific type stated?
               NO (bare generic like "soup", "meat", "salad") → ask which type.
@@ -272,10 +298,25 @@ class GroqService {
             When asking (generic OR unrecognized type):
             - Set clarification_needed: true
             - Set clarification_question with 3-4 specific options in parentheses
-            - Include best-guess meal in meals array anyway
 
-            GUESS MODE (triggered when system prompt begins with \
-            "NOTE: This is the user's 2nd clarification attempt"):
+            CRITICAL RULE — CLARIFICATION AND MEALS ARE MUTUALLY EXCLUSIVE:
+            If clarification_needed: true:
+            - meals[] MUST be empty ([])
+            - isGuess: false
+            - guessedFoodName: null
+            If meals[] is non-empty:
+            - clarification_needed: false
+            - clarification_question: null
+            EXCEPTION: GUESS MODE (when isSecondClarification flag arrives) \
+            is the only case — there meals[] is filled, isGuess: true, \
+            clarification_question: "I think you meant X, is that right?". \
+            Outside this special case, NEVER have both meals and clarification together.
+
+            GUESS MODE — ONLY ACTIVE ON 2ND CLARIFICATION:
+            This section is ONLY active if the system prompt contains the line \
+            "NOTE: This is the user's 2nd clarification attempt. Apply GUESS MODE immediately." \
+            If this line is absent, GUESS MODE is OFF — behave normally.
+            When active:
             - Do NOT ask another question
             - Pick the most phonetically similar real food from the transcript
             - Set isGuess: true, guessedFoodName: the food you chose
@@ -283,6 +324,16 @@ class GroqService {
             "I think you meant '[food name]', is that right?"
             - Set clarification_needed: false
             - Fill meals[] with the guessed food and your best calorie estimate
+
+            VAGUE INPUT FALLBACK (when GUESS MODE is active but no phonetic match exists):
+            If transcript is too vague ("I don't know", "something", "food", "stuff") \
+            and no phonetic match, use the PREVIOUS conversation's category as context:
+            - Previous: "soup" → guess: "Lentil Soup" (most common soup)
+            - Previous: "I had meat" → guess: "Grilled Chicken"
+            - Previous: "dessert" → guess: "Cheesecake"
+            - Previous: "breakfast" → guess: "Scrambled Eggs"
+            If no category is identifiable → default guess: "Grilled Chicken Breast".
+            NEVER return empty meals when GUESS MODE is active. Always make a guess.
 
             MULTI-FOOD RULE:
             When user mentions multiple foods:
@@ -338,6 +389,22 @@ class GroqService {
             CRITICAL: Your response must be ONLY valid JSON.
             Do NOT write any text, explanation, or commentary before or after the JSON.
             Start your response directly with { and end with }
+
+            FINAL REMINDER — BEHAVE BASED ON CONTEXT:
+
+            If isSecondClarification is FALSE (first attempt or first clarification reply):
+            - If you do NOT know the specific food: meals MUST be empty
+            - Only ask via clarification_question
+            - NEVER guess
+
+            If isSecondClarification is TRUE (2nd clarification reply — GUESS MODE active):
+            - If there is a phonetically similar food in the transcript: guess it
+            - If input is too vague ("I don't know", "something", "food", "stuff"): \
+            guess the MOST COMMON example from the category the user mentioned earlier
+            - NEVER return empty meals — always make a guess
+            - Fill meals with the guess: isGuess: true, guessedFoodName: name of guess, \
+            clarification_question: "I think you meant [X], is that right?", \
+            clarification_needed: false
             """
         } else {
             return """
@@ -409,6 +476,32 @@ class GroqService {
             salgam → şalgam suyu
             sahlep → salep
 
+            ═══════════════════════════════════════════════
+            KRİTİK KURAL — DO/DON'T ÖRNEKLİ
+            ═══════════════════════════════════════════════
+
+            Belirsiz input geldiğinde (sadece "çorba", "yemek", "bir şeyler yedim"):
+
+            DOĞRU yanıt:
+            {"meals": [], "clarification_needed": true, "clarification_question": "Hangi çorba? (mercimek, tarhana, ezogelin, domates)", "isGuess": false}
+
+            YANLIŞ yanıt — HİÇBİR ZAMAN BÖYLE YAPMA:
+            {"meals": [{"name": "Mercimek Çorbası", "amount": "1 tabak"}], "clarification_needed": true, "clarification_question": "Hangi çorba?", "isGuess": false}
+
+            SEBEP: Kullanıcı hem "Mercimek Çorbası" görür hem "Hangi çorba?" sorusu — \
+            kafa karıştırıcı. Emin olmadığın yemeği MEALS'a koyma. Sadece SORU SOR, \
+            cevap gelince meals'i doldur.
+
+            Spesifik input geldiğinde ("tarhana çorbası", "iki yumurta"):
+
+            DOĞRU yanıt:
+            {"meals": [{"name": "Tarhana Çorbası", "calories": 120, "protein": 5, "carbs": 18, "fat": 3, "amount": "1 tabak"}], "clarification_needed": false, "clarification_question": null, "isGuess": false}
+
+            İSTİSNA — TAHMİN MODU (sadece isSecondClarification flag aktifken):
+            {"meals": [{"name": "Tarhana Çorbası", ...}], "clarification_needed": false, "clarification_question": "Sanırım tarhana çorbası demek istediniz, doğru mu?", "isGuess": true, "guessedFoodName": "Tarhana Çorbası"}
+            Bu istisna SADECE 2. clarification denemesinde aktiftir.
+            ═══════════════════════════════════════════════
+
             AÇIKLAMA KURALI — SPESİFİKLİK + TANINIRLIK KONTROLÜ:
             Adım 1 — Spesifik bir tür belirtildi mi?
               HAYIR (sadece "çorba", "et", "salata" gibi genel kelime) → hangi tür olduğunu sor.
@@ -431,10 +524,25 @@ class GroqService {
             Soru sorulacak durumlar (genel kelime VEYA tanınmayan tür):
             - clarification_needed: true
             - clarification_question'da 3-4 spesifik seçenek ver parantez içinde
-            - Yine de meals dizisine en iyi tahminle ekle
 
-            TAHMİN MODU (sistem prompt "NOT: Bu kullanıcının 2. clarification \
-            denemesidir." ile başladığında tetiklenir):
+            ÖNEMLİ KURAL — CLARIFICATION VE MEALS BİRLİKTE OLMAZ:
+            Eğer clarification_needed: true ise:
+            - meals[] BOŞ olmalı ([])
+            - isGuess: false olmalı
+            - guessedFoodName: null olmalı
+            Eğer meals[] dolu ise:
+            - clarification_needed: false olmalı
+            - clarification_question: null olmalı
+            İSTİSNA: TAHMİN MODU (isSecondClarification flag'i geldiğinde) \
+            tek istisnadır — orada meals[] dolu, isGuess: true, \
+            clarification_question: "Sanırım X demek istediniz, doğru mu?" olur. \
+            Bu özel durum dışında ASLA hem meals dolu hem clarification var olmaz.
+
+            TAHMİN MODU — SADECE 2. CLARIFICATION'DA AKTİF:
+            Bu bölüm SADECE sistem prompt'a "NOT: Bu kullanıcının 2. clarification \
+            denemesidir. TAHMİN MODU'nu hemen uygula." satırı eklenmişse aktiftir. \
+            Bu satır yoksa TAHMİN MODU YOK, normal davran.
+            Aktif olduğunda:
             - Başka SORU SORMA
             - Transcript'e fonetik benzerliği en yüksek gerçek Türk yemeğini TAHMİN ET
             - isGuess: true, guessedFoodName: tahmin ettiğin yemeğin adı
@@ -442,6 +550,17 @@ class GroqService {
             "Sanırım '[yemek adı]' demek istediniz, doğru mu?"
             - clarification_needed: false
             - meals[]: tahmin ettiğin yemekle doldur, kalori tahminini ekle
+
+            VAG INPUT FALLBACK (TAHMİN MODU aktifken fonetik eşleşme yoksa):
+            Transcript çok vag ise ("yemek işte", "bir şey", "bilmiyorum") ve \
+            fonetik eşleşme yoksa, ÖNCEKİ konuşmadaki kategoriye bak:
+            - Önceki: "çorba" → tahmin: "Mercimek Çorbası"
+            - Önceki: "et yedim" → tahmin: "Köfte"
+            - Önceki: "tatlı" → tahmin: "Künefe"
+            - Önceki: "kahvaltı" → tahmin: "Menemen"
+            - Önceki: "pasta" → tahmin: "Tiramisu"
+            Hiçbir kategori belirgin değilse → tahmin: "Adana Kebap" (güvenli default).
+            TAHMİN MODU aktifken ASLA boş meals döndürme. Mutlaka bir tahmin yap.
 
             ÇOKLU YEMEK KURALI:
             Kullanıcı birden fazla yemek söylediğinde:
@@ -501,6 +620,22 @@ class GroqService {
             KRİTİK: Yanıtın SADECE geçerli JSON olmalı.
             JSON öncesinde veya sonrasında HİÇBİR metin, açıklama veya yorum yazma.
             Yanıta doğrudan { ile başla ve } ile bitir.
+
+            SON HATIRLATMA — DURUMA GÖRE DAVRAN:
+
+            Eğer isSecondClarification FALSE ise (1. konuşma veya 1. clarification cevabı):
+            - Hangi spesifik yemek olduğunu BİLMİYORSAN: meals BOŞ olmalı
+            - Sadece clarification_question ile sor
+            - ASLA tahmin etme
+
+            Eğer isSecondClarification TRUE ise (2. clarification cevabı — TAHMİN MODU aktif):
+            - Fonetik benzerliği yüksek yemek varsa: tahmin et
+            - Vag input ise ("yemek işte", "bir şey"): önceki kategorinin en yaygın örneğini \
+            veya Adana Kebap'ı (default) tahmin et
+            - ASLA boş meals döndürme — mutlaka bir tahmin yap
+            - meals'a tahmin yemeği ekle: isGuess: true, guessedFoodName: tahmin adı, \
+            clarification_question: "Sanırım [X] demek istediniz, doğru mu?", \
+            clarification_needed: false
             """
         }
     }
@@ -642,6 +777,19 @@ class GroqService {
             systemContent = baseSystem
         }
 
+        #if DEBUG
+        print("─────────────────────────────────────────")
+        print("🤖 [GROQ-PROMPT] isSecondClarification: \(isSecondClarification) | length: \(systemContent.count) chars")
+        print("🤖 [GROQ-PROMPT] First 500 chars:")
+        print(String(systemContent.prefix(500)))
+        print("...")
+        print("🤖 [GROQ-PROMPT] Last 500 chars:")
+        print(String(systemContent.suffix(500)))
+        print("─────────────────────────────────────────")
+        print("👤 [GROQ-USER] \"\(String(transcript.prefix(200)))\"")
+        print("─────────────────────────────────────────")
+        #endif
+
         let body: [String: Any] = [
             "model": model,
             "messages": [
@@ -699,6 +847,12 @@ class GroqService {
         let cleanedJSON = cleanGroqJSON(jsonString)
         let extractedJSON = extractJSON(cleanedJSON)
 
+        #if DEBUG
+        print("📦 [GROQ-RAW] Raw response (first 1000 chars):")
+        print(String(extractedJSON.prefix(1000)))
+        print("─────────────────────────────────────────")
+        #endif
+
         guard let jsonData = extractedJSON.data(using: .utf8) else {
             #if DEBUG
             print("❌ [GroqService] Invalid JSON string: \(extractedJSON)")
@@ -707,7 +861,11 @@ class GroqService {
         }
 
         do {
-            return try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
+            let parsed = try JSONDecoder().decode(MealParseResponse.self, from: jsonData)
+            #if DEBUG
+            print("✅ [GROQ-PARSED] OK: \(parsed.meals.count) meals, clarif=\(parsed.clarification_needed), guess=\(parsed.isGuess ?? false)")
+            #endif
+            return parsed
         } catch {
             SentrySDK.capture(error: error)
             #if DEBUG

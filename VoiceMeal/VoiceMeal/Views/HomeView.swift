@@ -214,7 +214,7 @@ struct HomeView: View {
                 mealEntrySection
                     .id("voiceSection")
 
-                if showReviewCard && !reviewMeals.isEmpty {
+                if showReviewCard && (!reviewMeals.isEmpty || !clarificationQuestion.isEmpty) {
                     mealReviewCard
                 }
 
