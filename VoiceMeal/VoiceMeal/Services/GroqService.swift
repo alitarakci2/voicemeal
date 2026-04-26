@@ -248,10 +248,14 @@ class GroqService {
             "eggs soup" → parse both. Do NOT require verbs.
 
             CLARIFICATION RULE — SPECIFICITY FIRST:
-            Does the food name already include a specific type? YES → do NOT ask, proceed.
-            Specific = user named the exact variety, preparation method, or type together.
-            NO clarification needed (examples): lentil soup, tomato soup, tarhana soup, \
-            chicken broth, minestrone, french onion soup, ezogelin soup, \
+            Step 1 — Is a specific type stated?
+              NO (bare generic like "soup", "meat", "salad") → ask which type.
+              YES → go to Step 2.
+            Step 2 — Is that specific type a real, recognizable food?
+              YES (known food) → proceed without asking.
+              NO (unrecognizable, garbled, or non-existent word) → ask which type they meant.
+            Recognized specific types (NO clarification needed): lentil soup, tomato soup, \
+            tarhana soup, chicken broth, minestrone, french onion soup, ezogelin soup, \
             chicken breast, ground beef, meatballs, grilled chicken, steak, chicken wings, \
             salmon fillet, sea bass, sardines, tuna, mackerel, \
             caesar salad, greek salad, garden salad, coleslaw, \
@@ -261,9 +265,7 @@ class GroqService {
             - If amount is unclear, estimate with "~" prefix — do NOT ask
             - NEVER ask about calories/protein/carbs — you calculate these
 
-            ONLY ask when: user said a bare generic word with NO type specified \
-            (e.g., just "soup", just "meat", just "salad", just "dessert" — no other qualifier).
-            In that case:
+            When asking (generic OR unrecognized type):
             - Set clarification_needed: true
             - Set clarification_question with 3-4 specific options in parentheses
             - Include best-guess meal in meals array anyway
@@ -336,10 +338,14 @@ class GroqService {
             Örnekler: "2 haşlanmış yumurta bir tabak çorba" → ikisini de parse et. \
             "yumurta çorba" → ikisini de parse et. Fiil ZORUNLU DEĞİL.
 
-            AÇIKLAMA KURALI — ÖNCE SPESİFİKLİK KONTROLÜ:
-            Yemek adı zaten spesifik türü içeriyor mu? EVET ise → SORMA, devam et.
-            Spesifik = kullanıcı tam çeşidini, pişirme şeklini veya türünü birlikte söyledi.
-            Açıklama GEREKMEZ (örnekler): tarhana çorbası, mercimek çorbası, \
+            AÇIKLAMA KURALI — SPESİFİKLİK + TANINIRLIK KONTROLÜ:
+            Adım 1 — Spesifik bir tür belirtildi mi?
+              HAYIR (sadece "çorba", "et", "salata" gibi genel kelime) → hangi tür olduğunu sor.
+              EVET → Adım 2'ye geç.
+            Adım 2 — Belirtilen tür gerçek ve tanınabilir bir yemek mi?
+              EVET (bilinen yemek) → SORMA, devam et.
+              HAYIR (tanınmayan, hatalı duyulan veya var olmayan kelime) → hangi türü kastettiklerini sor.
+            Tanınan spesifik türler (açıklama GEREKMEZ): tarhana çorbası, mercimek çorbası, \
             ezogelin çorbası, domates çorbası, tavuk suyu çorbası, kremalı mantar çorbası, \
             şehriye çorbası, yayla çorbası, \
             tavuk göğsü, kıyma, köfte, ızgara köfte, tavuk but, tavuk kanat, biftek, \
@@ -351,9 +357,7 @@ class GroqService {
             - Miktar belirsizse "~" ile tahmin et — SORMA
             - ASLA kalori/protein/karbonhidrat sorma — bunları sen hesapla
 
-            SADECE şu durumda sor: kullanıcı TÜR BELİRTMEDEN sade genel kategoriyi söyledi \
-            (ör: sadece "çorba", sadece "et", sadece "salata", sadece "tatlı" — başka niteleyici yok).
-            Bu durumda:
+            Soru sorulacak durumlar (genel kelime VEYA tanınmayan tür):
             - clarification_needed: true
             - clarification_question'da 3-4 spesifik seçenek ver parantez içinde
             - Yine de meals dizisine en iyi tahminle ekle
