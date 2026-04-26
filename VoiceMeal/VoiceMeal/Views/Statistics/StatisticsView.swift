@@ -427,7 +427,7 @@ struct StatisticsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
         .onChange(of: isObserveMode) { _, newValue in
             if newValue && selectedRange == 2 {
@@ -567,10 +567,10 @@ struct StatisticsView: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -579,12 +579,13 @@ struct StatisticsView: View {
     private var weeklyInsightCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                Image(systemName: "brain.head.profile")
-                    .foregroundStyle(Theme.accent)
-                    .font(.system(size: 14))
+                Image(systemName: "sparkles")
+                    .foregroundStyle(Theme.indioOrange)
+                    .font(.system(size: 16, weight: .medium))
+                    .symbolEffect(.pulse, options: .repeating, isActive: weeklyInsight != nil)
                 Text(L.weeklyInsight.localized)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.white)
+                    .font(BrandTypography.bodyMedium())
+                    .foregroundStyle(Theme.indioOrange)
                 Spacer()
             }
 
@@ -617,10 +618,10 @@ struct StatisticsView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(Theme.indioOrange.opacity(0.30), lineWidth: 0.5)
         )
     }
 
@@ -712,10 +713,10 @@ struct MetricSummaryCard: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 }

@@ -86,10 +86,10 @@ struct NutritionReportCard: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.l))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.l)
+                    .stroke(Theme.indioOrange.opacity(0.30), lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -98,12 +98,13 @@ struct NutritionReportCard: View {
 
     private var header: some View {
         HStack(spacing: 6) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .foregroundStyle(Theme.accent)
+            Image(systemName: "sparkles")
+                .foregroundStyle(Theme.indioOrange)
                 .font(.system(size: 14))
+                .symbolEffect(.pulse, options: .repeating)
             Text(cardTitle)
-                .font(.subheadline.bold())
-                .foregroundStyle(.white)
+                .font(BrandTypography.bodyMedium())
+                .foregroundStyle(Theme.indioOrange)
             Spacer()
             Text(periodLabel)
                 .font(.caption)
@@ -189,13 +190,13 @@ struct NutritionReportCard: View {
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(Theme.danger)
+                        .fill(Theme.protein)
                         .frame(width: geo.size.width * pP)
                     Rectangle()
                         .fill(Theme.macroCarb)
                         .frame(width: geo.size.width * pC)
                     Rectangle()
-                        .fill(Theme.success)
+                        .fill(Theme.fatColor)
                         .frame(width: geo.size.width * pF)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -203,9 +204,9 @@ struct NutritionReportCard: View {
             .frame(height: 8)
 
             HStack(spacing: 12) {
-                macroLabel(color: Theme.danger, text: "P \(Int((pP * 100).rounded()))%")
+                macroLabel(color: Theme.protein, text: "P \(Int((pP * 100).rounded()))%")
                 macroLabel(color: Theme.macroCarb, text: "\(isEN ? "C" : "K") \(Int((pC * 100).rounded()))%")
-                macroLabel(color: Theme.success, text: "\(isEN ? "F" : "Y") \(Int((pF * 100).rounded()))%")
+                macroLabel(color: Theme.fatColor, text: "\(isEN ? "F" : "Y") \(Int((pF * 100).rounded()))%")
             }
         }
     }

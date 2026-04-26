@@ -79,10 +79,10 @@ struct MacroChartView: View {
         }
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 

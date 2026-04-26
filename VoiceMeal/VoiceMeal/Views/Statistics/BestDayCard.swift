@@ -44,9 +44,9 @@ struct BestDayCard: View {
 
     var bestDayValueColor: Color {
         switch gapKind {
-        case .deficit:  return .orange
+        case .deficit:  return Theme.indioOrange
         case .surplus:  return Theme.protein
-        case .maintain: return .green
+        case .maintain: return Theme.green
         case .observe:  return .white
         }
     }
@@ -75,14 +75,14 @@ struct BestDayCard: View {
             // Header
             HStack {
                 Image(systemName: "trophy.fill")
-                    .foregroundColor(.yellow)
+                    .foregroundStyle(Theme.indioOrange)
                     .font(.system(size: 16))
                     .frame(width: 30, height: 30)
-                    .background(Color.yellow.opacity(0.15))
-                    .cornerRadius(8)
+                    .background(Theme.indioOrange.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.s))
                 Text(L.bestOfPeriod.localized)
                     .font(.subheadline.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 Spacer()
             }
 
@@ -123,10 +123,10 @@ struct BestDayCard: View {
         }
         .padding(14)
         .background(Theme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.yellow.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(Theme.indioOrange.opacity(0.30), lineWidth: 0.5)
         )
     }
 
@@ -155,17 +155,17 @@ struct HighlightRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 Text(subtitle)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandColors.textMuted)
             }
 
             Spacer()
 
             Text(value)
                 .font(.subheadline.bold())
-                .foregroundColor(valueColor)
+                .foregroundStyle(valueColor)
         }
         .padding(.vertical, 4)
     }

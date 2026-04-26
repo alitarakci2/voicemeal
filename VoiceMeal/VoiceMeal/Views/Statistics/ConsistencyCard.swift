@@ -24,9 +24,9 @@ struct ConsistencyCard: View {
     }
     var trend: Int { consistencyPct - previousPct }
     var consistencyColor: Color {
-        consistencyPct >= 80 ? .green
-            : consistencyPct >= 50 ? .orange
-            : .red
+        consistencyPct >= 80 ? Theme.green
+            : consistencyPct >= 50 ? Theme.warning
+            : Theme.danger
     }
 
     var body: some View {
@@ -34,15 +34,15 @@ struct ConsistencyCard: View {
             // Header
             HStack {
                 Image(systemName: "checkmark.seal.fill")
-                    .foregroundColor(consistencyColor)
+                    .foregroundStyle(consistencyColor)
                     .font(.system(size: 16))
                     .frame(width: 30, height: 30)
                     .background(consistencyColor.opacity(0.15))
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.s))
                 Text(appLanguage == "en"
                      ? "Consistency" : "Tutarlılık")
                     .font(.subheadline.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 Spacer()
                 // Trend vs last period
                 if trend != 0 {
@@ -53,13 +53,13 @@ struct ConsistencyCard: View {
                         Text("\(abs(trend))%")
                             .font(.caption2.bold())
                     }
-                    .foregroundColor(trend > 0 ? .green : .red)
+                    .foregroundStyle(trend > 0 ? Theme.green : Theme.danger)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(
-                        (trend > 0 ? Color.green : Color.red)
+                        (trend > 0 ? Theme.green : Theme.danger)
                             .opacity(0.12))
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.s))
                 }
             }
 
@@ -67,15 +67,16 @@ struct ConsistencyCard: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(consistencyPct)")
                     .font(.system(size: 42, weight: .bold))
-                    .foregroundColor(consistencyColor)
+                    .foregroundStyle(consistencyColor)
+                    .contentTransition(.numericText())
                 Text("%")
                     .font(.title2)
-                    .foregroundColor(consistencyColor.opacity(0.7))
+                    .foregroundStyle(consistencyColor.opacity(0.7))
                 Spacer()
                 Text("\(daysWithData)/\(totalDays) " +
                      L.daysLogged.localized)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandColors.textMuted)
             }
 
             // Day dots visualization
@@ -85,14 +86,14 @@ struct ConsistencyCard: View {
                     Circle()
                         .fill(stat.hasData
                               ? consistencyColor
-                              : Color.white.opacity(0.12))
+                              : BrandColors.surface2)
                         .frame(width: 10, height: 10)
                         .overlay(
                             Circle()
                                 .stroke(
                                     stat.hasData
                                         ? consistencyColor
-                                        : Color.white.opacity(0.08),
+                                        : BrandColors.border,
                                     lineWidth: 1)
                         )
                 }
@@ -102,14 +103,14 @@ struct ConsistencyCard: View {
             // Message
             Text(consistencyMessage)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(BrandColors.textMuted)
         }
         .padding(14)
         .background(Theme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 

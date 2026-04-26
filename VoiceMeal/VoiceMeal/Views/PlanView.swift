@@ -329,7 +329,7 @@ struct PlanView: View {
                                 .id(today.date)
                                 .onTapGesture { selectedPlan = today }
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
+                                    RoundedRectangle(cornerRadius: Radius.l)
                                         .stroke(Theme.accent, lineWidth: 1.5)
                                 )
                         }
@@ -405,21 +405,24 @@ struct PlanView: View {
 
     private func sectionHeader(title: String, dateRange: String, isExpanded: Binding<Bool>) -> some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.25)) { isExpanded.wrappedValue.toggle() }
+            BrandHaptics.lightTap()
+            withAnimation(Motion.spring) { isExpanded.wrappedValue.toggle() }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: isExpanded.wrappedValue ? "chevron.down" : "chevron.right")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Theme.textTertiary)
+                    .foregroundStyle(BrandColors.textMuted)
+                    .rotationEffect(.degrees(isExpanded.wrappedValue ? 0 : 0))
+                    .animation(Motion.spring, value: isExpanded.wrappedValue)
                 Text(title)
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Theme.textSecondary)
+                    .font(BrandTypography.monoMicro())
+                    .foregroundStyle(BrandColors.textDim)
                     .textCase(.uppercase)
-                    .tracking(0.5)
+                    .tracking(0.32)
                 Spacer()
                 Text(dateRange)
-                    .font(Theme.microFont)
-                    .foregroundStyle(Theme.textTertiary)
+                    .font(BrandTypography.monoMicro())
+                    .foregroundStyle(BrandColors.textMuted)
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
@@ -636,7 +639,7 @@ struct PlanView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(Theme.accent)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.m))
                 }
                 .buttonStyle(.plain)
                 .disabled(isSaveDisabled)
@@ -654,7 +657,7 @@ struct PlanView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(Theme.red.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.s))
                 }
                 .buttonStyle(.plain)
             }
@@ -681,10 +684,10 @@ struct PlanView: View {
         .tint(Theme.textSecondary)
         .padding(16)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -713,7 +716,7 @@ struct PlanView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(Theme.accent)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.m))
                 }
                 .buttonStyle(.plain)
                 .disabled(weeklySchedule == originalSchedule)
@@ -736,7 +739,7 @@ struct PlanView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(Theme.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.m))
                 }
                 .buttonStyle(.plain)
             }
@@ -763,10 +766,10 @@ struct PlanView: View {
         .tint(Theme.textSecondary)
         .padding(16)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -828,7 +831,8 @@ struct PlanView: View {
         VStack(spacing: 0) {
             // Header (always visible)
             Button {
-                withAnimation(.easeInOut(duration: 0.3)) { weeklyCardExpanded.toggle() }
+                BrandHaptics.lightTap()
+                withAnimation(Motion.spring) { weeklyCardExpanded.toggle() }
             } label: {
                 HStack(spacing: 12) {
                     Text("\u{1F4CA}")
@@ -971,10 +975,10 @@ struct PlanView: View {
             }
         }
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 }
@@ -1091,7 +1095,7 @@ struct DayRowView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.08))
+                            .fill(BrandColors.surface2)
                         RoundedRectangle(cornerRadius: 3)
                             .fill(statusColor)
                             .frame(width: max(geo.size.width * calorieProgress, 2))
@@ -1115,9 +1119,9 @@ struct DayRowView: View {
         }
         .padding(14)
         .background(isToday ? Theme.accent.opacity(0.12) : Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.l)
                 .stroke(
                     isToday ? Theme.accent.opacity(0.5) : Color.white.opacity(0.06),
                     lineWidth: isToday ? 1.5 : 1
@@ -1314,15 +1318,29 @@ struct DayDetailSheetView: View {
 
             ZStack {
                 Circle()
-                    .stroke(Theme.trackBackground, lineWidth: 6)
+                    .stroke(BrandColors.surface2, lineWidth: 6)
                 Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .trim(from: 0, to: min(progress, 1.0))
+                    .stroke(
+                        AngularGradient(
+                            gradient: Gradient(colors: [
+                                ringColor.opacity(0.85),
+                                ringColor,
+                                ringColor.opacity(0.95)
+                            ]),
+                            center: .center,
+                            startAngle: .degrees(-90),
+                            endAngle: .degrees(270)
+                        ),
+                        style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                    )
                     .rotationEffect(.degrees(-90))
+                    .animation(Motion.spring, value: progress)
                 VStack(spacing: 0) {
                     Text(value)
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
+                        .contentTransition(.numericText())
                     Text(subtitle)
                         .font(.system(size: 8, weight: .medium, design: .rounded))
                         .foregroundStyle(Theme.textTertiary)
@@ -1333,10 +1351,10 @@ struct DayDetailSheetView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -1361,10 +1379,10 @@ struct DayDetailSheetView: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.l))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.l)
+                    .stroke(BrandColors.border, lineWidth: 0.5)
             )
         } else if dayEntries.isEmpty {
             Text(L.noFoodLog.localized)
@@ -1373,7 +1391,7 @@ struct DayDetailSheetView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Theme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 Text(L.foods.localized)
@@ -1418,10 +1436,10 @@ struct DayDetailSheetView: View {
             }
             .padding()
             .background(Theme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.l))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.l)
+                    .stroke(BrandColors.border, lineWidth: 0.5)
             )
         }
     }
@@ -1489,10 +1507,10 @@ struct DayDetailSheetView: View {
         }
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -1584,10 +1602,10 @@ struct DayDetailSheetView: View {
         }
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -1637,10 +1655,10 @@ struct DayDetailSheetView: View {
         }
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 

@@ -34,61 +34,56 @@ struct ProteinTrackingCard: View {
             // Header
             HStack {
                 Image(systemName: "bolt.circle.fill")
-                    .foregroundColor(Theme.protein)
+                    .foregroundStyle(Theme.protein)
                     .font(.system(size: 16))
                     .frame(width: 30, height: 30)
                     .background(Theme.protein.opacity(0.15))
-                    .cornerRadius(8)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.s))
                 Text(L.proteinGoalTitle.localized)
                     .font(.subheadline.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 Spacer()
                 Text("\(Int(proteinTarget))g " +
                      L.targetLabel.localized)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandColors.textMuted)
             }
 
             // Stats row
             HStack(spacing: 0) {
-                // Days on target
                 VStack(spacing: 4) {
                     Text("\(daysOnTarget)")
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(Theme.protein)
+                        .foregroundStyle(Theme.protein)
                     Text(L.daysOnTarget.localized)
                         .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(BrandColors.textMuted)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
 
                 Divider().frame(height: 50).opacity(0.2)
 
-                // Average protein
                 VStack(spacing: 4) {
                     Text("\(Int(avgProtein))g")
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(
-                            avgProtein >= proteinTarget ? .green : .orange)
+                        .foregroundStyle(avgProtein >= proteinTarget ? Theme.green : Theme.warning)
                     Text(L.dailyAvg.localized)
                         .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(BrandColors.textMuted)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
 
                 Divider().frame(height: 50).opacity(0.2)
 
-                // On target percentage
                 VStack(spacing: 4) {
                     Text("\(onTargetPct)%")
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(
-                            onTargetPct >= 70 ? .green : .orange)
+                        .foregroundStyle(onTargetPct >= 70 ? Theme.green : Theme.warning)
                     Text(L.hitRate.localized)
                         .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(BrandColors.textMuted)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -98,25 +93,23 @@ struct ProteinTrackingCard: View {
             Divider().opacity(0.2)
             Text(L.dailyBreakdown.localized)
                 .font(.caption.bold())
-                .foregroundColor(.secondary)
+                .foregroundStyle(BrandColors.textDim)
                 .textCase(.uppercase)
                 .tracking(0.5)
 
             ForEach(stats.filter { $0.hasData }.suffix(7),
                     id: \.date) { stat in
                 HStack(spacing: 8) {
-                    // Day label
                     Text(shortDayLabel(stat.date))
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(BrandColors.textMuted)
                         .frame(width: 30, alignment: .leading)
 
-                    // Progress bar
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.white.opacity(0.06))
-                            RoundedRectangle(cornerRadius: 3)
+                            RoundedRectangle(cornerRadius: Radius.xs)
+                                .fill(BrandColors.surface2)
+                            RoundedRectangle(cornerRadius: Radius.xs)
                                 .fill(stat.protein >= proteinTarget * 0.9
                                       ? Theme.protein : Theme.warning)
                                 .frame(width: min(
@@ -127,32 +120,25 @@ struct ProteinTrackingCard: View {
                     }
                     .frame(height: 5)
 
-                    // Value
                     Text("\(Int(stat.protein))g")
                         .font(.caption2.bold())
-                        .foregroundColor(
-                            stat.protein >= proteinTarget * 0.9
-                                ? .white : .orange)
+                        .foregroundStyle(stat.protein >= proteinTarget * 0.9 ? .white : Theme.warning)
                         .frame(width: 38, alignment: .trailing)
 
-                    // Check
-                    Image(systemName:
-                            stat.protein >= proteinTarget * 0.9
+                    Image(systemName: stat.protein >= proteinTarget * 0.9
                           ? "checkmark.circle.fill"
                           : "xmark.circle.fill")
                         .font(.caption2)
-                        .foregroundColor(
-                            stat.protein >= proteinTarget * 0.9
-                                ? .green : .red.opacity(0.6))
+                        .foregroundStyle(stat.protein >= proteinTarget * 0.9 ? Theme.green : Theme.danger.opacity(0.6))
                 }
             }
         }
         .padding(14)
         .background(Theme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 

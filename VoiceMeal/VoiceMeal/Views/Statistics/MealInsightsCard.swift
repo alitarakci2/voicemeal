@@ -60,23 +60,22 @@ struct MealInsightsCard: View {
             // Header
             HStack {
                 Image(systemName: "fork.knife.circle.fill")
-                    .foregroundColor(Theme.accent)
+                    .foregroundStyle(Theme.accent)
                     .font(.system(size: 16))
                     .frame(width: 30, height: 30)
-                    .background(
-                        Theme.accent.opacity(0.15))
-                    .cornerRadius(8)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.s))
 
                 Text(L.mealInsights.localized)
                     .font(.subheadline.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
 
                 Spacer()
 
                 Text("\(entries.count) " +
                      L.entriesLabel.localized)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandColors.textMuted)
             }
 
             Divider().opacity(0.2)
@@ -96,7 +95,7 @@ struct MealInsightsCard: View {
                 QuickStatCell(
                     value: "\(avgCaloriesPerMeal)",
                     label: L.kcalPerMeal.localized,
-                    color: .orange
+                    color: Theme.warning
                 )
 
                 Divider()
@@ -106,7 +105,7 @@ struct MealInsightsCard: View {
                 QuickStatCell(
                     value: "\(topFoods.first?.count ?? 0)",
                     label: L.mostEatenCount.localized,
-                    color: .green
+                    color: Theme.green
                 )
             }
 
@@ -116,7 +115,7 @@ struct MealInsightsCard: View {
                 // Top foods
                 Text(L.mostEatenTitle.localized)
                     .font(.caption.bold())
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandColors.textDim)
                     .textCase(.uppercase)
                     .tracking(0.5)
 
@@ -129,12 +128,12 @@ struct MealInsightsCard: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(food.name)
                                 .font(.subheadline)
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .lineLimit(1)
                             Text("\(food.avgCalories) kcal " +
                                  L.avgShort.localized)
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(BrandColors.textMuted)
                         }
 
                         Spacer()
@@ -142,12 +141,11 @@ struct MealInsightsCard: View {
                         // Frequency badge
                         Text("\(food.count)x")
                             .font(.caption.bold())
-                            .foregroundColor(Theme.accent)
+                            .foregroundStyle(Theme.accent)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(
-                                Theme.accent.opacity(0.15))
-                            .cornerRadius(8)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(Capsule())
                     }
                 }
             }
@@ -158,7 +156,7 @@ struct MealInsightsCard: View {
             Text(appLanguage == "en"
                  ? "Meal Timing" : "Öğün Saatleri")
                 .font(.caption.bold())
-                .foregroundColor(.secondary)
+                .foregroundStyle(BrandColors.textDim)
                 .textCase(.uppercase)
                 .tracking(0.5)
 
@@ -168,7 +166,7 @@ struct MealInsightsCard: View {
             VStack(spacing: 6) {
                 TimingRow(
                     icon: "sunrise.fill",
-                    iconColor: .yellow,
+                    iconColor: Theme.warning,
                     label: appLanguage == "en"
                         ? "Morning (6-12)" : "Sabah (6-12)",
                     count: timing.morning,
@@ -176,7 +174,7 @@ struct MealInsightsCard: View {
                 )
                 TimingRow(
                     icon: "sun.max.fill",
-                    iconColor: .orange,
+                    iconColor: Theme.indioOrange,
                     label: appLanguage == "en"
                         ? "Afternoon (12-17)" : "Öğleden Sonra (12-17)",
                     count: timing.afternoon,
@@ -184,7 +182,7 @@ struct MealInsightsCard: View {
                 )
                 TimingRow(
                     icon: "sunset.fill",
-                    iconColor: .red,
+                    iconColor: Theme.danger,
                     label: appLanguage == "en"
                         ? "Evening (17-21)" : "Akşam (17-21)",
                     count: timing.evening,
@@ -202,10 +200,10 @@ struct MealInsightsCard: View {
         }
         .padding(14)
         .background(Theme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 
@@ -239,10 +237,10 @@ struct QuickStatCell: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(color)
+                .foregroundStyle(color)
             Text(label)
                 .font(.system(size: 10))
-                .foregroundColor(.secondary)
+                .foregroundStyle(BrandColors.textMuted)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -263,20 +261,20 @@ struct TimingRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundColor(iconColor)
+                .foregroundStyle(iconColor)
                 .font(.system(size: 12))
                 .frame(width: 20)
 
             Text(label)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(BrandColors.textMuted)
                 .frame(width: 130, alignment: .leading)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white.opacity(0.06))
-                    RoundedRectangle(cornerRadius: 3)
+                    RoundedRectangle(cornerRadius: Radius.xs)
+                        .fill(BrandColors.surface2)
+                    RoundedRectangle(cornerRadius: Radius.xs)
                         .fill(iconColor)
                         .frame(width: geo.size.width * progress)
                 }
@@ -285,7 +283,7 @@ struct TimingRow: View {
 
             Text("\(count)")
                 .font(.caption.bold())
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 24, alignment: .trailing)
         }
     }

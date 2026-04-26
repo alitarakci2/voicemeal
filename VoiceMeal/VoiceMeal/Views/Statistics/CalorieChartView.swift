@@ -42,8 +42,8 @@ struct CalorieChartView: View {
 
                             if stat.targetCalories > 0 {
                                 RuleMark(y: .value("Hedef", stat.targetCalories))
-                                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                                    .foregroundStyle(Theme.textTertiary)
+                                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                                    .foregroundStyle(Theme.indioOrange)
                             }
                         }
                     }
@@ -68,10 +68,10 @@ struct CalorieChartView: View {
         }
         .padding()
         .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(BrandColors.border, lineWidth: 0.5)
         )
     }
 }
