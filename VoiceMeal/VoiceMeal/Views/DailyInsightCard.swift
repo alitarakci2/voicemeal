@@ -47,10 +47,14 @@ struct DailyInsightCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("\u{1F9E0} \(L.dailyAssessment.localized)")
-                    .font(Theme.headlineFont)
-                    .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Theme.indioOrange)
+                    .symbolEffect(.pulse, options: .repeating, isActive: insightText != nil)
+                Text(L.dailyAssessment.localized)
+                    .font(BrandTypography.bodyMedium())
+                    .foregroundStyle(Theme.indioOrange)
                 Spacer()
             }
 
@@ -129,7 +133,12 @@ struct DailyInsightCard: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(Theme.indioOrange.opacity(0.30), lineWidth: 1)
+        )
         .task {
             loadCachedInsight()
             lastTimeOfDay = GroqService.currentTimeOfDay()

@@ -74,6 +74,7 @@ struct HomeView: View {
     @State var voiceScrollTrigger = false
     @State var pendingVoiceStart = false
     @State var recordingStartedAt: Date?
+    @State var isMicPressed = false
 
     @State var showCamera = false
     @State var capturedImage: UIImage?

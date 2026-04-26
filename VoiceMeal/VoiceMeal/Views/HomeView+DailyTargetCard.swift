@@ -279,21 +279,40 @@ extension HomeView {
             }
 
             ZStack {
+                // Track
                 Circle()
-                    .fill(ringColor.opacity(0.08))
-                    .frame(width: 105, height: 105)
-                    .blur(radius: 8)
+                    .stroke(BrandColors.surface2, lineWidth: 8)
 
+                // Progress with AngularGradient
                 Circle()
-                    .stroke(Theme.trackBackground, lineWidth: 7)
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .trim(from: 0, to: min(progress, 1.0))
+                    .stroke(
+                        AngularGradient(
+                            gradient: Gradient(colors: [
+                                ringColor.opacity(0.85),
+                                ringColor,
+                                ringColor.opacity(0.95)
+                            ]),
+                            center: .center,
+                            startAngle: .degrees(-90),
+                            endAngle: .degrees(270)
+                        ),
+                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                    )
                     .rotationEffect(.degrees(-90))
+                    .animation(Motion.spring, value: progress)
+
+                // Inner glow
+                Circle()
+                    .fill(ringColor.opacity(0.06))
+                    .blur(radius: 14)
+                    .frame(width: 72, height: 72)
+
                 VStack(spacing: 0) {
                     Text(value)
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
+                        .contentTransition(.numericText())
                     Text(subtitle)
                         .font(.system(size: 9, weight: .medium, design: .rounded))
                         .foregroundStyle(Theme.textTertiary)

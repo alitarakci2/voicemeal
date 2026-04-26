@@ -9,27 +9,33 @@ struct FoodEntryRowView: View {
     let entry: FoodEntry
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             // Emoji
             Text(foodEmoji(entry.name))
-                .font(.system(size: 20))
-                .frame(width: 32, height: 32)
-                .background(Color.white.opacity(0.06))
+                .font(.system(size: 18))
+                .frame(width: 34, height: 34)
+                .background(BrandColors.surface2)
                 .clipShape(Circle())
 
-            VStack(alignment: .leading, spacing: 4) {
-                // Top: name
-                Text(entry.name)
-                    .font(Theme.bodyFont)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Theme.textPrimary)
+            VStack(alignment: .leading, spacing: 3) {
+                // Name + time
+                HStack {
+                    Text(entry.name)
+                        .font(BrandTypography.bodyMedium())
+                        .foregroundStyle(BrandColors.text)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text(entry.date, style: .time)
+                        .font(BrandTypography.monoCaption())
+                        .foregroundStyle(BrandColors.textDim)
+                }
 
-                // Bottom: amount + macros ... calories
+                // Amount + macros + calories
                 HStack(spacing: 4) {
                     if !entry.amount.isEmpty {
                         Text(entry.amount)
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundStyle(Theme.textSecondary)
+                            .font(BrandTypography.monoMicro())
+                            .foregroundStyle(BrandColors.textMuted)
                     }
 
                     macroLabel("P", value: Int(entry.protein), color: Theme.blue)
@@ -38,13 +44,18 @@ struct FoodEntryRowView: View {
 
                     Spacer(minLength: 4)
 
-                    Text("\(entry.calories) kcal")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(Theme.textSecondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(entry.calories)")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(BrandColors.text)
+                        Text("kcal")
+                            .font(BrandTypography.monoMicro())
+                            .foregroundStyle(BrandColors.textDim)
+                    }
                 }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, Spacing.xs)
     }
 
     private func macroLabel(_ label: String, value: Int, color: Color) -> some View {

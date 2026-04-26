@@ -31,7 +31,12 @@ struct TDEEWarningBanner: View {
             }
         }
         .padding()
-        .themeCard()
+        .background(hasWorkout ? Theme.green.opacity(0.10) : Theme.warning.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.l))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.l)
+                .stroke(hasWorkout ? Theme.green.opacity(0.30) : Theme.warning.opacity(0.30), lineWidth: 1)
+        )
     }
 
     // MARK: - Scenario A: Workout scheduled

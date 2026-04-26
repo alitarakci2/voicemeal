@@ -18,57 +18,105 @@ extension HomeView {
             HStack {
                 Spacer()
 
-                ZStack(alignment: .topTrailing) {
-                    Button {
-                        handleMicTap()
-                    } label: {
-                        VStack(spacing: 10) {
-                            Image(systemName: "mic.circle.fill")
-                                .font(.system(size: 64))
-                                .foregroundStyle(speechService.isRecording ? Theme.red : Theme.accent)
-                                .padding(28)
-                                .background(
-                                    (speechService.isRecording ? Theme.red : Theme.accent).opacity(0.1)
+                VStack(spacing: 12) {
+                    ZStack {
+                        // Layer 1: Outer glow halo
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        (speechService.isRecording ? Theme.danger : Theme.accent).opacity(0.40),
+                                        (speechService.isRecording ? Theme.danger : Theme.accent).opacity(0.0)
+                                    ],
+                                    center: .center,
+                                    startRadius: 40,
+                                    endRadius: 100
                                 )
-                                .clipShape(Circle())
-                                .symbolEffect(.pulse, options: .repeating, isActive: speechService.isRecording)
+                            )
+                            .frame(width: 200, height: 200)
+                            .blur(radius: 14)
+                            .opacity(speechService.isRecording ? 1.0 : 0.55)
+                            .animation(Motion.pulse, value: speechService.isRecording)
+                            .allowsHitTesting(false)
 
-                            Text(speechService.isRecording
-                                 ? "listening".localized
-                                 : "voice_record".localized)
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.white)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isAnalyzing)
-                    .sensoryFeedback(.impact, trigger: speechService.isRecording)
-
-                    if speechService.isRecording {
+                        // Layer 2 + 3: Button surface + icon
                         Button {
-                            speechService.cancelListening()
-                            originalSpeechText = ""
-                            errorMessage = nil
-                            showRetryButton = false
-                            let crumb = Breadcrumb()
-                            crumb.level = .info
-                            crumb.category = "voice.cancelled"
-                            crumb.message = "User cancelled recording"
-                            SentrySDK.addBreadcrumb(crumb)
-                            FeedbackService.shared.addLog("Voice recording cancelled by user")
-                            FeedbackService.shared.logVoiceEvent(icon: "❌", message: "User cancelled recording")
-                            FeedbackService.shared.endVoiceSession(reason: .cancelled)
+                            handleMicTap()
                         } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundStyle(.white, Theme.red)
-                                .shadow(radius: 3)
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: speechService.isRecording
+                                                ? [Theme.danger, Color(hex: "#CC2A20")]
+                                                : [Theme.accent, Theme.accentDim],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 120, height: 120)
+                                    .overlay(
+                                        Circle().stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    )
+                                    .shadow(
+                                        color: (speechService.isRecording ? Theme.danger : Theme.accent).opacity(0.45),
+                                        radius: 24, x: 0, y: 8
+                                    )
+
+                                Image(systemName: speechService.isRecording ? "stop.fill" : "mic.fill")
+                                    .font(.system(size: 44, weight: .medium))
+                                    .foregroundStyle(.white)
+                                    .symbolEffect(.pulse, options: .repeating, isActive: speechService.isRecording)
+                            }
                         }
                         .buttonStyle(.plain)
-                        .offset(x: 4, y: -4)
-                        .transition(.scale.combined(with: .opacity))
-                        .accessibilityLabel(L.cancel.localized)
+                        .disabled(isAnalyzing)
+                        .sensoryFeedback(.impact, trigger: speechService.isRecording)
+                        .scaleEffect(isMicPressed ? 0.96 : 1.0)
+                        .animation(Motion.snappy, value: isMicPressed)
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { _ in isMicPressed = true }
+                                .onEnded { _ in isMicPressed = false }
+                        )
+
+                        // Cancel button (top-right of the 200×200 frame)
+                        if speechService.isRecording {
+                            Button {
+                                BrandHaptics.warning()
+                                speechService.cancelListening()
+                                originalSpeechText = ""
+                                errorMessage = nil
+                                showRetryButton = false
+                                let crumb = Breadcrumb()
+                                crumb.level = .info
+                                crumb.category = "voice.cancelled"
+                                crumb.message = "User cancelled recording"
+                                SentrySDK.addBreadcrumb(crumb)
+                                FeedbackService.shared.addLog("Voice recording cancelled by user")
+                                FeedbackService.shared.logVoiceEvent(icon: "❌", message: "User cancelled recording")
+                                FeedbackService.shared.endVoiceSession(reason: .cancelled)
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(Spacing.s)
+                                    .background(Theme.danger)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                            .transition(.scale.combined(with: .opacity))
+                            .accessibilityLabel(L.cancel.localized)
+                        }
                     }
+                    .frame(width: 200, height: 200)
+
+                    Text(speechService.isRecording
+                         ? "listening".localized
+                         : "voice_record".localized)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
                 }
 
                 Spacer()
@@ -153,11 +201,11 @@ extension HomeView {
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
-                .background(Theme.warning.opacity(0.08))
-                .cornerRadius(14)
+                .background(BrandColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.l))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Theme.warning.opacity(0.2), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.l)
+                        .stroke(Theme.warning.opacity(0.30), lineWidth: 0.5)
                 )
                 .padding(.horizontal)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -348,8 +396,12 @@ extension HomeView {
             }
             .padding(16)
         }
-        .background(Theme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background(BrandColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.xl)
+                .stroke(BrandColors.border, lineWidth: 0.5)
+        )
     }
 
     // MARK: - Voice Actions
