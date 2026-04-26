@@ -86,8 +86,7 @@ struct StatisticsView: View {
 
     var body: some View {
         ZStack {
-            Theme.backgroundGradient
-                .ignoresSafeArea()
+            AtmosphericBackground()
 
             VStack(spacing: 0) {
                 // Sticky header

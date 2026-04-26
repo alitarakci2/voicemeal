@@ -8,18 +8,22 @@ enum Theme {
     static var cardBackground: Color   { BrandColors.surface }
     static var cardBorder: Color       { BrandColors.border }
 
-    // Accents — locked to VoiceMeal emerald
-    static var accent: Color           { BrandColors.vmEmerald }
-    static var accentLight: Color      { BrandColors.vmEmeraldSoft }
-    static var accentDim: Color        { BrandColors.vmEmeraldDim }
+    // Accents — INDIO ORANGE IS NOW PRIMARY
+    static var accent: Color           { BrandColors.indioOrange }
+    static var accentLight: Color      { BrandColors.indioOrangeSoft }
+    static var accentDim: Color        { BrandColors.indioOrangeDim }
 
-    // Indio brand orange (flame / streak / AI insight / attribution)
+    // Indio orange (kept under explicit name for brand-attribution moments — same value as accent)
     static var indioOrange: Color      { BrandColors.indioOrange }
     static var indioOrangeSoft: Color  { BrandColors.indioOrangeSoft }
 
-    // Background gradient — green-tinted dark for VoiceMeal
-    static var gradientTop: Color      { Color(hex: "#0A2218") }
-    static var gradientMid: Color      { Color(hex: "#061410") }
+    // Emerald — DEMOTED to success semantics only
+    static var success: Color          { BrandColors.vmEmerald }
+    static var successSoft: Color      { BrandColors.vmEmeraldSoft }
+
+    // Atmospheric background — black + warm orange undertone + purple touches
+    static var gradientTop: Color      { Color(hex: "#1A0A05") }
+    static var gradientMid: Color      { Color(hex: "#0F0612") }
     static var backgroundGradient: LinearGradient {
         LinearGradient(
             colors: [gradientTop, gradientMid, background],
@@ -28,34 +32,34 @@ enum Theme {
         )
     }
 
+    // Atmospheric purple — Indio brand family, used in gradient halos
+    static var atmospherePurple: Color { Color(hex: "#3D2552") }
+
     // Text
     static var textPrimary: Color      { BrandColors.text }
     static var textSecondary: Color    { BrandColors.textMuted }
     static var textTertiary: Color     { BrandColors.textDim }
 
-    // Semantic split from old Theme.orange
-    static var macroCarb: Color        { BrandColors.macroCarb }   // #FF9F0A — carb macro charts/bars/pills
-    static var warning: Color          { BrandColors.warning }     // #FFA533 — calorie warnings, alerts
+    // Semantic — macro colors preserved
+    static var macroCarb: Color        { BrandColors.macroCarb }
+    static var warning: Color          { BrandColors.warning }
+    static var danger: Color           { BrandColors.danger }
+    static var protein: Color          { BrandColors.macroProtein }
+    static var fat: Color              { BrandColors.macroFat }
+    static var trackBackground: Color  { BrandColors.trackBg }
 
-    // Other semantic — preserved
-    static var success: Color          { BrandColors.success }     // #34C759 — on-target, saved
-    static var danger: Color           { BrandColors.danger }      // #FF453A — recording, errors, over-limit
-    static var protein: Color          { BrandColors.macroProtein }// #0A84FF
-    static var fat: Color              { BrandColors.macroFat }    // #FF6B9D
-    static var trackBackground: Color  { BrandColors.trackBg }     // #2A2A38
-
-    // Aliases for backwards compatibility with existing call sites
-    static var green: Color            { BrandColors.success }
+    // Aliases — green now maps to vmEmerald (success semantics)
+    static var green: Color            { BrandColors.vmEmerald }
     static var blue: Color             { BrandColors.macroProtein }
     static var red: Color              { BrandColors.danger }
     static var fatColor: Color         { BrandColors.macroFat }
     static var trackBg: Color          { BrandColors.trackBg }
 
     // Gradients
-    static let greenGradient = LinearGradient(colors: [Color(hex: "#34C759"), Color(hex: "#30D158")], startPoint: .leading, endPoint: .trailing)
+    static let greenGradient = LinearGradient(colors: [Color(hex: "#1D9E75"), Color(hex: "#2EBC8E")], startPoint: .leading, endPoint: .trailing)
     static let orangeGradient = LinearGradient(colors: [Color(hex: "#FF9F0A"), Color(hex: "#FF6B2C")], startPoint: .leading, endPoint: .trailing)
     static var accentGradient: LinearGradient {
-        LinearGradient(colors: [BrandColors.vmEmerald, BrandColors.vmEmeraldSoft], startPoint: .leading, endPoint: .trailing)
+        LinearGradient(colors: [BrandColors.indioOrange, BrandColors.indioOrangeSoft], startPoint: .leading, endPoint: .trailing)
     }
     static let fireGradient = LinearGradient(colors: [Color(hex: "#FF453A"), Color(hex: "#FF9F0A")], startPoint: .topLeading, endPoint: .bottomTrailing)
 

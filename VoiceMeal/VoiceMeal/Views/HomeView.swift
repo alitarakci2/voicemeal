@@ -112,7 +112,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Theme.backgroundGradient.ignoresSafeArea()
+            AtmosphericBackground()
 
             VStack(spacing: 0) {
                 // STICKY HEADER BAR
