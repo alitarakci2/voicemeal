@@ -48,7 +48,7 @@ extension HomeView {
                         HStack(spacing: 12) {
                             MetricInfoCard(
                                 icon: "flame.fill",
-                                iconColor: Theme.orange,
+                                iconColor: Theme.indioOrange,
                                 label: "TDEE",
                                 value: "\(Int(goalEngine.tdee))",
                                 unit: "kcal",
@@ -151,8 +151,8 @@ extension HomeView {
     var tdeeSourceColor: Color {
         if goalEngine.isUsingExtrapolatedTDEE { return Theme.blue }
         if goalEngine.usingHealthKit { return Theme.green }
-        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable { return Theme.orange }
-        if goalEngine.healthKitBurn > 0 { return Theme.orange }
+        if healthKitService.dayFraction < 0.40 && healthKitService.isAvailable { return Theme.warning }
+        if goalEngine.healthKitBurn > 0 { return Theme.warning }
         return Theme.textSecondary
     }
 
@@ -192,7 +192,7 @@ extension HomeView {
     var confidenceColor: Color {
         let conf = goalEngine.tdeeConfidence.lowercased()
         if conf.contains("yüksek") || conf.contains("high") { return Theme.green }
-        if conf.contains("orta") || conf.contains("med") { return Theme.orange }
+        if conf.contains("orta") || conf.contains("med") { return Theme.warning }
         return Theme.red
     }
 
@@ -367,7 +367,7 @@ extension HomeView {
                 MacroTargetPill(
                     label: "P",
                     value: "\(goalEngine.proteinTarget)g",
-                    color: Color(hex: "5E9FFF")
+                    color: Theme.protein
                 )
                 MacroTargetPill(
                     label: "K",

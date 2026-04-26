@@ -22,7 +22,6 @@ struct NutritionReportSheet: View {
     let onRefresh: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var themeManager: ThemeManager
 
     @State private var shareURL: URL?
     @State private var showShare = false
@@ -68,7 +67,7 @@ struct NutritionReportSheet: View {
                         listSection(
                             title: isEN ? "Strengths" : "Güçlü Yanlar",
                             icon: "checkmark.seal.fill",
-                            iconColor: Color(hex: "2ECC71"),
+                            iconColor: Theme.success,
                             items: report.strengths
                         )
                     }
@@ -77,7 +76,7 @@ struct NutritionReportSheet: View {
                         listSection(
                             title: isEN ? "Areas to Improve" : "Gelişim Alanları",
                             icon: "target",
-                            iconColor: Color(hex: "F39C12"),
+                            iconColor: Theme.macroCarb,
                             items: report.improvements
                         )
                     }
@@ -106,7 +105,7 @@ struct NutritionReportSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(isEN ? "Close" : "Kapat") { dismiss() }
-                        .foregroundStyle(themeManager.current.accent)
+                        .foregroundStyle(Theme.accent)
                 }
             }
             .sheet(isPresented: $showShare) {
@@ -127,7 +126,7 @@ struct NutritionReportSheet: View {
                     .trim(from: 0, to: CGFloat(report.score) / 10.0)
                     .stroke(
                         AngularGradient(
-                            colors: [themeManager.current.accent, themeManager.current.accentLight, themeManager.current.accent],
+                            colors: [Theme.accent, Theme.accentLight, Theme.accent],
                             center: .center
                         ),
                         style: StrokeStyle(lineWidth: 8, lineCap: .round)
@@ -233,7 +232,7 @@ struct NutritionReportSheet: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundStyle(themeManager.current.accent)
+                    .foregroundStyle(Theme.accent)
                 Text(patternSectionTitle)
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
@@ -269,13 +268,13 @@ struct NutritionReportSheet: View {
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(Color(hex: "E74C3C"))
+                        .fill(Theme.danger)
                         .frame(width: geo.size.width * pP)
                     Rectangle()
-                        .fill(Color(hex: "F39C12"))
+                        .fill(Theme.macroCarb)
                         .frame(width: geo.size.width * pC)
                     Rectangle()
-                        .fill(Color(hex: "2ECC71"))
+                        .fill(Theme.success)
                         .frame(width: geo.size.width * pF)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -283,9 +282,9 @@ struct NutritionReportSheet: View {
             .frame(height: 14)
 
             HStack(spacing: 14) {
-                legend(color: Color(hex: "E74C3C"), label: isEN ? "Protein \(Int(avgProtein))g" : "Protein \(Int(avgProtein))g")
-                legend(color: Color(hex: "F39C12"), label: isEN ? "Carbs \(Int(avgCarbs))g" : "Karb. \(Int(avgCarbs))g")
-                legend(color: Color(hex: "2ECC71"), label: isEN ? "Fat \(Int(avgFat))g" : "Yağ \(Int(avgFat))g")
+                legend(color: Theme.danger, label: isEN ? "Protein \(Int(avgProtein))g" : "Protein \(Int(avgProtein))g")
+                legend(color: Theme.macroCarb, label: isEN ? "Carbs \(Int(avgCarbs))g" : "Karb. \(Int(avgCarbs))g")
+                legend(color: Theme.success, label: isEN ? "Fat \(Int(avgFat))g" : "Yağ \(Int(avgFat))g")
             }
         }
         .padding(14)
@@ -322,7 +321,7 @@ struct NutritionReportSheet: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(canRefresh ? themeManager.current.accent : Color.white.opacity(0.08))
+                .background(canRefresh ? Theme.accent : Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(!canRefresh || isRefreshing)
@@ -443,8 +442,7 @@ struct NutritionReportSheet: View {
             periodSubtitle: periodLabel,
             avgProtein: avgProtein,
             avgCarbs: avgCarbs,
-            avgFat: avgFat,
-            theme: themeManager.current
+            avgFat: avgFat
         )
         guard let image = ImageExporter.render(view, size: CGSize(width: 1080, height: 1920), scale: 1.0) else {
             return

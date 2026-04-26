@@ -69,7 +69,6 @@ struct HomeView: View {
     @State var problematicSessionToReport: VoiceSession?
     @State var showProblematicPrompt = false
     @State var showReportThanksToast = false
-    @EnvironmentObject var themeManager: ThemeManager
 
     @State var scrollToTopTrigger = false
     @State var voiceScrollTrigger = false
@@ -126,7 +125,7 @@ struct HomeView: View {
                     if goalEngine.profile != nil {
                         HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
-                                .foregroundStyle(Theme.orange)
+                                .foregroundStyle(Theme.indioOrange)
                                 .font(.caption)
                             Text("\(remainingCalories) kcal")
                                 .font(.caption.bold())
@@ -433,7 +432,6 @@ struct HomeView: View {
                 appLanguage: groqService.appLanguage,
                 voiceSession: session
             )
-            .environmentObject(themeManager)
         }
         .alert("delete_confirm".localized, isPresented: $showDeleteAlert) {
             Button(L.delete.localized, role: .destructive) {
@@ -621,7 +619,7 @@ struct HomeView: View {
             proteinEaten: eatenProtein,
             proteinTarget: Double(goalEngine.proteinTarget),
             lastMeals: Array(recentMeals),
-            theme: ThemeManager.shared.current.rawValue,
+            theme: "voicemeal",
             waterConsumed: isWaterTrackingEnabled ? todayWaterMl : 0,
             waterGoal: isWaterTrackingEnabled ? waterGoalService.dailyGoalMl : 0,
             lastUpdated: Date(),

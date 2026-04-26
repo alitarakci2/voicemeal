@@ -15,7 +15,6 @@ struct FeedbackSheet: View {
     @State private var isRecording = false
     @State private var lastTranscript = ""
     @StateObject private var speechService = SpeechService()
-    @EnvironmentObject var themeManager: ThemeManager
     var appLanguage: String
     /// When non-nil, the sheet becomes a voice-session report surface:
     /// shows a context banner and routes send through `sendVoiceReport`.
@@ -24,8 +23,7 @@ struct FeedbackSheet: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [themeManager.current.gradientTop,
-                         Color(hex: "0A0A1F")],
+                colors: [Theme.gradientTop, Color(hex: "#0A0A1F")],
                 startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
@@ -52,7 +50,7 @@ struct FeedbackSheet: View {
                     .buttonStyle(.plain)
                 }
                 .padding()
-                .background(themeManager.current.gradientTop.opacity(0.95))
+                .background(Theme.gradientTop.opacity(0.95))
                 .overlay(Divider().opacity(0.2), alignment: .bottom)
 
                 // SCROLLABLE CONTENT
@@ -93,7 +91,7 @@ struct FeedbackSheet: View {
                                         .frame(minHeight: 130)
                                         .padding(10)
                                         .padding(.trailing, 50)
-                                        .background(themeManager.current.cardBackground)
+                                        .background(Theme.cardBackground)
                                         .cornerRadius(12)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
@@ -115,7 +113,7 @@ struct FeedbackSheet: View {
                                             .font(.system(size: 30))
                                             .foregroundColor(isRecording
                                                 ? .red
-                                                : themeManager.current.accent)
+                                                : Theme.accent)
                                     }
                                     .buttonStyle(.plain)
                                     .padding(10)
@@ -143,7 +141,7 @@ struct FeedbackSheet: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "info.circle.fill")
-                                        .foregroundColor(themeManager.current.accent)
+                                        .foregroundColor(Theme.accent)
                                         .font(.caption)
                                     Text(appLanguage == "en"
                                         ? "Automatically included"
@@ -165,19 +163,19 @@ struct FeedbackSheet: View {
                                             text: Date().formatted(date: .abbreviated, time: .shortened))
                                 }
                                 .padding(10)
-                                .background(themeManager.current.cardBackground)
+                                .background(Theme.cardBackground)
                                 .cornerRadius(10)
                             }
 
                             if error {
                                 HStack {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(Theme.warning)
                                     Text(appLanguage == "en"
                                         ? "Could not send. Try again."
                                         : "Gönderilemedi. Tekrar dene.")
                                         .font(.caption)
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(Theme.warning)
                                 }
                             }
                         }
@@ -226,15 +224,15 @@ struct FeedbackSheet: View {
                         .padding(.vertical, 14)
                         .background(
                             isSending
-                                ? themeManager.current.accent.opacity(0.5)
-                                : themeManager.current.accent)
+                                ? Theme.accent.opacity(0.5)
+                                : Theme.accent)
                         .cornerRadius(14)
                     }
                     .buttonStyle(.plain)
                     .disabled(isSending)
                     .padding(.horizontal)
                     .padding(.vertical, 12)
-                    .background(themeManager.current.cardBackground.opacity(0.95))
+                    .background(Theme.cardBackground.opacity(0.95))
                 }
             }
         }
@@ -276,7 +274,7 @@ struct FeedbackSheet: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "waveform.circle.fill")
                 .font(.title2)
-                .foregroundColor(themeManager.current.accent)
+                .foregroundColor(Theme.accent)
             VStack(alignment: .leading, spacing: 4) {
                 Text(appLanguage == "en"
                      ? "Report last voice session"
@@ -298,10 +296,10 @@ struct FeedbackSheet: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(themeManager.current.accent.opacity(0.12))
+        .background(Theme.accent.opacity(0.12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(themeManager.current.accent.opacity(0.3), lineWidth: 1)
+                .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }

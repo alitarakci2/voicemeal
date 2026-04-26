@@ -94,7 +94,7 @@ extension HomeView {
                     HStack(spacing: 6) {
                         Spacer()
                         MacroTotalPill("P", value: Int(eatenProtein), color: Theme.blue)
-                        MacroTotalPill("K", value: Int(eatenCarbs), color: Theme.orange)
+                        MacroTotalPill("K", value: Int(eatenCarbs), color: Theme.macroCarb)
                         MacroTotalPill("Y", value: Int(eatenFat), color: Theme.fatColor)
                     }
                     .padding(.horizontal)
@@ -108,7 +108,7 @@ extension HomeView {
                     Text("which_entry_correct".localized)
                         .font(Theme.bodyFont)
                         .fontWeight(.medium)
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.warning)
                     ForEach(entries, id: \.id) { entry in
                         Button {
                             entryToEdit = entry
@@ -124,7 +124,7 @@ extension HomeView {
                     }
                 }
                 .padding()
-                .background(Theme.orange.opacity(0.1))
+                .background(Theme.warning.opacity(0.1))
                 .themeCard()
             }
         }

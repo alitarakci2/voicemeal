@@ -9,7 +9,6 @@ import SwiftUI
 
 struct PlanView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var themeManager: ThemeManager
     @Query(sort: \FoodEntry.date, order: .reverse) private var allEntries: [FoodEntry]
     @Query private var profiles: [UserProfile]
     @Query private var allSnapshots: [DailySnapshot]
@@ -109,7 +108,7 @@ struct PlanView: View {
         let kind = CalorieGapKind.from(signedTargetDeficit: target)
         switch CalorieGapCopy.colorCue(actual: actual, target: target, kind: kind) {
         case .good: return Theme.green
-        case .warn: return Theme.orange
+        case .warn: return Theme.warning
         case .bad:  return Theme.red
         }
     }
@@ -179,7 +178,7 @@ struct PlanView: View {
     private var trendColor: Color {
         let change = weeklyEstimatedChangeKg
         if change < -0.05 { return Theme.green }
-        if change > 0.05 { return Theme.orange }
+        if change > 0.05 { return Theme.warning }
         return Theme.textSecondary
     }
 
@@ -384,7 +383,6 @@ struct PlanView: View {
         }
         .sheet(item: $selectedPlan) { plan in
             DayDetailSheetView(plan: plan)
-                .environmentObject(themeManager)
         }
         .overlay(alignment: .bottom) {
             if showSavedToast {
@@ -487,7 +485,7 @@ struct PlanView: View {
                         } else if newGoalWeeklyChange > 0.75 {
                             Label("aggressive_goal".localized, systemImage: "exclamationmark.triangle.fill")
                                 .font(Theme.captionFont)
-                                .foregroundStyle(Theme.orange)
+                                .foregroundStyle(Theme.warning)
                         }
                         if newGoalWeeklyChange < -1.0 {
                             Label(L.weightGainTooFast.localized, systemImage: "light.beacon.max.fill")
@@ -496,12 +494,12 @@ struct PlanView: View {
                         } else if newGoalWeeklyChange < -0.5 {
                             Label(L.weightGainFast.localized, systemImage: "exclamationmark.triangle.fill")
                                 .font(Theme.captionFont)
-                                .foregroundStyle(Theme.orange)
+                                .foregroundStyle(Theme.warning)
                         }
                         if isNewGoalDeficitCapped {
                             Label(L.deficitCapped.localized, systemImage: "exclamationmark.triangle.fill")
                                 .font(Theme.captionFont)
-                                .foregroundStyle(Theme.orange)
+                                .foregroundStyle(Theme.warning)
                         }
                     }
                 }
@@ -596,7 +594,7 @@ struct PlanView: View {
                     } else if weeklyChange > 0.75 {
                         Label("aggressive_goal".localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
+                            .foregroundStyle(Theme.warning)
                     }
                     if weeklyChange < -1.0 {
                         Label(L.weightGainTooFast.localized, systemImage: "light.beacon.max.fill")
@@ -605,12 +603,12 @@ struct PlanView: View {
                     } else if weeklyChange < -0.5 {
                         Label(L.weightGainFast.localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
+                            .foregroundStyle(Theme.warning)
                     }
                     if isDeficitCapped {
                         Label(L.deficitCapped.localized, systemImage: "exclamationmark.triangle.fill")
                             .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
+                            .foregroundStyle(Theme.warning)
                     }
                 }
 
@@ -950,7 +948,7 @@ struct PlanView: View {
                             switch profileGapKind {
                             case .deficit:  return weeklyAvgDeficit > 0 ? Theme.green : Theme.red
                             case .surplus:  return weeklyAvgDeficit < 0 ? Theme.green : Theme.red
-                            case .maintain: return abs(weeklyAvgDeficit) <= 150 ? Theme.green : Theme.orange
+                            case .maintain: return abs(weeklyAvgDeficit) <= 150 ? Theme.green : Theme.warning
                             case .observe:  return Theme.textPrimary
                             }
                         }())
@@ -1001,7 +999,7 @@ struct DayRowView: View {
         switch plan.status {
         case .completed: return Theme.green
         case .exceeded: return Theme.red
-        case .underate: return Theme.orange
+        case .underate: return Theme.warning
         case .missed: return Theme.textTertiary
         case .today: return Theme.accent
         case .planned: return Theme.textTertiary
@@ -1053,7 +1051,7 @@ struct DayRowView: View {
         let actual = plan.tdee - plan.consumedCalories
         switch CalorieGapCopy.colorCue(actual: actual, target: planTargetDeficit, kind: planGapKind) {
         case .good: return Theme.green
-        case .warn: return Theme.orange
+        case .warn: return Theme.warning
         case .bad:  return Theme.red
         }
     }
@@ -1246,7 +1244,7 @@ struct DayDetailSheetView: View {
         case .underate:
             Label("behind_deficit_status".localized, systemImage: "exclamationmark.triangle.fill")
                 .font(Theme.bodyFont)
-                .foregroundStyle(Theme.orange)
+                .foregroundStyle(Theme.warning)
         case .missed:
             Label("no_log_status".localized, systemImage: "xmark.circle.fill")
                 .font(Theme.bodyFont)
@@ -1282,7 +1280,7 @@ struct DayDetailSheetView: View {
         let gapRingColor: Color = {
             switch CalorieGapCopy.colorCue(actual: actualDeficit, target: targetDeficit, kind: kind) {
             case .good: return Theme.green
-            case .warn: return Theme.orange
+            case .warn: return Theme.warning
             case .bad:  return Theme.red
             }
         }()
@@ -1356,7 +1354,7 @@ struct DayDetailSheetView: View {
                     .foregroundStyle(Theme.textSecondary)
                 HStack(spacing: 6) {
                     MacroTotalPill("P", value: plan.targetProtein, color: Theme.blue)
-                    MacroTotalPill("K", value: plan.targetCarbs, color: Theme.orange)
+                    MacroTotalPill("K", value: plan.targetCarbs, color: Theme.macroCarb)
                     MacroTotalPill("Y", value: plan.targetFat, color: Theme.fatColor)
                 }
             }
@@ -1414,7 +1412,7 @@ struct DayDetailSheetView: View {
                 HStack(spacing: 6) {
                     Spacer()
                     MacroTotalPill("P", value: Int(totalP), color: Theme.blue)
-                    MacroTotalPill("K", value: Int(totalC), color: Theme.orange)
+                    MacroTotalPill("K", value: Int(totalC), color: Theme.macroCarb)
                     MacroTotalPill("Y", value: Int(totalF), color: Theme.fatColor)
                 }
             }
@@ -1433,7 +1431,7 @@ struct DayDetailSheetView: View {
     private var eatingTargetCard: some View {
         let diff = plan.consumedCalories - plan.targetCalories
         let progress = plan.targetCalories > 0 ? min(Double(plan.consumedCalories) / Double(plan.targetCalories), 1.0) : 0
-        let progressColor: Color = diff > 0 ? Theme.orange : Theme.green
+        let progressColor: Color = diff > 0 ? Theme.warning : Theme.green
 
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -1475,7 +1473,7 @@ struct DayDetailSheetView: View {
                     Label(String(format: "exceeded_by".localized, diff), systemImage: "exclamationmark.triangle.fill")
                         .font(Theme.captionFont)
                         .fontWeight(.medium)
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.warning)
                 } else if diff == 0 {
                     Label("goal_reached_exact".localized, systemImage: "checkmark.circle.fill")
                         .font(Theme.captionFont)
@@ -1512,7 +1510,7 @@ struct DayDetailSheetView: View {
         let gapColor: Color
         switch CalorieGapCopy.colorCue(actual: actualDeficit, target: targetDeficit, kind: kind) {
         case .good: gapColor = Theme.green
-        case .warn: gapColor = Theme.orange
+        case .warn: gapColor = Theme.warning
         case .bad:  gapColor = Theme.red
         }
 
@@ -1634,7 +1632,7 @@ struct DayDetailSheetView: View {
     private var macroSection: some View {
         VStack(spacing: 8) {
             detailMacroRow(label: "pro_short".localized, value: Double(plan.consumedProtein), target: Double(plan.targetProtein), color: Theme.blue)
-            detailMacroRow(label: "carb_short".localized, value: Double(plan.consumedCarbs), target: Double(plan.targetCarbs), color: Theme.orange)
+            detailMacroRow(label: "carb_short".localized, value: Double(plan.consumedCarbs), target: Double(plan.targetCarbs), color: Theme.macroCarb)
             detailMacroRow(label: "fat_short".localized, value: Double(plan.consumedFat), target: Double(plan.targetFat), color: Theme.fatColor)
         }
         .padding()

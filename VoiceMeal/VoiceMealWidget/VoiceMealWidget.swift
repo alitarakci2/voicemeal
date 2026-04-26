@@ -119,8 +119,8 @@ private struct WidgetTheme {
     }
 }
 
-private let surplusColor = Color(red: 0.953, green: 0.612, blue: 0.071)  // F39C12
-private let maintainColor = Color(red: 0.180, green: 0.800, blue: 0.443) // 2ECC71
+private let surplusColor = Color(red: 1.000, green: 0.647, blue: 0.200)  // FFA533
+private let maintainColor = Color(red: 0.204, green: 0.780, blue: 0.349) // 34C759
 
 private func modeColor(_ mode: WidgetGapMode, theme: WidgetTheme) -> Color {
     switch mode {

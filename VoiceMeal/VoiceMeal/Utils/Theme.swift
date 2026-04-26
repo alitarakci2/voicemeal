@@ -1,77 +1,71 @@
-//
-//  Theme.swift
-//  VoiceMeal
-//
-
 import SwiftUI
-
-// MARK: - Color Extension
-
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 6:
-            (a, r, g, b) = (255, (int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
-        case 8:
-            (a, r, g, b) = ((int >> 24) & 0xFF, (int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
 
 // MARK: - Theme Colors
 
 enum Theme {
-    private static var current: AppTheme { ThemeManager.shared.current }
+    // Surface
+    static var background: Color       { BrandColors.black }
+    static var cardBackground: Color   { BrandColors.surface }
+    static var cardBorder: Color       { BrandColors.border }
 
-    // Dynamic theme colors — read from active AppTheme
-    static var background: Color { Color(hex: "0A0A0F") }
-    static var cardBackground: Color { current.cardBackground }
-    static var cardBorder: Color { current.cardBorder }
-    static var accent: Color { current.accent }
-    static var gradientTop: Color { current.gradientTop }
-    static var backgroundGradient: LinearGradient { current.backgroundGradient }
+    // Accents — locked to VoiceMeal emerald
+    static var accent: Color           { BrandColors.vmEmerald }
+    static var accentLight: Color      { BrandColors.vmEmeraldSoft }
+    static var accentDim: Color        { BrandColors.vmEmeraldDim }
 
-    // Fixed colors — same across all themes
-    static let green = Color(hex: "34C759")
-    static let orange = Color(hex: "FF9F0A")
-    static let red = Color(hex: "FF453A")
-    static let blue = Color(hex: "0A84FF")
-    static let fatColor = Color(hex: "FF6B9D")
-    static let textPrimary = Color.white
-    static let textSecondary = Color(hex: "8E8EA0")
-    static let textTertiary = Color(hex: "48485A")
+    // Indio brand orange (flame / streak / AI insight / attribution)
+    static var indioOrange: Color      { BrandColors.indioOrange }
+    static var indioOrangeSoft: Color  { BrandColors.indioOrangeSoft }
 
-    // Progress bar track
-    static let trackBackground = Color(hex: "2A2A38")
+    // Background gradient — green-tinted dark for VoiceMeal
+    static var gradientTop: Color      { Color(hex: "#0A2218") }
+    static var gradientMid: Color      { Color(hex: "#061410") }
+    static var backgroundGradient: LinearGradient {
+        LinearGradient(
+            colors: [gradientTop, gradientMid, background],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    // Text
+    static var textPrimary: Color      { BrandColors.text }
+    static var textSecondary: Color    { BrandColors.textMuted }
+    static var textTertiary: Color     { BrandColors.textDim }
+
+    // Semantic split from old Theme.orange
+    static var macroCarb: Color        { BrandColors.macroCarb }   // #FF9F0A — carb macro charts/bars/pills
+    static var warning: Color          { BrandColors.warning }     // #FFA533 — calorie warnings, alerts
+
+    // Other semantic — preserved
+    static var success: Color          { BrandColors.success }     // #34C759 — on-target, saved
+    static var danger: Color           { BrandColors.danger }      // #FF453A — recording, errors, over-limit
+    static var protein: Color          { BrandColors.macroProtein }// #0A84FF
+    static var fat: Color              { BrandColors.macroFat }    // #FF6B9D
+    static var trackBackground: Color  { BrandColors.trackBg }     // #2A2A38
+
+    // Aliases for backwards compatibility with existing call sites
+    static var green: Color            { BrandColors.success }
+    static var blue: Color             { BrandColors.macroProtein }
+    static var red: Color              { BrandColors.danger }
+    static var fatColor: Color         { BrandColors.macroFat }
+    static var trackBg: Color          { BrandColors.trackBg }
 
     // Gradients
-    static let greenGradient = LinearGradient(colors: [Color(hex: "34C759"), Color(hex: "30D158")], startPoint: .leading, endPoint: .trailing)
-    static let orangeGradient = LinearGradient(colors: [Color(hex: "FF9F0A"), Color(hex: "FF6B2C")], startPoint: .leading, endPoint: .trailing)
+    static let greenGradient = LinearGradient(colors: [Color(hex: "#34C759"), Color(hex: "#30D158")], startPoint: .leading, endPoint: .trailing)
+    static let orangeGradient = LinearGradient(colors: [Color(hex: "#FF9F0A"), Color(hex: "#FF6B2C")], startPoint: .leading, endPoint: .trailing)
     static var accentGradient: LinearGradient {
-        LinearGradient(colors: [current.accent, current.accentLight], startPoint: .leading, endPoint: .trailing)
+        LinearGradient(colors: [BrandColors.vmEmerald, BrandColors.vmEmeraldSoft], startPoint: .leading, endPoint: .trailing)
     }
-    static let fireGradient = LinearGradient(colors: [Color(hex: "FF453A"), Color(hex: "FF9F0A")], startPoint: .topLeading, endPoint: .bottomTrailing)
+    static let fireGradient = LinearGradient(colors: [Color(hex: "#FF453A"), Color(hex: "#FF9F0A")], startPoint: .topLeading, endPoint: .bottomTrailing)
 
-    // Typography
+    // Typography — keep existing API for backwards compat
     static let largeTitleFont = Font.system(size: 34, weight: .bold)
-    static let titleFont = Font.system(size: 22, weight: .bold)
-    static let headlineFont = Font.system(size: 17, weight: .semibold)
-    static let bodyFont = Font.system(size: 15, weight: .regular)
-    static let captionFont = Font.system(size: 13, weight: .regular)
-    static let microFont = Font.system(size: 11, weight: .medium)
+    static let titleFont      = Font.system(size: 22, weight: .bold)
+    static let headlineFont   = Font.system(size: 17, weight: .semibold)
+    static let bodyFont       = Font.system(size: 15, weight: .regular)
+    static let captionFont    = Font.system(size: 13, weight: .regular)
+    static let microFont      = Font.system(size: 11, weight: .medium)
 }
 
 // MARK: - Card Modifier

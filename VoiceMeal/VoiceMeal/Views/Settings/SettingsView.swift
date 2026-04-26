@@ -13,7 +13,6 @@ extension Notification.Name {
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var themeManager: ThemeManager
     @Environment(GroqService.self) private var groqService
     @Query private var profiles: [UserProfile]
 
@@ -119,8 +118,7 @@ struct SettingsView: View {
                             // Section: Language
                             languageSection
 
-                            // Section: App Theme
-                            appThemeSection
+
 
                             // Section: Tooltips
                             tooltipSection
@@ -159,7 +157,7 @@ struct SettingsView: View {
                     .fontWeight(.medium)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(themeManager.current.accent)
+                    .background(Theme.accent)
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -371,7 +369,7 @@ struct SettingsView: View {
     private var foodProfileSection: some View {
         settingsCard {
             VStack(alignment: .leading, spacing: 12) {
-                sectionHeader(L.foodProfile.localized, icon: "fork.knife", iconColor: Theme.orange)
+                sectionHeader(L.foodProfile.localized, icon: "fork.knife", iconColor: Theme.warning)
 
                 foodHabitRow(
                     label: L.cookingLabel.localized,
@@ -502,7 +500,7 @@ struct SettingsView: View {
                                     #selector(UIResponder.resignFirstResponder),
                                     to: nil, from: nil, for: nil)
                             }
-                            .foregroundColor(themeManager.current.accent)
+                            .foregroundColor(Theme.accent)
                             .fontWeight(.semibold)
                         }
                     }
@@ -519,12 +517,12 @@ struct SettingsView: View {
     private var notificationsSection: some View {
         settingsCard {
             VStack(alignment: .leading, spacing: 12) {
-                sectionHeader(L.notifications.localized, icon: "bell.fill", iconColor: Theme.orange)
+                sectionHeader(L.notifications.localized, icon: "bell.fill", iconColor: Theme.warning)
 
                 Toggle(isOn: $weightReminderEnabled) {
                     HStack(spacing: 8) {
                         Image(systemName: "scalemass.fill")
-                            .foregroundStyle(Theme.orange)
+                            .foregroundStyle(Theme.warning)
                             .font(.system(size: 14))
                         Text("weight_reminder_enabled".localized)
                             .font(.subheadline)
@@ -652,45 +650,6 @@ struct SettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 11))
     }
 
-    // MARK: - App Theme Section
-
-    private var appThemeSection: some View {
-        settingsCard {
-            VStack(alignment: .leading, spacing: 12) {
-                sectionHeader("app_theme".localized, icon: "paintpalette.fill", iconColor: Theme.accent)
-
-                ForEach(AppTheme.allCases, id: \.self) { theme in
-                    Button {
-                        themeManager.apply(theme)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(theme.accent)
-                                .frame(width: 20, height: 20)
-                            Text(isEN ? theme.displayNameEn : theme.displayName)
-                                .font(Theme.bodyFont)
-                                .foregroundStyle(.white)
-                            Spacer()
-                            if themeManager.current == theme {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(theme.accent)
-                                    .font(.system(size: 22))
-                            }
-                        }
-                        .padding(12)
-                        .background(
-                            themeManager.current == theme
-                                ? theme.accent.opacity(0.1)
-                                : Color.white.opacity(0.04)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
     // MARK: - Debug Section
 
     #if DEBUG
@@ -749,7 +708,7 @@ struct SettingsView: View {
                     } label: {
                         Image(systemName: "doc.on.doc")
                             .font(.caption)
-                            .foregroundColor(themeManager.current.accent)
+                            .foregroundColor(Theme.accent)
                     }
                     .buttonStyle(.plain)
                 }
@@ -992,7 +951,7 @@ struct SettingsView: View {
         NotificationService.shared.reschedule(profile: p)
         NotificationCenter.default.post(name: .profileUpdated, object: nil)
 
-        FeedbackService.shared.addLog("Settings saved: theme=\(themeManager.current.rawValue) lang=\(selectedLanguage)")
+        FeedbackService.shared.addLog("Settings saved: theme=voicemeal lang=\(selectedLanguage)")
 
         showSavedToast = true
         Task {

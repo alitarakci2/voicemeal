@@ -68,7 +68,7 @@ struct TDEEWarningBanner: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("🌙 \("banner_no_workout_title".localized)")
                 .font(Theme.headlineFont)
-                .foregroundStyle(Theme.orange)
+                .foregroundStyle(Theme.warning)
 
             Text(String(format: noWorkoutBodyKey.localized, updatedGoal))
                 .font(Theme.captionFont)

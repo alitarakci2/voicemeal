@@ -8,7 +8,6 @@ import SwiftUI
 struct BestDayCard: View {
     let stats: [DayStat]
     let gapKind: CalorieGapKind
-    @EnvironmentObject var themeManager: ThemeManager
     var appLanguage: String
 
     var bestDay: DayStat? {
@@ -46,7 +45,7 @@ struct BestDayCard: View {
     var bestDayValueColor: Color {
         switch gapKind {
         case .deficit:  return .orange
-        case .surplus:  return Color(hex: "5E9FFF")
+        case .surplus:  return Theme.protein
         case .maintain: return .green
         case .observe:  return .white
         }
@@ -107,7 +106,7 @@ struct BestDayCard: View {
                     title: L.longestStreak.localized,
                     value: "\(mostConsistentStreak) " + L.daysShort.localized,
                     subtitle: L.consecutiveDaysLogged.localized,
-                    valueColor: themeManager.current.accent
+                    valueColor: Theme.accent
                 )
             }
 
@@ -118,12 +117,12 @@ struct BestDayCard: View {
                     title: L.bestProteinDay.localized,
                     value: "\(Int(protDay.protein))g",
                     subtitle: formatDate(protDay.date),
-                    valueColor: Color(hex: "5E9FFF")
+                    valueColor: Theme.protein
                 )
             }
         }
         .padding(14)
-        .background(themeManager.current.cardBackground)
+        .background(Theme.cardBackground)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)

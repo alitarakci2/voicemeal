@@ -8,7 +8,6 @@ import SwiftUI
 struct MealInsightsCard: View {
     let entries: [FoodEntry]
     let appLanguage: String
-    @EnvironmentObject var themeManager: ThemeManager
 
     // Top 5 most eaten foods by frequency
     var topFoods: [(name: String, count: Int, avgCalories: Int)] {
@@ -61,11 +60,11 @@ struct MealInsightsCard: View {
             // Header
             HStack {
                 Image(systemName: "fork.knife.circle.fill")
-                    .foregroundColor(themeManager.current.accent)
+                    .foregroundColor(Theme.accent)
                     .font(.system(size: 16))
                     .frame(width: 30, height: 30)
                     .background(
-                        themeManager.current.accent.opacity(0.15))
+                        Theme.accent.opacity(0.15))
                     .cornerRadius(8)
 
                 Text(L.mealInsights.localized)
@@ -87,7 +86,7 @@ struct MealInsightsCard: View {
                 QuickStatCell(
                     value: String(format: "%.1f", avgMealsPerDay),
                     label: L.mealsPerDayStat.localized,
-                    color: themeManager.current.accent
+                    color: Theme.accent
                 )
 
                 Divider()
@@ -143,11 +142,11 @@ struct MealInsightsCard: View {
                         // Frequency badge
                         Text("\(food.count)x")
                             .font(.caption.bold())
-                            .foregroundColor(themeManager.current.accent)
+                            .foregroundColor(Theme.accent)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
                             .background(
-                                themeManager.current.accent.opacity(0.15))
+                                Theme.accent.opacity(0.15))
                             .cornerRadius(8)
                     }
                 }
@@ -202,7 +201,7 @@ struct MealInsightsCard: View {
             }
         }
         .padding(14)
-        .background(themeManager.current.cardBackground)
+        .background(Theme.cardBackground)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)

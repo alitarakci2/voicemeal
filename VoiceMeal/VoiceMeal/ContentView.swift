@@ -14,7 +14,6 @@ struct ContentView: View {
     @State private var goalEngine = GoalEngine()
     @State private var groqService = GroqService()
     @State private var showFeedback = false
-    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.scenePhase) private var scenePhase
     @State private var backgroundedAt: Date?
     private let watchService = WatchConnectivityService.shared
@@ -57,16 +56,18 @@ struct ContentView: View {
     }
 
     init() {
-        let black = UIColor.black
+        // Brand canvas color: #0A0A0A
+        let canvasColor = UIColor(red: 0.039, green: 0.039, blue: 0.039, alpha: 1.0)
+        // Emerald accent: #1D9E75
+        let accent = UIColor(red: 0.114, green: 0.620, blue: 0.459, alpha: 1.0)
+        let normalColor = UIColor(white: 0.45, alpha: 1)
 
-        // Tab bar - force black for ALL states
+        // Tab bar
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithOpaqueBackground()
-        tabAppearance.backgroundColor = black
+        tabAppearance.backgroundColor = canvasColor
         tabAppearance.shadowColor = .clear
 
-        // Normal icons/text
-        let normalColor = UIColor(white: 0.45, alpha: 1)
         tabAppearance.stackedLayoutAppearance.normal.iconColor = normalColor
         tabAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
         tabAppearance.compactInlineLayoutAppearance.normal.iconColor = normalColor
@@ -74,8 +75,6 @@ struct ContentView: View {
         tabAppearance.inlineLayoutAppearance.normal.iconColor = normalColor
         tabAppearance.inlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
 
-        // Selected icons/text
-        let accent = UIColor(ThemeManager.shared.current.accent)
         tabAppearance.stackedLayoutAppearance.selected.iconColor = accent
         tabAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
         tabAppearance.compactInlineLayoutAppearance.selected.iconColor = accent
@@ -85,15 +84,15 @@ struct ContentView: View {
 
         UITabBar.appearance().standardAppearance = tabAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabAppearance
-        UITabBar.appearance().barTintColor = black
-        UITabBar.appearance().backgroundColor = black
+        UITabBar.appearance().barTintColor = canvasColor
+        UITabBar.appearance().backgroundColor = canvasColor
         UITabBar.appearance().isTranslucent = false
         UITabBar.appearance().unselectedItemTintColor = normalColor
 
         // Navigation bar
         let navAppearance = UINavigationBarAppearance()
         navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = black
+        navAppearance.backgroundColor = canvasColor
         navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         navAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         navAppearance.shadowColor = .clear
@@ -102,12 +101,12 @@ struct ContentView: View {
         UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
         UINavigationBar.appearance().compactAppearance = navAppearance
 
-        // Segmented control
+        // Segmented control — surface2: #1F1F1F
+        let surface2 = UIColor(red: 0.122, green: 0.122, blue: 0.122, alpha: 1.0)
         UISegmentedControl.appearance().selectedSegmentTintColor = accent
         UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor(white: 0.6, alpha: 1)], for: .normal)
-        UISegmentedControl.appearance().backgroundColor = UIColor(Color(hex: "1C1C1E"))
-
+        UISegmentedControl.appearance().backgroundColor = surface2
     }
 
     var body: some View {
@@ -174,7 +173,6 @@ struct ContentView: View {
                         isPresented: $showFeedback,
                         appLanguage: groqService.appLanguage
                     )
-                    .environmentObject(themeManager)
                 }
             } else {
                 OnboardingContainerView(onboardingComplete: $onboardingComplete)

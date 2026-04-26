@@ -134,10 +134,10 @@ extension HomeView {
                 VStack(spacing: 6) {
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(Theme.warning)
                         Text(L.error.localized)
                             .font(.subheadline.bold())
-                            .foregroundColor(.orange)
+                            .foregroundColor(Theme.warning)
                     }
                     Text(error.isEmpty
                          ? L.couldNotProcess.localized
@@ -153,11 +153,11 @@ extension HomeView {
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
-                .background(Color.orange.opacity(0.08))
+                .background(Theme.warning.opacity(0.08))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+                        .stroke(Theme.warning.opacity(0.2), lineWidth: 1)
                 )
                 .padding(.horizontal)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -963,7 +963,7 @@ private struct MealReviewRow: View {
                         .foregroundStyle(Theme.blue.opacity(0.8))
                     Text("K:\(Int(meal.carbs ?? 0))g")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Theme.orange.opacity(0.8))
+                        .foregroundStyle(Theme.macroCarb.opacity(0.8))
                     Text("Y:\(Int(meal.fat ?? 0))g")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(Theme.green.opacity(0.8))

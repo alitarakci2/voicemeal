@@ -28,7 +28,6 @@ struct VoiceMealApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(ThemeManager.shared)
                 .task { @MainActor in
                     NutritionReportMigrator.migrateLegacyReportsIfNeeded(context: sharedContainer.mainContext)
                 }

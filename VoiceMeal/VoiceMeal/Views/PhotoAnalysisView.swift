@@ -233,7 +233,7 @@ struct PhotoAnalysisView: View {
             HStack {
                 Image(systemName: "questionmark.circle.fill")
                     .font(.title2)
-                    .foregroundStyle(Theme.orange)
+                    .foregroundStyle(Theme.warning)
                 Text(L.notSure.localized)
                     .font(Theme.headlineFont)
                     .foregroundStyle(Theme.textPrimary)
@@ -250,11 +250,11 @@ struct PhotoAnalysisView: View {
                 Text("\"\(question)\"")
                     .font(Theme.bodyFont)
                     .fontWeight(.medium)
-                    .foregroundStyle(Theme.orange)
+                    .foregroundStyle(Theme.warning)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.orange.opacity(0.1))
+                    .background(Theme.warning.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
 

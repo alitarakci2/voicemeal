@@ -8,7 +8,6 @@ import SwiftUI
 
 struct CalorieChartView: View {
     let stats: [DayStat]
-    @EnvironmentObject private var themeManager: ThemeManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -38,7 +37,7 @@ struct CalorieChartView: View {
                                 x: .value("Tarih", stat.date, unit: .day),
                                 y: .value("Kalori", stat.consumedCalories)
                             )
-                            .foregroundStyle(stat.consumedCalories > stat.targetCalories ? Theme.orange : Theme.green)
+                            .foregroundStyle(stat.consumedCalories > stat.targetCalories ? Theme.warning : Theme.green)
                             .cornerRadius(4)
 
                             if stat.targetCalories > 0 {

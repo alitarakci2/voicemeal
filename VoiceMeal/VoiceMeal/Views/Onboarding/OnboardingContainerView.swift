@@ -8,7 +8,6 @@ import SwiftUI
 
 struct OnboardingContainerView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var themeManager: ThemeManager
     @Binding var onboardingComplete: Bool
 
     @State private var step = 0 // 0 = HealthKit intro

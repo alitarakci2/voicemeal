@@ -50,7 +50,7 @@ struct GoalSlider: View {
         switch aggressivenessLevel {
         case .safe:       return Theme.green
         case .moderate:   return Theme.accent
-        case .aggressive: return Theme.orange
+        case .aggressive: return Theme.warning
         case .dangerous:  return Theme.red
         case .locked:     return Theme.red.opacity(0.7)
         }

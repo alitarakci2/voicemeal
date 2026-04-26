@@ -8,14 +8,13 @@ import SwiftUI
 struct StepAppTourView: View {
     var appLanguage: String
     var onContinue: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
     @State private var currentCard = 0
 
     private var cards: [(icon: String, iconColor: Color, title: String, titleEN: String, body: String, bodyEN: String, example: String, exampleEN: String)] {
         [
             (
                 icon: "mic.circle.fill",
-                iconColor: themeManager.current.accent,
+                iconColor: Theme.accent,
                 title: "Sesini Kullan",
                 titleEN: "Use Your Voice",
                 body: "Yediğin yemeği doğal bir şekilde söyle. AI kalorini hesaplar.",
@@ -26,7 +25,7 @@ struct StepAppTourView: View {
             // V2: Camera card hidden until photo-based meal entry ships
             (
                 icon: "brain.head.profile",
-                iconColor: Color(hex: "5E9FFF"),
+                iconColor: Theme.protein,
                 title: "Kişisel AI Koçun",
                 titleEN: "Your Personal AI Coach",
                 body: "Her gün sağlık verilerini analiz eder. HRV, uyku, kalori — hepsini değerlendirir.",
@@ -60,7 +59,7 @@ struct StepAppTourView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [themeManager.current.gradientTop, Color(hex: "0A0A1F")],
+                colors: [Theme.gradientTop, Color(hex: "0A0A1F")],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -70,7 +69,7 @@ struct StepAppTourView: View {
                 HStack(spacing: 8) {
                     ForEach(0..<cards.count, id: \.self) { i in
                         Circle()
-                            .fill(i == currentCard ? themeManager.current.accent : Color.white.opacity(0.2))
+                            .fill(i == currentCard ? Theme.accent : Color.white.opacity(0.2))
                             .frame(width: i == currentCard ? 20 : 8, height: 8)
                             .animation(.spring(), value: currentCard)
                     }
@@ -144,7 +143,7 @@ struct StepAppTourView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(themeManager.current.accent)
+                    .background(Theme.accent)
                     .cornerRadius(16)
                 }
                 .buttonStyle(.plain)

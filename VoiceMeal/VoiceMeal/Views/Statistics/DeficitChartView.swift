@@ -10,7 +10,6 @@ struct DeficitChartView: View {
     let stats: [DayStat]
     let goalDays: Int
     let totalNeededDeficit: Double
-    @EnvironmentObject private var themeManager: ThemeManager
 
     private var snapshotStats: [(date: Date, cumulativeDeficit: Int)] {
         let filtered = stats.filter { $0.hasData && $0.hasSnapshot }
@@ -59,7 +58,7 @@ struct DeficitChartView: View {
                             x: .value("Tarih", item.date, unit: .day),
                             y: .value("Birikimli", item.cumulativeDeficit)
                         )
-                        .foregroundStyle(isAhead ? Theme.green : Theme.orange)
+                        .foregroundStyle(isAhead ? Theme.green : Theme.warning)
                         .interpolationMethod(.catmullRom)
 
                         AreaMark(
@@ -67,7 +66,7 @@ struct DeficitChartView: View {
                             y: .value("Birikimli", item.cumulativeDeficit)
                         )
                         .foregroundStyle(
-                            (isAhead ? Theme.green : Theme.orange).opacity(0.15)
+                            (isAhead ? Theme.green : Theme.warning).opacity(0.15)
                         )
                     }
                 }

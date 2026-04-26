@@ -28,7 +28,7 @@ extension HomeView {
         let gapRingColor: Color = {
             switch CalorieGapCopy.colorCue(actual: actualDeficit, target: targetDeficit, kind: gapKind) {
             case .good: return Theme.green
-            case .warn: return Theme.orange
+            case .warn: return Theme.warning
             case .bad:  return Theme.red
             }
         }()
@@ -115,7 +115,7 @@ extension HomeView {
                     Spacer()
                 }
                 macroProgressRow(label: "pro_short".localized, value: eatenProtein, target: Double(goalEngine.proteinTarget), color: Theme.blue)
-                macroProgressRow(label: "carb_short".localized, value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.orange)
+                macroProgressRow(label: "carb_short".localized, value: eatenCarbs, target: Double(goalEngine.carbTarget), color: Theme.macroCarb)
                 macroProgressRow(label: "fat_short".localized, value: eatenFat, target: Double(goalEngine.fatTarget), color: Theme.fatColor)
             }
             .padding(.horizontal, 4)
@@ -125,7 +125,7 @@ extension HomeView {
             LinearGradient(
                 colors: [
                     Theme.gradientTop.opacity(0.7),
-                    Color(hex: "0D0D1A").opacity(0.8),
+                    BrandColors.surface.opacity(0.8),
                     Color(hex: "0A0A0F").opacity(0.6)
                 ],
                 startPoint: .top,
@@ -198,7 +198,7 @@ extension HomeView {
                     Spacer()
                 }
                 macroStatRow(label: "pro_short".localized, value: eatenProtein, color: Theme.blue)
-                macroStatRow(label: "carb_short".localized, value: eatenCarbs, color: Theme.orange)
+                macroStatRow(label: "carb_short".localized, value: eatenCarbs, color: Theme.macroCarb)
                 macroStatRow(label: "fat_short".localized, value: eatenFat, color: Theme.fatColor)
             }
             .padding(.horizontal, 4)
@@ -208,7 +208,7 @@ extension HomeView {
             LinearGradient(
                 colors: [
                     Theme.gradientTop.opacity(0.7),
-                    Color(hex: "0D0D1A").opacity(0.8),
+                    BrandColors.surface.opacity(0.8),
                     Color(hex: "0A0A0F").opacity(0.6)
                 ],
                 startPoint: .top,

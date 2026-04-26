@@ -8,7 +8,6 @@ import SwiftUI
 struct ProteinTrackingCard: View {
     let stats: [DayStat]
     let proteinTarget: Double
-    @EnvironmentObject var themeManager: ThemeManager
     var appLanguage: String
 
     var daysOnTarget: Int {
@@ -35,10 +34,10 @@ struct ProteinTrackingCard: View {
             // Header
             HStack {
                 Image(systemName: "bolt.circle.fill")
-                    .foregroundColor(Color(hex: "5E9FFF"))
+                    .foregroundColor(Theme.protein)
                     .font(.system(size: 16))
                     .frame(width: 30, height: 30)
-                    .background(Color(hex: "5E9FFF").opacity(0.15))
+                    .background(Theme.protein.opacity(0.15))
                     .cornerRadius(8)
                 Text(L.proteinGoalTitle.localized)
                     .font(.subheadline.bold())
@@ -56,7 +55,7 @@ struct ProteinTrackingCard: View {
                 VStack(spacing: 4) {
                     Text("\(daysOnTarget)")
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(Color(hex: "5E9FFF"))
+                        .foregroundColor(Theme.protein)
                     Text(L.daysOnTarget.localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
@@ -119,7 +118,7 @@ struct ProteinTrackingCard: View {
                                 .fill(Color.white.opacity(0.06))
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(stat.protein >= proteinTarget * 0.9
-                                      ? Color(hex: "5E9FFF") : .orange)
+                                      ? Theme.protein : Theme.warning)
                                 .frame(width: min(
                                     geo.size.width,
                                     geo.size.width * (stat.protein / max(1, proteinTarget))
@@ -149,7 +148,7 @@ struct ProteinTrackingCard: View {
             }
         }
         .padding(14)
-        .background(themeManager.current.cardBackground)
+        .background(Theme.cardBackground)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)

@@ -8,7 +8,6 @@ import SwiftUI
 struct ConsistencyCard: View {
     let stats: [DayStat]           // current period days
     let previousStats: [DayStat]   // previous period for comparison
-    @EnvironmentObject var themeManager: ThemeManager
     var appLanguage: String
 
     var daysWithData: Int {
@@ -106,7 +105,7 @@ struct ConsistencyCard: View {
                 .foregroundColor(.secondary)
         }
         .padding(14)
-        .background(themeManager.current.cardBackground)
+        .background(Theme.cardBackground)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)

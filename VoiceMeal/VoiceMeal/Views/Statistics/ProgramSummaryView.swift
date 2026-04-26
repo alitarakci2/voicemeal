@@ -16,7 +16,6 @@ struct ProgramSummaryView: View {
 
     @State private var insightText: String?
     @State private var insightLoading = false
-    @EnvironmentObject private var themeManager: ThemeManager
 
     @Environment(GroqService.self) private var groqService
 
@@ -145,7 +144,7 @@ struct ProgramSummaryView: View {
     }
 
     private var onTrackColor: Color {
-        summary.onTrackLevel >= 1 ? Theme.green : Theme.orange
+        summary.onTrackLevel >= 1 ? Theme.green : Theme.warning
     }
 
     private var programCompletionPercent: Int {
@@ -252,7 +251,7 @@ struct ProgramSummaryView: View {
                 } else if diff < -0.1 {
                     Text("⚠️ \(String(format: "behind_kg".localized, String(format: "%.2f", abs(diff))))")
                         .font(Theme.captionFont)
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.warning)
                 } else {
                     Text("👌 \("matches_estimate".localized)")
                         .font(Theme.captionFont)
@@ -368,11 +367,11 @@ struct ProgramSummaryView: View {
             if let worst = summary.worstDay {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.down.circle.fill")
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.warning)
                         .font(.system(size: 12))
                     Text(worstDayLabel(date: worst.date, value: worst.value))
                         .font(Theme.captionFont)
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.warning)
                 }
             }
         }
@@ -391,10 +390,10 @@ struct ProgramSummaryView: View {
     private var streakCard: some View {
         HStack(spacing: 14) {
             Image(systemName: "flame.fill")
-                .foregroundStyle(Theme.orange)
+                .foregroundStyle(Theme.indioOrange)
                 .font(.system(size: 28))
                 .frame(width: 50, height: 50)
-                .background(Theme.orange.opacity(0.12))
+                .background(Theme.indioOrange.opacity(0.12))
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 4) {
@@ -432,7 +431,7 @@ struct ProgramSummaryView: View {
             }
 
             macroBar(L.protein.localized, avg: Int(summary.avgDailyProtein), target: targetProtein, color: Theme.blue)
-            macroBar(L.carbs.localized, avg: Int(summary.avgDailyCarbs), target: targetCarbs, color: Theme.orange)
+            macroBar(L.carbs.localized, avg: Int(summary.avgDailyCarbs), target: targetCarbs, color: Theme.macroCarb)
             macroBar(L.fat.localized, avg: Int(summary.avgDailyFat), target: targetFat, color: Theme.fatColor)
         }
         .padding()

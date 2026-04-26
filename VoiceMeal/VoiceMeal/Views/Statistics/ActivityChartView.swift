@@ -8,7 +8,6 @@ import SwiftUI
 
 struct ActivityChartView: View {
     let stats: [DayStat]
-    @EnvironmentObject private var themeManager: ThemeManager
 
     private var activityCounts: [(activity: String, count: Int, emoji: String, label: String)] {
         var counts: [String: Int] = [:]

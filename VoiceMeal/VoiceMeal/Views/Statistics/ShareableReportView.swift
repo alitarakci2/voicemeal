@@ -12,7 +12,6 @@ struct ShareableReportView: View {
     let avgProtein: Double
     let avgCarbs: Double
     let avgFat: Double
-    let theme: AppTheme
 
     private var isEN: Bool { report.language == "en" }
 
@@ -36,7 +35,7 @@ struct ShareableReportView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [theme.gradientTop, theme.gradientMid, Color(hex: "0A0A0F")],
+                colors: [Theme.gradientTop, Theme.gradientMid, Color(hex: "0A0A0F")],
                 startPoint: .top, endPoint: .bottom
             )
             .ignoresSafeArea()
@@ -47,7 +46,7 @@ struct ShareableReportView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "waveform")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(Theme.accent)
                     Text("VoiceMeal")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
@@ -73,7 +72,7 @@ struct ShareableReportView: View {
                         .trim(from: 0, to: CGFloat(report.score) / 10.0)
                         .stroke(
                             AngularGradient(
-                                colors: [theme.accent, theme.accentLight, theme.accent],
+                                colors: [Theme.accent, Theme.accentLight, Theme.accent],
                                 center: .center
                             ),
                             style: StrokeStyle(lineWidth: 22, lineCap: .round)
@@ -120,7 +119,7 @@ struct ShareableReportView: View {
 
                     Text("voicemeal.app")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(Theme.accent)
                 }
                 .padding(.bottom, 60)
             }
@@ -137,13 +136,13 @@ struct ShareableReportView: View {
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(Color(hex: "E74C3C"))
+                        .fill(Theme.danger)
                         .frame(width: geo.size.width * proteinPct)
                     Rectangle()
-                        .fill(Color(hex: "F39C12"))
+                        .fill(Theme.macroCarb)
                         .frame(width: geo.size.width * carbsPct)
                     Rectangle()
-                        .fill(Color(hex: "2ECC71"))
+                        .fill(Theme.success)
                         .frame(width: geo.size.width * fatPct)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -151,9 +150,9 @@ struct ShareableReportView: View {
             .frame(height: 36)
 
             HStack(spacing: 24) {
-                macroLegend(color: Color(hex: "E74C3C"), label: isEN ? "Protein" : "Protein", pct: proteinPct)
-                macroLegend(color: Color(hex: "F39C12"), label: isEN ? "Carbs" : "Karb.", pct: carbsPct)
-                macroLegend(color: Color(hex: "2ECC71"), label: isEN ? "Fat" : "Yağ", pct: fatPct)
+                macroLegend(color: Theme.danger, label: isEN ? "Protein" : "Protein", pct: proteinPct)
+                macroLegend(color: Theme.macroCarb, label: isEN ? "Carbs" : "Karb.", pct: carbsPct)
+                macroLegend(color: Theme.success, label: isEN ? "Fat" : "Yağ", pct: fatPct)
             }
         }
     }

@@ -16,7 +16,6 @@ struct MacroChartView: View {
     let todayProtein: Double
     let todayCarbs: Double
     let todayFat: Double
-    @EnvironmentObject private var themeManager: ThemeManager
 
     private var todayTotal: Double {
         todayProtein * 4 + todayCarbs * 4 + todayFat * 9
@@ -37,7 +36,7 @@ struct MacroChartView: View {
             // Weekly average bars
             VStack(spacing: 10) {
                 macroBar("protein_label".localized, avg: avgProtein, target: targetProtein, color: Theme.blue)
-                macroBar("carb_label".localized, avg: avgCarbs, target: targetCarbs, color: Theme.orange)
+                macroBar("carb_label".localized, avg: avgCarbs, target: targetCarbs, color: Theme.macroCarb)
                 macroBar("fat_label".localized, avg: avgFat, target: targetFat, color: Theme.fatColor)
             }
 
@@ -57,7 +56,7 @@ struct MacroChartView: View {
 
                 HStack(spacing: 0) {
                     macroSegment("P", pct: proteinPct, color: Theme.blue)
-                    macroSegment("K", pct: carbPct, color: Theme.orange)
+                    macroSegment("K", pct: carbPct, color: Theme.macroCarb)
                     macroSegment("Y", pct: fatPct, color: Theme.fatColor)
                 }
                 .frame(height: 28)
@@ -66,7 +65,7 @@ struct MacroChartView: View {
                 HStack {
                     legendDot("\("protein_label".localized) %\(proteinPct)", color: Theme.blue)
                     Spacer()
-                    legendDot("\("carb_label".localized) %\(carbPct)", color: Theme.orange)
+                    legendDot("\("carb_label".localized) %\(carbPct)", color: Theme.macroCarb)
                     Spacer()
                     legendDot("\("fat_label".localized) %\(fatPct)", color: Theme.fatColor)
                 }

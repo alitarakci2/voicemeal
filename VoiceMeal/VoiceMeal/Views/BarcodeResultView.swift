@@ -225,7 +225,7 @@ struct BarcodeResultView: View {
                         HStack(spacing: 16) {
                             nutrientLabel("\(product.caloriesPer100g ?? 0) kcal", color: Theme.accent)
                             nutrientLabel("P: \(Int(product.proteinPer100g ?? 0))g", color: Theme.blue)
-                            nutrientLabel("K: \(Int(product.carbsPer100g ?? 0))g", color: Theme.orange)
+                            nutrientLabel("K: \(Int(product.carbsPer100g ?? 0))g", color: Theme.macroCarb)
                             nutrientLabel("Y: \(Int(product.fatPer100g ?? 0))g", color: Theme.red)
                         }
                     }
@@ -269,7 +269,7 @@ struct BarcodeResultView: View {
                     HStack(spacing: 8) {
                         Text("\u{26A0}\u{FE0F} \("confirm_quantity".localized)")
                             .font(Theme.captionFont)
-                            .foregroundStyle(Theme.orange)
+                            .foregroundStyle(Theme.warning)
                         Spacer()
                         TextField("Miktar", text: $customAmountText)
                             .keyboardType(.decimalPad)
@@ -302,7 +302,7 @@ struct BarcodeResultView: View {
                         Text("P:\(Int(calculatedProtein))g")
                             .foregroundStyle(Theme.blue)
                         Text("K:\(Int(calculatedCarbs))g")
-                            .foregroundStyle(Theme.orange)
+                            .foregroundStyle(Theme.macroCarb)
                         Text("Y:\(Int(calculatedFat))g")
                             .foregroundStyle(Theme.red)
                     }

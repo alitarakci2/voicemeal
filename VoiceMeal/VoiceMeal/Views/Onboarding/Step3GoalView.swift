@@ -105,10 +105,10 @@ struct Step3GoalView: View {
                         if isAggressive {
                             Label("too_aggressive".localized, systemImage: "exclamationmark.triangle.fill")
                                 .font(Theme.bodyFont)
-                                .foregroundStyle(Theme.orange)
+                                .foregroundStyle(Theme.warning)
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.orange.opacity(0.1))
+                                .background(Theme.warning.opacity(0.1))
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     } else if currentWeightKg < goalWeightKg {

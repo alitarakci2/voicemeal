@@ -13,7 +13,6 @@
 		576FDB3CDC207A8DB01E8FE7 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C0606C1299A210188E74A0C7 /* Assets.xcassets */; };
 		5C3D4CC472F04E9FD271CA6E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57E81C569171BFCD30DCD03 /* SwiftUI.framework */; };
 		B60BB7B386E00991775510BD /* VoiceMealWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 653665859AD431C4DDD50613 /* VoiceMealWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B974CE8B2F78296600EEC453 /* VoiceMealWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B974CE6B2F78296500EEC453 /* VoiceMealWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B9E588E32F8F5AEC00AA128D /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = B9E588E22F8F5AEC00AA128D /* Sentry */; };
 		F6235255A93E69CAFC75D426 /* VoiceMealWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518844E37B2DADF4C884F472 /* VoiceMealWidget.swift */; };
 /* End PBXBuildFile section */
@@ -34,13 +33,6 @@
 			remoteInfo = "VoiceMealWatch Watch App";
 		};
 		B974CE822F78296600EEC453 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B98021612F620F300032CCEB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B974CE6A2F78296500EEC453;
-			remoteInfo = "VoiceMealWatch Watch App";
-		};
-		B974CE892F78296600EEC453 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B98021612F620F300032CCEB /* Project object */;
 			proxyType = 1;
@@ -73,17 +65,6 @@
 				B60BB7B386E00991775510BD /* VoiceMealWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B974CE8F2F78296600EEC453 /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				B974CE8B2F78296600EEC453 /* VoiceMealWatch Watch App.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -600,11 +581,6 @@
 			target = B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */;
 			targetProxy = B974CE822F78296600EEC453 /* PBXContainerItemProxy */;
 		};
-		B974CE8A2F78296600EEC453 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B974CE6A2F78296500EEC453 /* VoiceMealWatch Watch App */;
-			targetProxy = B974CE892F78296600EEC453 /* PBXContainerItemProxy */;
-		};
 		B980217A2F620F310032CCEB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B98021682F620F300032CCEB /* VoiceMeal */;
@@ -972,7 +948,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = VoiceMeal/VoiceMeal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = NAPXV2993R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1010,7 +986,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = VoiceMeal/VoiceMeal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = NAPXV2993R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

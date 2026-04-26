@@ -11,12 +11,11 @@ struct StepReadyView: View {
     var dailyTarget: Int
     var isObserveMode: Bool = false
     var onStart: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
 
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [themeManager.current.gradientTop, Color(hex: "0A0A1F")],
+                colors: [Theme.gradientTop, Color(hex: "0A0A1F")],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -55,19 +54,19 @@ struct StepReadyView: View {
                                 .foregroundColor(.secondary)
                             Text("\(dailyTarget) kcal")
                                 .font(.title2.bold())
-                                .foregroundColor(themeManager.current.accent)
+                                .foregroundColor(Theme.accent)
                         }
                         Spacer()
                         Image(systemName: "flame.fill")
                             .font(.system(size: 32))
-                            .foregroundColor(themeManager.current.accent)
+                            .foregroundColor(Theme.accent)
                     }
                     .padding(16)
-                    .background(themeManager.current.cardBackground)
+                    .background(Theme.cardBackground)
                     .cornerRadius(16)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(themeManager.current.accent.opacity(0.3), lineWidth: 1)
+                            .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
                     )
                     .padding(.horizontal, 32)
 
@@ -90,7 +89,7 @@ struct StepReadyView: View {
                         FirstStepRow(
                             number: "1",
                             icon: "mic.fill",
-                            iconColor: themeManager.current.accent,
+                            iconColor: Theme.accent,
                             text: appLanguage == "en"
                                 ? "After each meal → tap mic → say what you ate"
                                 : "Her yemekten sonra → mikrofona bas → ne yediğini söyle"
@@ -99,7 +98,7 @@ struct StepReadyView: View {
                         FirstStepRow(
                             number: "2",
                             icon: "brain.head.profile",
-                            iconColor: Color(hex: "5E9FFF"),
+                            iconColor: Theme.protein,
                             text: appLanguage == "en"
                                 ? "Each evening → read your daily AI assessment"
                                 : "Her akşam → günlük AI değerlendirmeni oku"
@@ -115,7 +114,7 @@ struct StepReadyView: View {
                         )
                     }
                     .padding(16)
-                    .background(themeManager.current.cardBackground)
+                    .background(Theme.cardBackground)
                     .cornerRadius(16)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
@@ -154,7 +153,7 @@ struct StepReadyView: View {
                         .padding(.vertical, 18)
                         .background(
                             LinearGradient(
-                                colors: [themeManager.current.accent, themeManager.current.accent.opacity(0.7)],
+                                colors: [Theme.accent, Theme.accent.opacity(0.7)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )

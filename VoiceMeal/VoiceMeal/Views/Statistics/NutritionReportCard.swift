@@ -18,8 +18,6 @@ struct NutritionReportCard: View {
     let isLoading: Bool
     let onTap: () -> Void
 
-    @EnvironmentObject private var themeManager: ThemeManager
-
     private var isEN: Bool {
         if let r = report { return r.language == "en" }
         return Locale.current.language.languageCode?.identifier == "en"
@@ -91,7 +89,7 @@ struct NutritionReportCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(themeManager.current.accent.opacity(0.3), lineWidth: 1)
+                    .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -101,7 +99,7 @@ struct NutritionReportCard: View {
     private var header: some View {
         HStack(spacing: 6) {
             Image(systemName: "doc.text.magnifyingglass")
-                .foregroundStyle(themeManager.current.accent)
+                .foregroundStyle(Theme.accent)
                 .font(.system(size: 14))
             Text(cardTitle)
                 .font(.subheadline.bold())
@@ -126,7 +124,7 @@ struct NutritionReportCard: View {
                 Circle()
                     .trim(from: 0, to: CGFloat(report.score) / 10.0)
                     .stroke(
-                        themeManager.current.accent,
+                        Theme.accent,
                         style: StrokeStyle(lineWidth: 6, lineCap: .round)
                     )
                     .frame(width: 64, height: 64)
@@ -191,13 +189,13 @@ struct NutritionReportCard: View {
             GeometryReader { geo in
                 HStack(spacing: 0) {
                     Rectangle()
-                        .fill(Color(hex: "E74C3C"))
+                        .fill(Theme.danger)
                         .frame(width: geo.size.width * pP)
                     Rectangle()
-                        .fill(Color(hex: "F39C12"))
+                        .fill(Theme.macroCarb)
                         .frame(width: geo.size.width * pC)
                     Rectangle()
-                        .fill(Color(hex: "2ECC71"))
+                        .fill(Theme.success)
                         .frame(width: geo.size.width * pF)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -205,9 +203,9 @@ struct NutritionReportCard: View {
             .frame(height: 8)
 
             HStack(spacing: 12) {
-                macroLabel(color: Color(hex: "E74C3C"), text: "P \(Int((pP * 100).rounded()))%")
-                macroLabel(color: Color(hex: "F39C12"), text: "\(isEN ? "C" : "K") \(Int((pC * 100).rounded()))%")
-                macroLabel(color: Color(hex: "2ECC71"), text: "\(isEN ? "F" : "Y") \(Int((pF * 100).rounded()))%")
+                macroLabel(color: Theme.danger, text: "P \(Int((pP * 100).rounded()))%")
+                macroLabel(color: Theme.macroCarb, text: "\(isEN ? "C" : "K") \(Int((pC * 100).rounded()))%")
+                macroLabel(color: Theme.success, text: "\(isEN ? "F" : "Y") \(Int((pF * 100).rounded()))%")
             }
         }
     }
@@ -224,7 +222,7 @@ struct NutritionReportCard: View {
     private var loadingState: some View {
         HStack {
             Spacer()
-            ProgressView().tint(themeManager.current.accent)
+            ProgressView().tint(Theme.accent)
             Text(isEN ? "Analyzing…" : "Analiz ediliyor…")
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textSecondary)

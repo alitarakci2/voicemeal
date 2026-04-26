@@ -13,8 +13,6 @@ struct StatisticsView: View {
     @Query(sort: \NutritionReport.weekStartDate, order: .reverse) private var nutritionReports: [NutritionReport]
     @Environment(GoalEngine.self) private var goalEngine
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var themeManager: ThemeManager
-
     @State private var statisticsService = StatisticsService()
     @State private var selectedRange = 0 // 0 = weekly, 1 = monthly, 2 = program
     @State private var weeklyInsight: String?
@@ -182,28 +180,24 @@ struct StatisticsView: View {
                                     entries: periodEntries,
                                     appLanguage: groqService.appLanguage
                                 )
-                                .environmentObject(themeManager)
 
                                 ConsistencyCard(
                                     stats: currentStats,
                                     previousStats: previousPeriodStats,
                                     appLanguage: groqService.appLanguage
                                 )
-                                .environmentObject(themeManager)
 
                                 ProteinTrackingCard(
                                     stats: currentStats,
                                     proteinTarget: Double(goalEngine.proteinTarget),
                                     appLanguage: groqService.appLanguage
                                 )
-                                .environmentObject(themeManager)
 
                                 BestDayCard(
                                     stats: currentStats,
                                     gapKind: profiles.first.map { CalorieGapKind.from(profile: $0) } ?? .deficit,
                                     appLanguage: groqService.appLanguage
                                 )
-                                .environmentObject(themeManager)
 
                                 // Weekly Groq insight
                                 weeklyInsightCard
@@ -270,7 +264,6 @@ struct StatisticsView: View {
             isLoading: generatingReportPeriod == period,
             onTap: { sheetPeriod = period }
         )
-        .environmentObject(themeManager)
     }
 
     @ViewBuilder
@@ -294,7 +287,6 @@ struct StatisticsView: View {
                 canRefresh: cooldown == 0 && meets && generatingReportPeriod != period,
                 onRefresh: { Task { await refreshReport(period: period, force: true) } }
             )
-            .environmentObject(themeManager)
         }
     }
 
@@ -463,7 +455,7 @@ struct StatisticsView: View {
     private var trendColor: Color {
         switch statisticsService.trend {
         case .losing: return Theme.green
-        case .gaining: return Theme.orange
+        case .gaining: return Theme.warning
         case .stable: return Theme.textSecondary
         }
     }
@@ -489,7 +481,7 @@ struct StatisticsView: View {
             HStack(spacing: 12) {
                 MetricSummaryCard(
                     icon: "flame.fill",
-                    iconColor: Theme.orange,
+                    iconColor: Theme.indioOrange,
                     title: L.streak.localized,
                     value: "\(statisticsService.currentStreak)",
                     subtitle: L.daysLabelShort.localized,
@@ -536,7 +528,7 @@ struct StatisticsView: View {
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text("\(weekKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(weekKg)))")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(weekKg >= 0 ? Theme.green : Theme.orange)
+                            .foregroundStyle(weekKg >= 0 ? Theme.green : Theme.warning)
                         Text("kg")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Theme.textSecondary)
@@ -560,7 +552,7 @@ struct StatisticsView: View {
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text("\(monthKg >= 0 ? "-" : "+")\(String(format: "%.2f", abs(monthKg)))")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(monthKg >= 0 ? Theme.green : Theme.orange)
+                            .foregroundStyle(monthKg >= 0 ? Theme.green : Theme.warning)
                         Text("kg")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Theme.textSecondary)
